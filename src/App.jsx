@@ -1,0 +1,68 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useState, useEffect } from "react";
+import Home from "./pages/Stars/home";
+import AdminPanel from "./pages/Admin/AdminPanel";
+import Premium from "./pages/Premium/Premium";
+import PremiumSuccess from "./pages/Premium/log/PremiumSuccess";
+import PremiumError from "./pages/Premium/log/PremiumError";
+import Dashboard from "./pages/Homepage/Dashboard";
+import Referral from "./pages/Referral/Referral";
+import Profile from "./pages/Profile/Profile";
+import History from "./pages/History/History";
+import Challenges from "./pages/Challenges/Challenges";
+import Gift from "./pages/Gift/Gift";
+import TermsOfService from "./pages/Legal/TermsOfService";
+import PrivacyPolicy from "./pages/Legal/PrivacyPolicy";
+import MaintenancePage from "./pages/Maintenance/MaintenancePage";
+import { LanguageProvider } from "./context/LanguageContext";
+import { ThemeProvider } from "./context/ThemeContext";
+import TelegramGate from "./components/TelegramGate";
+import apiFetch from "./utils/apiFetch";
+
+function App() {
+  const [maintenance, setMaintenance] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    apiFetch("/api/maintenance")
+      .then(r => r.json())
+      .then(d => { setMaintenance(d.maintenance); setLoaded(true); })
+      .catch(() => setLoaded(true));
+  }, []);
+
+  // Admin panel har doim ochilsin (maintenance da ham)
+  // Boshqa sahifalar maintenance da MaintenancePage ko'rsatsin
+  const isAdminRoute = window.location.pathname === "/starsadmin";
+
+  if (loaded && maintenance && !isAdminRoute) {
+    return <MaintenancePage />;
+  }
+
+  return (
+    <TelegramGate>
+      <ThemeProvider>
+        <LanguageProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Dashboard/>} />
+              <Route path="/stars" element={<Home />} />
+              <Route path="/premium" element={<Premium />} />
+              <Route path="/referral" element={<Referral />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/history" element={<History />} />
+              <Route path="/challenges" element={<Challenges />} />
+              <Route path="/gift" element={<Gift />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/starsadmin" element={<AdminPanel/>} />
+              <Route path="/premium/success" element={<PremiumSuccess />} />
+              <Route path="/premium/error" element={<PremiumError />} />
+            </Routes>
+          </BrowserRouter>
+        </LanguageProvider>
+      </ThemeProvider>
+    </TelegramGate>
+  );
+}
+
+export default App;

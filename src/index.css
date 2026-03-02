@@ -1,0 +1,5 @@
+html, body, #root {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+

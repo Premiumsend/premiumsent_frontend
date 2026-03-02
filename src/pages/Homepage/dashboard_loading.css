@@ -1,0 +1,37 @@
+
+/* =====================
+   NAV LOADING OVERLAY
+   ===================== */
+.nav-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 60px; /* Leave nav visible or cover it? User said "screen fully opens", let's cover content area mainly */
+  background: var(--bg-primary); 
+  z-index: 99; /* Below nav (100) but above content */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.nav-loading-sticker {
+  width: 100px;
+  height: 100px;
+  margin-bottom: 20px;
+}
+
+.nav-loading-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}

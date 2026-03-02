@@ -1,0 +1,1437 @@
+import React, { useEffect, useState } from "react";
+import "./AdminPanel.css";
+import { TGSSticker } from "../../components/TGSSticker";
+import adminSticker from "../../assets/AnimatedSticker_admin.tgs";
+import apiFetch from "../../utils/apiFetch";
+
+export default function AdminPanel() {
+  // ========== TELEGRAM AUTH PROTECTION ==========
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
+
+  // Telegram user admin ekanligini tekshirish
+  useEffect(() => {
+    try {
+      // Backend admin endpointga test so'rov yuborish
+      // Development da initData bo'lmasa ham backend o'tkazadi
+      apiFetch("/api/admin/users")
+        .then(res => {
+          if (res.ok) {
+            setIsAuthenticated(true);
+          } else {
+            setIsAuthenticated(false);
+          }
+          setAuthChecking(false);
+        })
+        .catch(() => {
+          setIsAuthenticated(false);
+          setAuthChecking(false);
+        });
+    } catch {
+      setIsAuthenticated(false);
+      setAuthChecking(false);
+    }
+  }, []);
+
+  // All other state hooks - MUST be before any conditional return
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [stats, setStats] = useState({
+    totalStars: 0,
+    completed: 0,
+    expired: 0,
+    pending: 0,
+    stars_sent: 0,
+    failed: 0,
+    error: 0,
+  });
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  
+  // Users state
+  const [users, setUsers] = useState([]);
+  const [activeTab, setActiveTab] = useState("transactions");
+  const [userStats, setUserStats] = useState({
+    total: 0,
+    today: 0,
+    totalReferrals: 0
+  });
+
+  // New: expanded order & show all
+  const [expandedId, setExpandedId] = useState(null);
+  const [showAll, setShowAll] = useState(false);
+
+  // Referral withdrawals state
+  const [refWithdrawals, setRefWithdrawals] = useState([]);
+  const [refFilter, setRefFilter] = useState("pending");
+
+  // Balance adjustment state
+  const [balanceModal, setBalanceModal] = useState(null); // { username, currentBalance }
+  const [balanceAmount, setBalanceAmount] = useState("");
+  const [balanceLoading, setBalanceLoading] = useState(false);
+
+  // Som balance adjustment state
+  const [somBalanceModal, setSomBalanceModal] = useState(null); // { username, currentBalance }
+  const [somBalanceAmount, setSomBalanceAmount] = useState("");
+  const [somBalanceLoading, setSomBalanceLoading] = useState(false);
+  
+  // User details modal state
+  const [userModal, setUserModal] = useState(null); // full user object
+
+  // 🔧 Maintenance mode
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false);
+
+  // Premium orders state
+  const [premiumOrders, setPremiumOrders] = useState([]);
+  const [premiumExpandedId, setPremiumExpandedId] = useState(null);
+  const [premiumFilter, setPremiumFilter] = useState("all");
+  const [premiumStats, setPremiumStats] = useState({
+    total: 0,
+    pending: 0,
+    premium_sent: 0,
+    expired: 0,
+    failed: 0
+  });
+  const [premiumShowAll, setPremiumShowAll] = useState(false);
+
+  // Gift orders state
+  const [giftOrders, setGiftOrders] = useState([]);
+  const [giftExpandedId, setGiftExpandedId] = useState(null);
+  const [giftFilter, setGiftFilter] = useState("all");
+  const [giftStats, setGiftStats] = useState({
+    total: 0,
+    pending: 0,
+    completed: 0,
+    gift_sent: 0,
+    expired: 0,
+    failed: 0
+  });
+  const [giftShowAll, setGiftShowAll] = useState(false);
+
+  // ========== MAINTENANCE MODE ==========
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    apiFetch("/api/maintenance")
+      .then(r => r.json())
+      .then(d => setMaintenanceMode(d.maintenance))
+      .catch(() => {});
+  }, [isAuthenticated]);
+
+  const toggleMaintenance = async () => {
+    setMaintenanceLoading(true);
+    try {
+      const res = await apiFetch("/api/admin/maintenance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: !maintenanceMode }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMaintenanceMode(data.maintenance);
+      }
+    } catch (err) {
+      console.error("Maintenance toggle xato:", err);
+    }
+    setMaintenanceLoading(false);
+  };
+
+  // ========== ALL FUNCTIONS ==========
+  const fetchTransactions = async () => {
+    if (!isAuthenticated) return;
+    setLoading(true);
+    try {
+      let url = "/api/transactions/all";
+      if (filter !== "all") {
+        url = `/api/transactions/status/${filter}`;
+      }
+
+      const res = await apiFetch(url);
+      const data = await res.json();
+      setTransactions(data);
+
+      const stat = {
+        totalStars: 0,
+        completed: 0,
+        expired: 0,
+        pending: 0,
+        stars_sent: 0,
+        failed: 0,
+        error: 0,
+      };
+
+      data.forEach((tx) => {
+        stat.totalStars += tx.stars;
+        if (stat[tx.status] !== undefined) stat[tx.status]++;
+      });
+
+      setStats(stat);
+    } catch (err) {
+      console.error("❌ Transactionlarni olishda xato:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    if (!isAuthenticated) return;
+    setLoading(true);
+    try {
+      const res = await apiFetch("/api/admin/users");
+      const data = await res.json();
+      setUsers(data);
+
+      const todayStr = new Date().toDateString();
+      const stats = {
+        total: data.length,
+        today: data.filter(u => new Date(u.created_at).toDateString() === todayStr).length,
+        totalReferrals: data.reduce((acc, u) => acc + (u.total_referrals || 0), 0)
+      };
+      setUserStats(stats);
+    } catch (err) {
+      console.error("❌ Users fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPremiumOrders = async () => {
+    if (!isAuthenticated) return;
+    setLoading(true);
+    try {
+      const res = await apiFetch(`/api/admin/premium/list?status=${premiumFilter}`);
+      const data = await res.json();
+      
+      if (data.success) {
+        setPremiumOrders(data.orders || []);
+        
+        // Calculate stats from all orders
+        const allRes = await apiFetch("/api/admin/premium/list?status=all");
+        const allData = await allRes.json();
+        
+        if (allData.success) {
+          const orders = allData.orders || [];
+          const stats = {
+            total: orders.length,
+            pending: orders.filter(o => o.status === 'pending').length,
+            premium_sent: orders.filter(o => o.status === 'premium_sent').length,
+            expired: orders.filter(o => o.status === 'expired').length,
+            failed: orders.filter(o => o.status === 'failed' || o.status === 'error').length
+          };
+          setPremiumStats(stats);
+        }
+      }
+    } catch (err) {
+      console.error("❌ Premium orders fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRefWithdrawals = async () => {
+    if (!isAuthenticated) return;
+    setLoading(true);
+    try {
+      const res = await apiFetch(`/api/admin/referral-withdrawals?status=${refFilter}`);
+      const data = await res.json();
+      setRefWithdrawals(data);
+    } catch (err) {
+      console.error("❌ Referral withdrawals fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchGiftOrders = async () => {
+    if (!isAuthenticated) return;
+    setLoading(true);
+    try {
+      const res = await apiFetch(`/api/admin/gift/list?status=${giftFilter}`);
+      const data = await res.json();
+
+      if (data.success) {
+        setGiftOrders(data.orders || []);
+
+        // Calculate stats from all orders
+        const allRes = await apiFetch("/api/admin/gift/list?status=all");
+        const allData = await allRes.json();
+
+        if (allData.success) {
+          const orders = allData.orders || [];
+          const stats = {
+            total: orders.length,
+            pending: orders.filter(o => o.status === 'pending').length,
+            completed: orders.filter(o => o.status === 'completed').length,
+            gift_sent: orders.filter(o => o.status === 'gift_sent').length,
+            expired: orders.filter(o => o.status === 'expired').length,
+            failed: orders.filter(o => o.status === 'failed' || o.status === 'error').length
+          };
+          setGiftStats(stats);
+        }
+      }
+    } catch (err) {
+      console.error("❌ Gift orders fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordSubmit = null; // deprecated - Telegram auth ishlatiladi
+
+  // ========== ALL useEffect HOOKS ==========
+  // Fetch data based on active tab
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (activeTab === "transactions") {
+      fetchTransactions();
+    } else if (activeTab === "users") {
+      fetchUsers();
+    } else if (activeTab === "premium") {
+      fetchPremiumOrders();
+    } else if (activeTab === "gift") {
+      fetchGiftOrders();
+    }
+  }, [filter, activeTab, isAuthenticated, premiumFilter, giftFilter]);
+
+  // Auto refresh
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let interval;
+    if (autoRefresh) {
+      interval = setInterval(() => {
+        if (activeTab === "transactions") fetchTransactions();
+        else if (activeTab === "users") fetchUsers();
+        else if (activeTab === "premium") fetchPremiumOrders();
+        else if (activeTab === "gift") fetchGiftOrders();
+      }, 5000);
+    }
+    return () => clearInterval(interval);
+  }, [autoRefresh, filter, activeTab, isAuthenticated]);
+
+  // ========== AUTH CHECK SCREEN ==========
+  if (authChecking) {
+    return (
+      <div className="admin-password-screen">
+        <div className="admin-password-box">
+          <div className="admin-sticker-container">
+            <TGSSticker stickerPath={adminSticker} className="admin-sticker" />
+          </div>
+          <h2>🔐 Admin Panel</h2>
+          <p>Autentifikatsiya tekshirilmoqda...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="admin-password-screen">
+        <div className="admin-password-box">
+          <div className="admin-sticker-container">
+            <TGSSticker stickerPath={adminSticker} className="admin-sticker" />
+          </div>
+          <h2>🚫 Ruxsat berilmagan</h2>
+          <p>Sizda admin huquqi yo'q</p>
+        </div>
+      </div>
+    );
+  }
+  // ========== END AUTH PROTECTION ==========
+
+  const updateStatus = async (id, newStatus) => {
+    try {
+      const res = await apiFetch(`/api/transactions/update/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        fetchTransactions();
+        setExpandedId(null);
+      }
+    } catch (err) {
+      console.error("❌ Status update xato:", err);
+    }
+  };
+
+  // Premium order expire
+  const expirePremiumOrder = async (id) => {
+    try {
+      if (!window.confirm("❌ Bu premium buyurtmani expired qilasizmi?")) return;
+
+      const res = await apiFetch(`/api/admin/premium/update/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "expired" }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("✅ Premium order expired qilindi!");
+        fetchPremiumOrders();
+        setPremiumExpandedId(null);
+      } else {
+        alert("❌ Xato: " + data.error);
+      }
+    } catch (err) {
+      console.error("❌ Premium expire error:", err);
+      alert("Server xato!");
+    }
+  };
+
+  // Premium order send
+  const sendPremium = async (id) => {
+    try {
+      if (!window.confirm("💎 Ushbu buyurtmaga premium yuborilsinmi?")) return;
+
+      const res = await apiFetch(`/api/admin/premium/resend/${id}`, {
+        method: "POST",
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("💎 Premium yuborildi!");
+        fetchPremiumOrders();
+        setPremiumExpandedId(null);
+      } else {
+        alert("❌ Xato: " + data.error);
+      }
+    } catch (err) {
+      console.error("❌ Premium yuborishda xato:", err);
+      alert("Server xato!");
+    }
+  };
+
+  // Premium order update status
+  const updatePremiumStatus = async (id, newStatus) => {
+    try {
+      const res = await apiFetch(`/api/admin/premium/update/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        fetchPremiumOrders();
+        setPremiumExpandedId(null);
+      }
+    } catch (err) {
+      console.error("❌ Premium status update xato:", err);
+    }
+  };
+
+  const sendStars = async (id) => {
+    try {
+      if (!window.confirm("⭐ Ushbu buyurtmaga stars yuborilsinmi?")) return;
+
+      const res = await apiFetch(`/api/admin/stars/send/${id}`, {
+        method: "POST",
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("🌟 Stars yuborildi!");
+        fetchTransactions();
+        setExpandedId(null);
+      } else {
+        alert("❌ Xato: " + data.error);
+      }
+    } catch (err) {
+      console.error("❌ Stars yuborishda xato:", err);
+      alert("Server xato!");
+    }
+  };
+
+  // Gift order expire
+  const expireGiftOrder = async (id) => {
+    try {
+      if (!window.confirm("❌ Bu gift buyurtmani expired qilasizmi?")) return;
+
+      const res = await apiFetch(`/api/admin/gift/update/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "expired" }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("✅ Gift order expired qilindi!");
+        fetchGiftOrders();
+        setGiftExpandedId(null);
+      } else {
+        alert("❌ Xato: " + data.error);
+      }
+    } catch (err) {
+      console.error("❌ Gift expire error:", err);
+      alert("Server xato!");
+    }
+  };
+
+  // Gift order send
+  const sendGift = async (id) => {
+    try {
+      if (!window.confirm("🎁 Ushbu buyurtmaga gift yuborilsinmi?")) return;
+
+      const res = await apiFetch(`/api/admin/gift/send/${id}`, {
+        method: "POST",
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("🎁 Gift yuborildi!");
+        fetchGiftOrders();
+        setGiftExpandedId(null);
+      } else {
+        alert("❌ Xato: " + data.error);
+      }
+    } catch (err) {
+      console.error("❌ Gift yuborishda xato:", err);
+      alert("Server xato!");
+    }
+  };
+
+  // Gift order update status
+  const updateGiftStatus = async (id, newStatus) => {
+    try {
+      const res = await apiFetch(`/api/admin/gift/update/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        fetchGiftOrders();
+        setGiftExpandedId(null);
+      }
+    } catch (err) {
+      console.error("❌ Gift status update xato:", err);
+    }
+  };
+
+  // Referral withdrawal approve
+  const approveWithdrawal = async (id) => {
+    try {
+      if (!window.confirm("✅ Bu so'rovni tasdiqlaysizmi? (Stars yuborildi deb belgilanadi)")) return;
+
+      const res = await apiFetch(`/api/admin/referral-withdrawals/${id}/approve`, {
+        method: "POST",
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("✅ Tasdiqlandi!");
+        fetchRefWithdrawals();
+      } else {
+        alert("❌ Xato: " + data.error);
+      }
+    } catch (err) {
+      console.error("❌ Approve error:", err);
+      alert("Server xato!");
+    }
+  };
+
+  // Referral withdrawal reject
+  const rejectWithdrawal = async (id) => {
+    try {
+      if (!window.confirm("❌ Bu so'rovni bekor qilasizmi? (Balans qaytariladi)")) return;
+
+      const res = await apiFetch(`/api/admin/referral-withdrawals/${id}/reject`, {
+        method: "POST",
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("❌ Bekor qilindi, balans qaytarildi!");
+        fetchRefWithdrawals();
+      } else {
+        alert("❌ Xato: " + data.error);
+      }
+    } catch (err) {
+      console.error("❌ Reject error:", err);
+      alert("Server xato!");
+    }
+  };
+
+  // Admin: Adjust user balance
+  const openBalanceModal = (user) => {
+    setBalanceModal({
+      username: user.username,
+      currentBalance: user.referral_balance || 0
+    });
+    setBalanceAmount("");
+  };
+
+  const adjustBalance = async (action) => {
+    if (!balanceModal || !balanceAmount) return;
+    
+    const amount = parseInt(balanceAmount);
+    if (isNaN(amount) || amount <= 0) {
+      alert("❌ Noto'g'ri miqdor!");
+      return;
+    }
+
+    const confirmMsg = action === "add" 
+      ? `➕ @${balanceModal.username} ga ${amount} ⭐ qo'shilsinmi?`
+      : `➖ @${balanceModal.username} dan ${amount} ⭐ ayirilsinmi?`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setBalanceLoading(true);
+    try {
+      const res = await apiFetch(`/api/admin/users/${balanceModal.username}/balance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount, action }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert(`✅ Balans o'zgartirildi!\n${data.previousBalance} → ${data.newBalance} ⭐`);
+        setBalanceModal(null);
+        setBalanceAmount("");
+        fetchUsers(); // Refresh users list
+      } else {
+        alert("❌ Xato: " + data.error);
+      }
+    } catch (err) {
+      console.error("❌ Balance adjust error:", err);
+      alert("Server xato!");
+    } finally {
+      setBalanceLoading(false);
+    }
+  };
+
+  // Admin: Adjust user som balance
+  const openSomBalanceModal = (user) => {
+    setSomBalanceModal({
+      username: user.username,
+      currentBalance: user.som_balance || 0
+    });
+    setSomBalanceAmount("");
+  };
+
+  const adjustSomBalance = async (action) => {
+    if (!somBalanceModal || !somBalanceAmount) return;
+
+    const amount = parseInt(somBalanceAmount);
+    if (isNaN(amount) || amount <= 0) {
+      alert("Noto'g'ri miqdor!");
+      return;
+    }
+
+    const confirmMsg = action === "add"
+      ? `@${somBalanceModal.username} ga ${amount.toLocaleString()} so'm qo'shilsinmi?`
+      : `@${somBalanceModal.username} dan ${amount.toLocaleString()} so'm ayirilsinmi?`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setSomBalanceLoading(true);
+    try {
+      const res = await apiFetch(`/api/admin/users/${somBalanceModal.username}/som-balance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount, action }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert(`Balans o'zgartirildi!\n${data.previousBalance.toLocaleString()} → ${data.newBalance.toLocaleString()} so'm`);
+        setSomBalanceModal(null);
+        setSomBalanceAmount("");
+        fetchUsers();
+      } else {
+        alert("Xato: " + data.error);
+      }
+    } catch (err) {
+      console.error("Som balance adjust error:", err);
+      alert("Server xato!");
+    } finally {
+      setSomBalanceLoading(false);
+    }
+  };
+
+  const filteredTransactions = transactions.filter((tx) => {
+    const s = search.toLowerCase();
+    return (
+      tx.username.toLowerCase().includes(s) ||
+      tx.recipient?.toLowerCase().includes(s) ||
+      tx.id.toString().includes(s)
+    );
+  });
+
+  const filteredUsers = users.filter((u) => {
+    const s = search.toLowerCase();
+    return (
+      u.username.toLowerCase().includes(s) ||
+      u.referral_code?.toLowerCase().includes(s)
+    );
+  });
+
+  // Show last 20 or all
+  const displayedTransactions = showAll 
+    ? filteredTransactions 
+    : filteredTransactions.slice(0, 20);
+
+  const getStatusColor = (status) => {
+    const colors = {
+      pending: "#f39c12",
+      completed: "#27ae60",
+      expired: "#e74c3c",
+      stars_sent: "#3498db",
+      premium_sent: "#3498db",
+      gift_sent: "#9b59b6",
+      failed: "#c0392b",
+      error: "#8e44ad"
+    };
+    return colors[status] || "#95a5a6";
+  };
+
+  const getStatusIcon = (status) => {
+    const icons = {
+      pending: "⏳",
+      completed: "✅",
+      expired: "❌",
+      stars_sent: "🌟",
+      premium_sent: "💎",
+      gift_sent: "🎁",
+      failed: "⚠️",
+      error: "🔴"
+    };
+    return icons[status] || "❓";
+  };
+
+  return (
+    <div className="admin-panel-new">
+      {/* 🔧 MAINTENANCE MODE TOGGLE */}
+      <div className={`mt-bar ${maintenanceMode ? 'mt-bar--on' : 'mt-bar--off'}`}>
+        <div className="mt-bar__left">
+          <div className={`mt-bar__dot ${maintenanceMode ? 'mt-bar__dot--on' : 'mt-bar__dot--off'}`}></div>
+          <div className="mt-bar__info">
+            <span className="mt-bar__label">
+              {maintenanceMode ? 'Texnik ishlar rejimi' : 'Sayt faol'}
+            </span>
+            <span className="mt-bar__status">
+              {maintenanceMode ? 'Foydalanuvchilar kira olmaydi' : 'Hammasi ishlayapti'}
+            </span>
+          </div>
+        </div>
+        <button
+          className="mt-bar__switch"
+          onClick={toggleMaintenance}
+          disabled={maintenanceLoading}
+          aria-label="Maintenance toggle"
+        >
+          <span className={`mt-bar__track ${maintenanceMode ? 'mt-bar__track--on' : ''}`}>
+            <span className="mt-bar__thumb"></span>
+          </span>
+        </button>
+      </div>
+
+      <header className="admin-header">
+        <h1>⚡ Admin Panel</h1>
+        <div className="header-controls">
+          <label className="auto-refresh">
+            <input
+              type="checkbox"
+              checked={autoRefresh}
+              onChange={(e) => setAutoRefresh(e.target.checked)}
+            />
+            Auto 5s
+          </label>
+          <button className="refresh-btn" onClick={() => {
+            if (activeTab === "transactions") fetchTransactions();
+            else if (activeTab === "users") fetchUsers();
+            else if (activeTab === "premium") fetchPremiumOrders();
+            else if (activeTab === "gift") fetchGiftOrders();
+          }}>
+            🔄
+          </button>
+        </div>
+      </header>
+
+      {/* TABS */}
+      <div className="tabs">
+        <button 
+          className={`tab ${activeTab === "transactions" ? "active" : ""}`}
+          onClick={() => setActiveTab("transactions")}
+        >
+          ⭐ Stars
+        </button>
+        <button 
+          className={`tab ${activeTab === "premium" ? "active" : ""}`}
+          onClick={() => setActiveTab("premium")}
+        >
+          💎 Premium
+        </button>
+        <button 
+          className={`tab ${activeTab === "gift" ? "active" : ""}`}
+          onClick={() => setActiveTab("gift")}
+        >
+          🎁 Gift
+        </button>
+        <button 
+          className={`tab ${activeTab === "users" ? "active" : ""}`}
+          onClick={() => setActiveTab("users")}
+        >
+          👥 Users
+        </button>
+      </div>
+
+      {/* ==================== TRANSACTIONS TAB ==================== */}
+      {activeTab === "transactions" && (
+        <div className="tab-content">
+          {/* Stats Text */}
+          <div className="stats-text">
+            <span>Total: <b>{stats.totalStars}</b></span>
+            <span>Pending: <b>{stats.pending}</b></span>
+            <span>Sent: <b>{stats.stars_sent}</b></span>
+            <span>Done: <b>{stats.completed}</b></span>
+            <span>Expired: <b>{stats.expired}</b></span>
+            <span>Failed: <b>{stats.failed + stats.error}</b></span>
+          </div>
+
+          {/* Filters */}
+          <div className="filters">
+            <input
+              type="text"
+              placeholder="🔍 Qidiruv..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="search-input"
+            />
+            <select value={filter} onChange={(e) => setFilter(e.target.value)} className="filter-select">
+              <option value="all">Hammasi</option>
+              <option value="pending">⏳ Pending</option>
+              <option value="completed">✅ Completed</option>
+              <option value="expired">❌ Expired</option>
+              <option value="stars_sent">🌟 Sent</option>
+              <option value="failed">⚠️ Failed</option>
+            </select>
+          </div>
+
+          {/* Orders List */}
+          {loading && !autoRefresh ? (
+            <div className="loader">⏳ Yuklanmoqda...</div>
+          ) : (
+            <div className="orders-list">
+              {displayedTransactions.length === 0 ? (
+                <div className="empty-state">📭 Buyurtmalar yo'q</div>
+              ) : (
+                displayedTransactions.map((tx) => (
+                  <div key={tx.id} className="order-card">
+                    {/* Order Header - Horizontal */}
+                    <div 
+                      className="order-header"
+                      onClick={() => setExpandedId(expandedId === tx.id ? null : tx.id)}
+                    >
+                      <div className="order-main">
+                        <span className="order-id">#{tx.id}</span>
+                        <span className="order-user">@{tx.username}</span>
+                        <span className="order-stars">{tx.stars} ⭐</span>
+                      </div>
+                      <div 
+                        className="order-status"
+                        style={{ backgroundColor: getStatusColor(tx.status) }}
+                      >
+                        {getStatusIcon(tx.status)} {tx.status}
+                      </div>
+                    </div>
+
+                    {/* Expanded Details */}
+                    {expandedId === tx.id && (
+                      <div className="order-details">
+                        <div className="detail-grid">
+                          <div className="detail-item">
+                            <span className="detail-label">Recipient ID</span>
+                            <span className="detail-value">{tx.recipient || "-"}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Amount</span>
+                            <span className="detail-value">{tx.amount?.toLocaleString()} so'm</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Transaction ID</span>
+                            <span className="detail-value">{tx.transaction_id || "-"}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Created</span>
+                            <span className="detail-value">{new Date(tx.created_at).toLocaleString()}</span>
+                          </div>
+                        </div>
+
+                        {/* Actions - Only for pending */}
+                        {tx.status === "pending" && (
+                          <div className="order-actions">
+                            <button 
+                              className="action-btn send"
+                              onClick={(e) => { e.stopPropagation(); sendStars(tx.id); }}
+                            >
+                              🌟 Start Send
+                            </button>
+                            <button 
+                              className="action-btn expire"
+                              onClick={(e) => { e.stopPropagation(); updateStatus(tx.id, "expired"); }}
+                            >
+                              ❌ Expire
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+
+              {/* Show All Button */}
+              {filteredTransactions.length > 20 && !showAll && (
+                <button className="show-all-btn" onClick={() => setShowAll(true)}>
+                  📋 Barcha buyurtmalarni ko'rish ({filteredTransactions.length} ta)
+                </button>
+              )}
+
+              {showAll && filteredTransactions.length > 20 && (
+                <button className="show-all-btn" onClick={() => setShowAll(false)}>
+                  🔼 Faqat oxirgi 20 tani ko'rish
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ==================== GIFT ORDERS TAB ==================== */}
+      {activeTab === "gift" && (
+        <div className="tab-content">
+          {/* Gift Stats */}
+          <div className="stats-text">
+            <span>Jami: <b>{giftStats.total}</b></span>
+            <span>Pending: <b>{giftStats.pending}</b></span>
+            <span>Completed: <b>{giftStats.completed}</b></span>
+            <span>Sent: <b>{giftStats.gift_sent}</b></span>
+            <span>Expired: <b>{giftStats.expired}</b></span>
+            <span>Failed: <b>{giftStats.failed}</b></span>
+          </div>
+
+          {/* Gift Filters */}
+          <div className="filters">
+            <input
+              type="text"
+              placeholder="🔍 Qidiruv..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="search-input"
+            />
+            <select value={giftFilter} onChange={(e) => setGiftFilter(e.target.value)} className="filter-select">
+              <option value="all">Hammasi</option>
+              <option value="pending">⏳ Pending</option>
+              <option value="completed">✅ Completed</option>
+              <option value="gift_sent">🎁 Sent</option>
+              <option value="expired">❌ Expired</option>
+              <option value="error">🔴 Error</option>
+            </select>
+          </div>
+
+          {loading && !autoRefresh ? (
+            <div className="loader">⏳ Yuklanmoqda...</div>
+          ) : (
+            <div className="orders-list">
+              {giftOrders.length === 0 ? (
+                <div className="empty-state">🎁 Gift buyurtmalar yo'q</div>
+              ) : (
+                giftOrders
+                  .filter((tx) => {
+                    const s = search.toLowerCase();
+                    return (
+                      tx.username?.toLowerCase().includes(s) ||
+                      tx.recipient_username?.toLowerCase().includes(s) ||
+                      tx.id.toString().includes(s)
+                    );
+                  })
+                  .slice(0, giftShowAll ? giftOrders.length : 20)
+                  .map((tx) => (
+                  <div key={tx.id} className="order-card">
+                    <div 
+                      className="order-header"
+                      onClick={() => setGiftExpandedId(giftExpandedId === tx.id ? null : tx.id)}
+                    >
+                      <div className="order-main">
+                        <span className="order-id">#{tx.id}</span>
+                        <span className="order-user">@{tx.username}</span>
+                        <span className="order-stars">{tx.stars} ⭐ 🎁</span>
+                      </div>
+                      <div 
+                        className="order-status"
+                        style={{ backgroundColor: getStatusColor(tx.status) }}
+                      >
+                        {getStatusIcon(tx.status)} {tx.status}
+                      </div>
+                    </div>
+
+                    {giftExpandedId === tx.id && (
+                      <div className="order-details">
+                        <div className="detail-grid">
+                          <div className="detail-item">
+                            <span className="detail-label">Kimdan</span>
+                            <span className="detail-value">@{tx.username}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Kimga</span>
+                            <span className="detail-value">@{tx.recipient_username}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Gift ID</span>
+                            <span className="detail-value" style={{fontSize: '11px'}}>{tx.gift_id}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Stars</span>
+                            <span className="detail-value">{tx.stars} ⭐</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Amount</span>
+                            <span className="detail-value">{tx.amount?.toLocaleString()} so'm</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Card</span>
+                            <span className="detail-value">**** {tx.card_last4 || "----"}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Anonim</span>
+                            <span className="detail-value">{tx.anonymous ? "Ha ✅" : "Yo'q"}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Izoh</span>
+                            <span className="detail-value">{tx.comment || "-"}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Created</span>
+                            <span className="detail-value">{new Date(tx.created_at).toLocaleString()}</span>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        {(tx.status === "pending" || tx.status === "completed" || tx.status === "error") && (
+                          <div className="order-actions">
+                            {(tx.status === "completed" || tx.status === "error") && (
+                              <button 
+                                className="action-btn send"
+                                onClick={(e) => { e.stopPropagation(); sendGift(tx.id); }}
+                              >
+                                🎁 Gift Yuborish
+                              </button>
+                            )}
+                            {tx.status === "pending" && (
+                              <button 
+                                className="action-btn expire"
+                                onClick={(e) => { e.stopPropagation(); expireGiftOrder(tx.id); }}
+                              >
+                                ❌ Expired qilish
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+
+              {/* Show All Button */}
+              {giftOrders.length > 20 && !giftShowAll && (
+                <button className="show-all-btn" onClick={() => setGiftShowAll(true)}>
+                  🎁 Barcha buyurtmalarni ko'rish ({giftOrders.length} ta)
+                </button>
+              )}
+
+              {giftShowAll && giftOrders.length > 20 && (
+                <button className="show-all-btn" onClick={() => setGiftShowAll(false)}>
+                  🔼 Faqat oxirgi 20 tani ko'rish
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ==================== USERS TAB ==================== */}
+      {activeTab === "users" && (
+        <div className="tab-content">
+          {/* User Stats */}
+          <div className="stats-text">
+            <span>Jami: <b>{userStats.total}</b></span>
+            <span>Bugun: <b>{userStats.today}</b></span>
+            <span>Referrals: <b>{userStats.totalReferrals}</b></span>
+          </div>
+
+          {/* Search */}
+          <div className="filters">
+            <input
+              type="text"
+              placeholder="🔍 Username yoki referral code..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="search-input"
+            />
+          </div>
+
+          {/* Users List */}
+          {loading && !autoRefresh ? (
+            <div className="loader">⏳ Yuklanmoqda...</div>
+          ) : (
+            <div className="users-list">
+              {filteredUsers.length === 0 ? (
+                <div className="empty-state">👤 Foydalanuvchilar yo'q</div>
+              ) : (
+                filteredUsers.slice(0, showAll ? filteredUsers.length : 20).map((u) => (
+                  <div 
+                    key={u.id} 
+                    className="user-card"
+                    onClick={() => setUserModal(u)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="user-main">
+                      <span className="user-id">#{u.id}</span>
+                      <span className="user-name">@{u.username}</span>
+                    </div>
+                    <div className="user-stats">
+                      <span className="user-stat">💰 {u.referral_balance} ⭐</span>
+                      <span className="user-stat">👥 {u.total_referrals}</span>
+                      {u.som_balance > 0 && <span className="user-stat">💵 {(u.som_balance || 0).toLocaleString()}</span>}
+                    </div>
+                  </div>
+                ))
+              )}
+
+              {filteredUsers.length > 20 && !showAll && (
+                <button className="show-all-btn" onClick={() => setShowAll(true)}>
+                  👥 Barcha foydalanuvchilar ({filteredUsers.length} ta)
+                </button>
+              )}
+
+              {showAll && filteredUsers.length > 20 && (
+                <button className="show-all-btn" onClick={() => setShowAll(false)}>
+                  🔼 Faqat 20 tani ko'rish
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ==================== PREMIUM ORDERS TAB ==================== */}
+      {activeTab === "premium" && (
+        <div className="tab-content">
+          {/* Premium Stats */}
+          <div className="stats-text">
+            <span>Jami: <b>{premiumStats.total}</b></span>
+            <span>Pending: <b>{premiumStats.pending}</b></span>
+            <span>Sent: <b>{premiumStats.premium_sent}</b></span>
+            <span>Expired: <b>{premiumStats.expired}</b></span>
+            <span>Failed: <b>{premiumStats.failed}</b></span>
+          </div>
+
+          {/* Premium Filters */}
+          <div className="filters">
+            <input
+              type="text"
+              placeholder="🔍 Qidiruv..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="search-input"
+            />
+            <select value={premiumFilter} onChange={(e) => setPremiumFilter(e.target.value)} className="filter-select">
+              <option value="all">Hammasi</option>
+              <option value="pending">⏳ Pending</option>
+              <option value="premium_sent">💎 Sent</option>
+              <option value="expired">❌ Expired</option>
+              <option value="failed">⚠️ Failed</option>
+            </select>
+          </div>
+
+          {loading && !autoRefresh ? (
+            <div className="loader">⏳ Yuklanmoqda...</div>
+          ) : (
+            <div className="orders-list">
+              {premiumOrders.length === 0 ? (
+                <div className="empty-state">💎 Premium buyurtmalar yo'q</div>
+              ) : (
+                premiumOrders
+                  .filter((tx) => {
+                    const s = search.toLowerCase();
+                    return (
+                      tx.username?.toLowerCase().includes(s) ||
+                      tx.recipient?.toLowerCase().includes(s) ||
+                      tx.id.toString().includes(s)
+                    );
+                  })
+                  .slice(0, premiumShowAll ? premiumOrders.length : 20)
+                  .map((tx) => (
+                  <div key={tx.id} className="order-card">
+                    <div 
+                      className="order-header"
+                      onClick={() => setPremiumExpandedId(premiumExpandedId === tx.id ? null : tx.id)}
+                    >
+                      <div className="order-main">
+                        <span className="order-id">#{tx.id}</span>
+                        <span className="order-user">@{tx.username}</span>
+                        <span className="order-stars">{tx.muddat_oy || tx.months || 1} oy 💎</span>
+                      </div>
+                      <div 
+                        className="order-status"
+                        style={{ backgroundColor: getStatusColor(tx.status === 'premium_sent' ? 'stars_sent' : tx.status) }}
+                      >
+                        {tx.status === 'premium_sent' ? '💎' : getStatusIcon(tx.status)} {tx.status}
+                      </div>
+                    </div>
+
+                    {premiumExpandedId === tx.id && (
+                      <div className="order-details">
+                        <div className="detail-grid">
+                          <div className="detail-item">
+                            <span className="detail-label">Recipient</span>
+                            <span className="detail-value">@{tx.recipient || tx.username}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Muddat</span>
+                            <span className="detail-value">{tx.muddat_oy || 1} oy</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Amount</span>
+                            <span className="detail-value">{tx.amount?.toLocaleString()} so'm</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Card</span>
+                            <span className="detail-value">**** {tx.card_last4 || "----"}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Transaction ID</span>
+                            <span className="detail-value">{tx.transaction_id || "-"}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Created</span>
+                            <span className="detail-value">{new Date(tx.created_at).toLocaleString()}</span>
+                          </div>
+                        </div>
+
+                        {/* Actions - Only Expire for pending */}
+                        {tx.status === "pending" && (
+                          <div className="order-actions">
+                            <button 
+                              className="action-btn expire"
+                              onClick={(e) => { e.stopPropagation(); expirePremiumOrder(tx.id); }}
+                            >
+                              ❌ Expired qilish
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+
+              {/* Show All Button */}
+              {premiumOrders.length > 20 && !premiumShowAll && (
+                <button className="show-all-btn" onClick={() => setPremiumShowAll(true)}>
+                  💎 Barcha buyurtmalarni ko'rish ({premiumOrders.length} ta)
+                </button>
+              )}
+
+              {premiumShowAll && premiumOrders.length > 20 && (
+                <button className="show-all-btn" onClick={() => setPremiumShowAll(false)}>
+                  🔼 Faqat oxirgi 20 tani ko'rish
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ==================== USER DETAILS MODAL ==================== */}
+      {userModal && (
+        <div className="balance-modal-overlay" onClick={() => setUserModal(null)}>
+          <div className="balance-modal user-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="balance-modal-header">
+              <h3>👤 Foydalanuvchi ma'lumotlari</h3>
+              <button className="modal-close" onClick={() => setUserModal(null)}>✕</button>
+            </div>
+            
+            <div className="balance-modal-body">
+              <div className="user-detail-section">
+                <div className="user-detail-row">
+                  <span className="detail-label">ID:</span>
+                  <span className="detail-value">#{userModal.id}</span>
+                </div>
+                <div className="user-detail-row">
+                  <span className="detail-label">Username:</span>
+                  <span className="detail-value highlight">@{userModal.username}</span>
+                </div>
+                <div className="user-detail-row">
+                  <span className="detail-label">User ID:</span>
+                  <span className="detail-value">{userModal.user_id || "-"}</span>
+                </div>
+                <div className="user-detail-row">
+                  <span className="detail-label">Referral Code:</span>
+                  <span className="detail-value">{userModal.referral_code || "-"}</span>
+                </div>
+                <div className="user-detail-row">
+                  <span className="detail-label">Referrer:</span>
+                  <span className="detail-value">{userModal.referrer_username ? `@${userModal.referrer_username}` : "-"}</span>
+                </div>
+                <div className="user-detail-row">
+                  <span className="detail-label">Ref Balance:</span>
+                  <span className="detail-value highlight">💰 {userModal.referral_balance || 0} ⭐</span>
+                </div>
+                <div className="user-detail-row">
+                  <span className="detail-label">Total Earnings:</span>
+                  <span className="detail-value">{userModal.total_earnings || 0} ⭐</span>
+                </div>
+                <div className="user-detail-row">
+                  <span className="detail-label">Total Referrals:</span>
+                  <span className="detail-value">👥 {userModal.total_referrals || 0}</span>
+                </div>
+                <div className="user-detail-row">
+                  <span className="detail-label">Som Balance:</span>
+                  <span className="detail-value highlight">💵 {(userModal.som_balance || 0).toLocaleString()} so'm</span>
+                </div>
+                <div className="user-detail-row">
+                  <span className="detail-label">Language:</span>
+                  <span className="detail-value">{userModal.language || "uz"}</span>
+                </div>
+                <div className="user-detail-row">
+                  <span className="detail-label">Created:</span>
+                  <span className="detail-value">{new Date(userModal.created_at).toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="user-detail-actions">
+                <button
+                  className="balance-btn add"
+                  onClick={() => {
+                    setUserModal(null);
+                    openBalanceModal(userModal);
+                  }}
+                >
+                  ✏️ Star balansni o'zgartirish
+                </button>
+                <button
+                  className="balance-btn add"
+                  style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
+                  onClick={() => {
+                    setUserModal(null);
+                    openSomBalanceModal(userModal);
+                  }}
+                >
+                  💵 Som balansni o'zgartirish
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== BALANCE ADJUSTMENT MODAL ==================== */}
+      {balanceModal && (
+        <div className="balance-modal-overlay" onClick={() => setBalanceModal(null)}>
+          <div className="balance-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="balance-modal-header">
+              <h3>💰 Balans o'zgartirish</h3>
+              <button className="modal-close" onClick={() => setBalanceModal(null)}>✕</button>
+            </div>
+            
+            <div className="balance-modal-body">
+              <div className="balance-user-info">
+                <span className="balance-username">@{balanceModal.username}</span>
+                <span className="balance-current">Joriy balans: <b>{balanceModal.currentBalance} ⭐</b></span>
+              </div>
+
+              <div className="balance-input-group">
+                <label>Miqdor</label>
+                <input
+                  type="number"
+                  value={balanceAmount}
+                  onChange={(e) => setBalanceAmount(e.target.value)}
+                  placeholder="Miqdorni kiriting..."
+                  min="1"
+                  disabled={balanceLoading}
+                />
+              </div>
+
+              <div className="balance-actions">
+                <button 
+                  className="balance-btn add"
+                  onClick={() => adjustBalance("add")}
+                  disabled={balanceLoading || !balanceAmount}
+                >
+                  {balanceLoading ? "⏳" : "➕"} Qo'shish
+                </button>
+                <button 
+                  className="balance-btn subtract"
+                  onClick={() => adjustBalance("subtract")}
+                  disabled={balanceLoading || !balanceAmount}
+                >
+                  {balanceLoading ? "⏳" : "➖"} Ayirish
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ==================== SOM BALANCE ADJUSTMENT MODAL ==================== */}
+      {somBalanceModal && (
+        <div className="balance-modal-overlay" onClick={() => setSomBalanceModal(null)}>
+          <div className="balance-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="balance-modal-header">
+              <h3>💵 Som balans o'zgartirish</h3>
+              <button className="modal-close" onClick={() => setSomBalanceModal(null)}>✕</button>
+            </div>
+
+            <div className="balance-modal-body">
+              <div className="balance-user-info">
+                <span className="balance-username">@{somBalanceModal.username}</span>
+                <span className="balance-current">Joriy balans: <b>{somBalanceModal.currentBalance.toLocaleString()} so'm</b></span>
+              </div>
+
+              <div className="balance-input-group">
+                <label>Miqdor (so'm)</label>
+                <input
+                  type="number"
+                  value={somBalanceAmount}
+                  onChange={(e) => setSomBalanceAmount(e.target.value)}
+                  placeholder="Miqdorni kiriting..."
+                  min="1"
+                  disabled={somBalanceLoading}
+                />
+              </div>
+
+              <div className="balance-actions">
+                <button
+                  className="balance-btn add"
+                  style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
+                  onClick={() => adjustSomBalance("add")}
+                  disabled={somBalanceLoading || !somBalanceAmount}
+                >
+                  {somBalanceLoading ? "⏳" : "➕"} Qo'shish
+                </button>
+                <button
+                  className="balance-btn subtract"
+                  onClick={() => adjustSomBalance("subtract")}
+                  disabled={somBalanceLoading || !somBalanceAmount}
+                >
+                  {somBalanceLoading ? "⏳" : "➖"} Ayirish
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
