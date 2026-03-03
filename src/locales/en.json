@@ -18,10 +18,13 @@
   },
   "dashboard": {
     "title": "Starsjoy",
+    "comingSoon": "Coming soon",
     "home": "Home",
     "referral": "Referral",
     "profile": "Profile",
     "buyStars": "Buy Stars",
+    "starsDesc": "Purchase Telegram stars",
+    "buyGift": "Buy Gift",
     "buyPremium": "Buy Premium",
     "leaderboard": "Trading Statistics",
     "stat": "Statistics",
@@ -130,7 +133,11 @@
     "somInsufficient": "Minimum 11,000 UZS required"
   },
   "profile": {
-    "title": "Profile",
+    "title": "Settings",
+    "myOrders": "My Orders",
+    "myOrdersDesc": "Purchase history",
+    "friendsCount": "Friends",
+    "friendsCountDesc": "Referral program",
     "referralStats": "Referral Statistics",
     "settings": "Settings",
     "account": "Account",
@@ -200,5 +207,21 @@
     "spent": "Spent",
     "purchases": "Purchases",
     "alreadyClaimed": "You have already claimed this reward!"
+  },
+  "statistics": {
+    "title": "Statistics",
+    "sales": "Sales",
+    "referral": "Referral",
+    "noOrders": "No data yet",
+    "noReferrals": "No referrals yet",
+    "myPosition": "Your position",
+    "noPurchases": "You haven't made a purchase yet",
+    "noFriendsYet": "You haven't invited friends yet",
+    "friends": "friends",
+    "loadError": "Error loading statistics",
+    "period_all": "All time",
+    "period_daily": "Today",
+    "period_weekly": "Week",
+    "period_monthly": "Month"
   }
 }

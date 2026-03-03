@@ -53,6 +53,7 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(language);
+  const [showComingSoonToast, setShowComingSoonToast] = useState(false);
 
   /* ================= CHALLENGE ================= */
   const [myTotal, setMyTotal] = useState(0);
@@ -89,17 +90,17 @@ export default function Dashboard() {
   useEffect(() => {
     try {
       WebApp.ready();
-      
+
       // Ko'k rang o'rnatish (Telegram header va bottom bar uchun)
       const blueColor = "#1a1a2e"; // Dark blue
-      
+
       WebApp.setHeaderColor(blueColor);
       WebApp.setBackgroundColor(blueColor);
       document.body.style.backgroundColor = blueColor;
-      
+
       // Telegram expand qilish
       WebApp.expand();
-      
+
       const tgUser =
         WebApp?.initDataUnsafe?.user?.username ||
         window?.Telegram?.WebApp?.initDataUnsafe?.user?.username;
@@ -114,7 +115,7 @@ export default function Dashboard() {
         localStorage.setItem("username", clean);
         setIsTelegram(true);
         if (tgPhoto) setUserPhoto(tgPhoto);
-        
+
         // Auto register
         registerUser(clean);
       }
@@ -217,18 +218,18 @@ export default function Dashboard() {
   // Smooth Navigation Handler
   const handleNavClick = (targetTab) => {
     if (tab === targetTab) return;
-    
+
     // Only show loading for complex tabs (iframes)
     if (targetTab !== 'home') {
        setNavLoading(true);
        setTab(targetTab);
-       
+
        // Silliq animatsiya uchun delay (white flashni yopish)
        setTimeout(() => {
          setNavLoading(false);
        }, 1500);
     } else {
-       // Home is usually fast as it's not an iframe here, 
+       // Home is usually fast as it's not an iframe here,
        // but let's give it a small feedback too for consistency or just direct swap
        setTab(targetTab);
     }
@@ -265,7 +266,7 @@ export default function Dashboard() {
       <div className={`splash-screen ${splashFading ? 'fade-out' : ''}`}>
         {/* Gradient mesh background */}
         <div className="splash-mesh"></div>
-        
+
         {/* Subtle grid pattern */}
         <div className="splash-grid"></div>
 
@@ -276,8 +277,8 @@ export default function Dashboard() {
             <div className="splash-logo-ring ring-2"></div>
             <div className="splash-logo-star">
               <svg viewBox="0 0 24 24" fill="none">
-                <path 
-                  d="M12 2L14.09 8.26L21 9.27L16 14.14L17.18 21.02L12 17.77L6.82 21.02L8 14.14L3 9.27L9.91 8.26L12 2Z" 
+                <path
+                  d="M12 2L14.09 8.26L21 9.27L16 14.14L17.18 21.02L12 17.77L6.82 21.02L8 14.14L3 9.27L9.91 8.26L12 2Z"
                   fill="url(#logoGradient)"
                   stroke="rgba(59,130,246,0.5)"
                   strokeWidth="0.5"
@@ -319,15 +320,8 @@ export default function Dashboard() {
       {/* HEADER */}
       <header className="dash-header_dashboard">
         <div className="header-inner_dashboard">
-          <div className="header-avatar_dashboard" onClick={() => handleNavClick("profile")}>
-            {userPhoto ? (
-              <img src={userPhoto} alt="avatar" className="header-avatar-img" />
-            ) : (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            )}
-          </div>
           <h1 className="brand-title_dashboard">
-            Starsjoy
+            <span className="brand-star">★</span> Starsjoy
           </h1>
           <button
             className="language-btn-dashboard"
@@ -342,235 +336,30 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* ACTION BUTTONS - Stars & Premium on top, Gift below */}
-      <div className="top-actions_dashboard">
-        <div
-          className="action-card_dashboard"
-          onClick={() => navigate("/stars")}
-        >
-          <img src={starsGif} className="plan-gif_dashboard" />
-          <span>{t("dashboard.buyStars") || "Stars olish"}</span>
-        </div>
-        <div
-          className="action-card_dashboard"
-          onClick={() => navigate("/premium")}
-        >
-          <img src={premiumGif} className="plan-gif_dashboard" />
-          <span>{t("dashboard.buyPremium") || "Premium olish"}</span>
-        </div>
-      </div>
-
-      {/* GIFT BLOCK - Full width */}
-      <div className="gift-action-block" onClick={() => navigate("/gift")}>
-        <div className="gift-action-block__content">
-          <div className="gift-action-block__text">
-            <span className="gift-action-block__title">Gift olish</span>
-            <span className="gift-action-block__subtitle">Noyob giftlarni oling</span>
-          </div>
-        </div>
-        <img src={ayiqImg} className="gift-action-block__img" alt="gift" />
-      </div>
-
-      <main className="dash-main_dashboard" style={{display: tab === 'home' ? 'block' : 'none'}}>
-
-        {/* ================= REFERRAL AD ================= */}
-        <div className="mission-ad-card_dashboard referral-theme" onClick={() => handleNavClick("referral")} style={{
-            position: 'relative', 
-            overflow: 'hidden', 
-            display: 'flex', 
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '12px 14px'
-        }}>
-          
-          {/* LEFT: INFO */}
-          <div style={{flex: 1, paddingRight: '10px', zIndex: 2}}>
-             <div style={{
-               fontSize: '12px', 
-               fontWeight: '500', 
-               color: '#fff', 
-               marginBottom: '8px', 
-               lineHeight: '1.3'
-             }}>
-                 {t("dashboard.referralTitleNew") || "Do'stlaringizni taklif qiling va stars bonus oling!"}
-             </div>
-
-             <div style={{display: 'flex', gap: '6px', alignItems: 'center'}}>
-                {/* Bonus Badge 1 */}
-                <div style={{
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '4px', 
-                  background: 'rgba(255, 255, 255, 0.25)', 
-                  padding: '4px 8px', 
-                  borderRadius: '8px',
-                  backdropFilter: 'blur(4px)'
-                }}>
-                   <img src={starsGif} alt="stars" style={{width: '14px', height: '14px', objectFit: 'contain'}} />
-                   <span style={{fontSize: '10px', fontWeight: '600', color: '#fff'}}>+5</span>
-                </div>
-
-                {/* Bonus Badge 2 */}
-                <div style={{
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '4px', 
-                  background: 'rgba(255, 255, 255, 0.25)', 
-                  padding: '4px 8px', 
-                  borderRadius: '8px',
-                  backdropFilter: 'blur(4px)'
-                }}>
-                   <img src={premiumGif} alt="prem" style={{width: '14px', height: '14px', objectFit: 'contain'}} />
-                   <span style={{fontSize: '10px', fontWeight: '600', color: '#fff'}}>+25</span>
-                </div>
-
-                {/* CTA Button */}
-                <div className="referral-cta-btn">
-                  🔗 Havolani olish
-                </div>
-             </div>
+      <main className="dash-main_dashboard" style={{display: tab === 'home' ? 'flex' : 'none'}}>
+        {/* ACTION CARDS - Stars wide, Gift & Premium side by side */}
+        <div className="dashboard-actions-container">
+          {/* Stars - Full Width */}
+          <div className="action-card-wide" onClick={() => navigate("/stars")}>
+            <img src={starsGif} className="action-card-wide__img" alt="stars" />
+            <div className="action-card-wide__content">
+              <span className="action-card-wide__title">{t("dashboard.buyStars") || "Stars olish"}</span>
+              <span className="action-card-wide__subtitle">{t("dashboard.starsDesc") || "Telegram stars xarid qiling"}</span>
+            </div>
           </div>
 
-          {/* RIGHT: STICKER */}
-          <div style={{
-            width: '60px',
-            height: '60px',
-            zIndex: 2,
-            flexShrink: 0
-          }}>
-             <TGSSticker stickerPath={referalSticker} className="mission-ad-sticker" />
+          {/* Gift & Premium - Side by Side */}
+          <div className="action-cards-row">
+            <div className="action-card-half" onClick={() => navigate("/gift")}>
+              <img src={ayiqImg} className="action-card-half__img" alt="gift" />
+              <span className="action-card-half__title">{t("dashboard.buyGift") || "Gift olish"}</span>
+            </div>
+            <div className="action-card-half" onClick={() => navigate("/premium")}>
+              <img src={premiumGif} className="action-card-half__img" alt="premium" />
+              <span className="action-card-half__title">{t("dashboard.buyPremium") || "Premium olish"}</span>
+            </div>
           </div>
-
         </div>
-
-        {/* ================= GLOBAL / LEADERBOARD ================= */}
-        <section className="leaderboard-card_dashboard">
-          <div className="leaderboard-header_dashboard">
-             <h3>🏆 {t("dashboard.stat") || "Statistika"}</h3>
-             <div className="stats-toggles">
-                 <button 
-                     className={`stats-toggle-btn ${statsTab === 'sales' ? 'active' : ''}`}
-                     onClick={() => setStatsTab('sales')}
-                 >
-                     {t("dashboard.sales") || "Savdo"}
-                 </button>
-                 <button 
-                      className={`stats-toggle-btn ${statsTab === 'referral' ? 'active' : ''}`}
-                      onClick={() => setStatsTab('referral')}
-                 >
-                      {t("dashboard.referralT") || "Referal"}
-                 </button>
-             </div>
-          </div>
-
-          {statsTab === 'sales' && loading && (
-            <div className="skeleton-list">
-              {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="skeleton-row"></div>
-              ))}
-            </div>
-          )}
-          
-          {statsTab === 'sales' && error && <p className="error_dashboard">{error}</p>}
-          
-          {/* === SALES LIST === */}
-          {statsTab === 'sales' && !loading && !error && leaderboard.length === 0 && (
-            <div className="empty-state_dashboard">
-              {t("dashboard.noOrders") || "Hozircha ma'lumot yo'q"}
-            </div>
-          )}
-
-          {statsTab === 'sales' && !loading && leaderboard.map((u, i) => (
-            <div key={u.username} className={`rank-row_dashboard rank-${i + 1}`}>
-              <span className="rank_dashboard">
-                {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${u.rank}`}
-              </span>
-              <span className="user_dashboard">@{u.username}</span>
-              <span className="sum_dashboard">
-                {formatAmount(u.total)} so‘m
-              </span>
-            </div>
-          ))}
-
-          {/* === REFERRAL LIST (Top 10) === */}
-          {statsTab === 'referral' && referralBoard.length === 0 && (
-             <div className="empty-state_dashboard">
-                {t("dashboard.noReferrals") || "Hozircha referallar yo'q"}
-             </div>
-          )}
-          
-          {statsTab === 'referral' && referralBoard.slice(0, 10).map((u, i) => (
-            <div key={u.username} className={`rank-row_dashboard rank-${i + 1}`}>
-              <span className="rank_dashboard">
-                {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}
-              </span>
-              <span className="user_dashboard">@{u.username}</span>
-              <span className="sum_dashboard">
-                {u.referrals} do'st
-              </span>
-            </div>
-          ))}
-          
-          {isTelegram && !loading && (
-            <>
-              <hr />
-              {/* ME - SALES */}
-              {statsTab === 'sales' && (
-                  myRank ? (
-                    myRank.rank > 10 && (
-                      <div className="rank-row_dashboard me">
-                        <span className="rank_dashboard">#{myRank.rank}</span>
-                        <span className="user_dashboard">
-                          @{myRank.username} (siz)
-                        </span>
-                        <span className="sum_dashboard">
-                          {formatAmount(myRank.total)} so‘m
-                        </span>
-                      </div>
-                    )
-                  ) : (
-                    <div className="empty-state_dashboard" style={{marginTop: 0, border: 'none', background: 'transparent', padding: '8px'}}>
-                      {t("dashboard.noPurchasesYet") || "Siz hali xarid qilmagansiz"}
-                    </div>
-                  )
-              )}
-              
-              {/* ME - REFERRAL */}
-              {statsTab === 'referral' && (
-                  myRefRank ? (
-                    myRefRank.rank > 10 ? (
-                      <div className="rank-row_dashboard me">
-                        <span className="rank_dashboard">#{myRefRank.rank}</span>
-                        <span className="user_dashboard">
-                          @{myRefRank.username} (siz)
-                        </span>
-                        <span className="sum_dashboard">
-                          {myRefRank.referrals} do'st
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="rank-row_dashboard me">
-                        <span className="rank_dashboard">#{myRefRank.rank}</span>
-                        <span className="user_dashboard">
-                          @{myRefRank.username} (siz)
-                        </span>
-                        <span className="sum_dashboard">
-                          {myRefRank.referrals} do'st
-                        </span>
-                      </div>
-                    )
-                  ) : (
-                     <div className="empty-state_dashboard" style={{marginTop: 0, border: 'none', background: 'transparent', padding: '8px'}}>
-                       Siz hali do'st taklif qilmagansiz
-                     </div>
-                  )
-              )}
-            </>
-          )}
-        </section>
-
-
-
       </main>
 
       {/* BOTTOM NAVIGATION */}
@@ -587,8 +376,8 @@ export default function Dashboard() {
 
         <button
           className={`nav-btn_dashboard ${tab === "history" ? "active" : ""}`}
-          onClick={() => handleNavClick("history")}
-          title={t("dashboard.myHistory")}
+          onClick={() => navigate("/statistics")}
+          title={t("dashboard.statistics") || "Statistika"}
         >
           <div className="nav-icon">
             <img src={statsIcon} alt="Stats" />
@@ -597,11 +386,14 @@ export default function Dashboard() {
 
         <button
           className={`nav-btn_dashboard ${tab === "referral" ? "active" : ""}`}
-          onClick={() => handleNavClick("referral")}
-          title={t("dashboard.referral")}
+          onClick={() => {
+            setShowComingSoonToast(true);
+            setTimeout(() => setShowComingSoonToast(false), 2500);
+          }}
+          title="Coming soon"
         >
           <div className="nav-icon">
-            <img src={discountIcon} alt="Referral" />
+            <img src={discountIcon} alt="Discount" />
           </div>
         </button>
 
@@ -615,6 +407,13 @@ export default function Dashboard() {
           </div>
         </button>
       </div>
+
+      {/* COMING SOON TOAST */}
+      {showComingSoonToast && (
+        <div className="coming-soon-toast">
+          🎁 {t("dashboard.comingSoon") || "Tez orada qo'shiladi"}
+        </div>
+      )}
 
       {/* NAV LOADING OVERLAY */}
       {navLoading && (
@@ -707,9 +506,9 @@ export default function Dashboard() {
             <button className="subscribe-sheet-close" onClick={() => setShowChannelBanner(false)}>✕</button>
             <div className="subscribe-sheet-content">
               <div className="subscribe-channel-info">
-                <img 
-                  src={starsjoyAvatar} 
-                  alt="Starsjoy" 
+                <img
+                  src={starsjoyAvatar}
+                  alt="Starsjoy"
                   className="subscribe-channel-avatar"
                 />
                 <div className="subscribe-channel-details">

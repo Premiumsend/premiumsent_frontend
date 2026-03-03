@@ -254,6 +254,8 @@
   color: var(--text-primary);
   transition: all 0.3s ease;
   padding-bottom: 70px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ===============================
@@ -262,7 +264,7 @@
 .dash-header_dashboard {
   background: transparent;
   padding: 14px 0;
-  margin-bottom: 16px;
+  margin-bottom: 90px;
   border-radius: 0;
   box-shadow: none;
   border: none;
@@ -273,7 +275,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
 }
 
 /* LOGO */
@@ -286,17 +288,29 @@
 
 /* BRAND TEXT */
 .brand-title_dashboard {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 800;
-  letter-spacing: -0.4px;
-  color: var(--color-primary);
+  letter-spacing: 1px;
+  color: var(--text-primary);
   margin: 0;
   line-height: 1;
-  text-align: center;
+  text-align: left;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.brand-title_dashboard span {
-  color: var(--text-primary);
+.brand-star {
+  color: #f59e0b;
+  font-size: 24px;
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.5));
+  animation: starPulse 2s ease-in-out infinite;
+}
+
+@keyframes starPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.85; }
 }
 
 /* HEADER ACTIONS */
@@ -649,6 +663,47 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+  flex: 1;
+  justify-content: flex-start;
+  align-items: center;
+  padding-top: 40px;
+  padding-bottom: 20px;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* ===============================
+   DISCOUNT BANNER
+=============================== */
+.discount-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 12px;
+}
+
+.discount-icon {
+  font-size: 1.2rem;
+  animation: bounce 2s infinite;
+}
+
+.discount-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
 }
 
 /* ===============================
@@ -923,7 +978,7 @@
 =============================== */
 .bottom-nav_dashboard {
   position: fixed;
-  bottom: 12px;
+  bottom: 20px;
   left: 14px;
   right: 14px;
   background: rgba(15, 23, 42, 0.4);
@@ -2103,6 +2158,48 @@
 }
 
 /* =====================
+   COMING SOON TOAST
+   ===================== */
+.coming-soon-toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 20px rgba(243, 156, 18, 0.5);
+  z-index: 1200;
+  animation: slideUpToast 0.3s ease-out, slideDownToast 0.3s ease-in 2.2s forwards;
+  white-space: nowrap;
+}
+
+@keyframes slideUpToast {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes slideDownToast {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+}
+
+/* =====================
    CHANNEL BANNER MODAL
    ===================== */
 /* ===============================
@@ -2374,6 +2471,152 @@
   border-radius: 12px;
   flex-shrink: 0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ===============================
+   NEW DASHBOARD ACTION CARDS LAYOUT
+=============================== */
+.dashboard-actions-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Stars Card - Full Width */
+.action-card-wide {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.action-card-wide::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.action-card-wide:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.4);
+}
+
+.action-card-wide:active {
+  transform: scale(0.98);
+}
+
+.action-card-wide__img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+}
+
+.action-card-wide__content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  z-index: 1;
+}
+
+.action-card-wide__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.3px;
+}
+
+.action-card-wide__subtitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Gift & Premium Row - Side by Side */
+.action-cards-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.action-card-half {
+  background: var(--bg-primary);
+  border-radius: 18px;
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-primary);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.action-card-half:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-xl);
+  background: var(--bg-secondary);
+}
+
+.action-card-half:active {
+  transform: scale(0.97);
+}
+
+.action-card-half__img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.action-card-half__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+/* First card (Gift) - subtle orange gradient accent */
+.action-card-half:first-child {
+  background: linear-gradient(145deg, var(--bg-primary) 0%, rgba(245, 158, 11, 0.05) 100%);
+}
+
+.action-card-half:first-child:hover {
+  background: linear-gradient(145deg, var(--bg-secondary) 0%, rgba(245, 158, 11, 0.1) 100%);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.15);
+}
+
+/* Second card (Premium) - subtle purple gradient accent */
+.action-card-half:last-child {
+  background: linear-gradient(145deg, var(--bg-primary) 0%, rgba(168, 85, 247, 0.05) 100%);
+}
+
+.action-card-half:last-child:hover {
+  background: linear-gradient(145deg, var(--bg-secondary) 0%, rgba(168, 85, 247, 0.1) 100%);
+  box-shadow: 0 8px 24px rgba(168, 85, 247, 0.15);
 }
 
 

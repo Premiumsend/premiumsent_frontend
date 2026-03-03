@@ -115,7 +115,7 @@ export default function TelegramGate({ children }) {
         {/* Tugmalar */}
         <div className="tg-gate-buttons">
           <a
-            href="https://t.me/starsjoybot/starsjoy"
+            href="https://t.me/StarsjoyBot/starsjoy"
             className="tg-gate-btn tg-gate-btn-primary"
             target="_blank"
             rel="noopener noreferrer"

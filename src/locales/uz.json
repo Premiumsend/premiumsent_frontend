@@ -18,10 +18,13 @@
   },
   "dashboard": {
     "title": "Starsjoy",
+    "comingSoon": "Tez orada qo'shiladi",
     "home": "Asosiy",
     "referral": "Referral",
     "profile": "Profil",
     "buyStars": "Stars olish",
+    "starsDesc": "Telegram stars xarid qiling",
+    "buyGift": "Gift olish",
     "buyPremium": "Premium olish",
     "leaderboard": "Umumiy savdo statistikasi",
     "stat": "Statistika",
@@ -131,7 +134,11 @@
     "somInsufficient": "Kamida 11,000 so'm kerak"
   },
   "profile": {
-    "title": "Profil",
+    "title": "Sozlamalar",
+    "myOrders": "Mening buyurtmalarim",
+    "myOrdersDesc": "Xaridlar tarixi",
+    "friendsCount": "Do'stlar soni",
+    "friendsCountDesc": "Referral dasturi",
     "referralStats": "Referral Statistika",
     "settings": "Sozlamalar",
     "account": "Akkaunt",
@@ -201,5 +208,21 @@
     "spent": "Xarid",
     "purchases": "Xaridlar",
     "alreadyClaimed": "Siz bu reward'ni olganingiz!"
+  },
+  "statistics": {
+    "title": "Statistika",
+    "sales": "Savdo",
+    "referral": "Referal",
+    "noOrders": "Hozircha ma'lumot yo'q",
+    "noReferrals": "Hozircha referallar yo'q",
+    "myPosition": "Sizning o'rningiz",
+    "noPurchases": "Siz hali xarid qilmagansiz",
+    "noFriendsYet": "Siz hali do'st taklif qilmagansiz",
+    "friends": "do'st",
+    "loadError": "Statistikani yuklashda xatolik",
+    "period_all": "Barchasi",
+    "period_daily": "Bugun",
+    "period_weekly": "Hafta",
+    "period_monthly": "Oy"
   }
 }

@@ -4,12 +4,11 @@ import { useNavigate } from "react-router-dom";
 import "./Profile.css";
 import { useTranslation } from "../../context/LanguageContext";
 import apiFetch from "../../utils/apiFetch";
-
-import adminIcon from "../../assets/admin_icon.png";
-import bellsIcon from "../../assets/bells_icon.png";
+import { TGSSticker } from "../../components/TGSSticker";
+import tilSticker from "../../assets/AnimatedSticker_til.tgs";
 
 export default function Profile() {
-  const { t } = useTranslation();
+  const { t, language, setLanguage } = useTranslation();
   const navigate = useNavigate();
   const [user, setUser] = useState({
     username: "User",
@@ -17,9 +16,12 @@ export default function Profile() {
     balance: 0,
     friends: 0
   });
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState(language);
+
+  const langLabels = { uz: "O'zbekcha", en: "English", ru: "Русский" };
 
   useEffect(() => {
-    // 1. Get User from Telegram
     let username = "User";
     let photoUrl = null;
 
@@ -31,14 +33,12 @@ export default function Profile() {
     } catch (e) {
       console.error("Telegram WebApp not ready");
     }
-    
-    // Fallback
+
     const storedUser = localStorage.getItem("username");
     if (storedUser && (!WebApp.initDataUnsafe?.user?.username)) {
-        username = storedUser;
+      username = storedUser;
     }
 
-    // 2. Fetch Stats
     const fetchStats = async () => {
       try {
         const safeUsername = username.replace("@", "");
@@ -47,13 +47,13 @@ export default function Profile() {
           const data = await res.json();
           setUser(prev => ({
             ...prev,
-            username: username,
+            username,
             photo_url: photoUrl,
             balance: data.referral_balance || 0,
             friends: data.total_referrals || 0
           }));
         } else {
-             setUser(prev => ({ ...prev, username, photo_url: photoUrl }));
+          setUser(prev => ({ ...prev, username, photo_url: photoUrl }));
         }
       } catch (err) {
         console.error("Failed to fetch profile stats", err);
@@ -64,85 +64,163 @@ export default function Profile() {
     fetchStats();
   }, []);
 
+  const handleLanguageConfirm = () => {
+    setLanguage(selectedLanguage);
+    setShowLanguageModal(false);
+  };
+
   return (
-    <div className="profile-page">
-      <div className="profile-header">
-        <div className="avatar-container">
-            {user.photo_url ? (
-                <img src={user.photo_url} alt="Profile" className="profile-avatar" />
-            ) : (
-                <div className="profile-avatar-placeholder">
-                    {user.username ? user.username.charAt(0).toUpperCase() : "U"}
-                </div>
-            )}
+    <div className="settings-page">
+      {/* Profile Header */}
+      <div className="settings-profile-header">
+        <div className="settings-avatar-wrap">
+          {user.photo_url ? (
+            <img src={user.photo_url} alt="Profile" className="settings-avatar-img" />
+          ) : (
+            <div className="settings-avatar-placeholder">
+              {user.username ? user.username.charAt(0).toUpperCase() : "U"}
+            </div>
+          )}
         </div>
-        <h2 className="profile-username">{user.username}</h2>
-        <p className="profile-handle">@{user.username.replace("@", "")}</p>
+        <h2 className="settings-username">{user.username}</h2>
+        <p className="settings-handle">@{user.username.replace("@", "")}</p>
       </div>
 
-      <div className="profile-group">
-        <a href="https://t.me/starsjoy_bot" target="_blank" rel="noopener noreferrer" className="profile-item-link">
-            <div className="profile-item">
-            <div className="profile-item-left">
-                <div className="icon-circle icon-help">
-                    <img src={adminIcon} alt="admin" className="profile-icon-img" />
-                </div>
-                <span>{t("profile.support") || "Yordam"}</span>
+      {/* Settings Items */}
+      <div className="settings-group">
+        {/* 1. Til almashtirish */}
+        <div className="settings-item" onClick={() => setShowLanguageModal(true)}>
+          <div className="settings-item-left">
+            <div className="settings-icon icon-lang">🌐</div>
+            <div className="settings-item-text">
+              <span className="settings-item-title">{t("profile.language") || "Til"}</span>
+              <span className="settings-item-desc">{t("common.selectLanguage") || "Tilni tanlang"}</span>
             </div>
-            <div className="profile-item-right">
-                <span className="blue-text">@starsjoy_bot</span>
-                <span className="arrow">›</span>
-            </div>
-            </div>
-        </a>
-
-        <a href="https://t.me/starsjoy" target="_blank" rel="noopener noreferrer" className="profile-item-link">
-            <div className="profile-item">
-            <div className="profile-item-left">
-                <div className="icon-circle icon-news">
-                    <img src={bellsIcon} alt="news" className="profile-icon-img" />
-                </div>
-                <span>{t("profile.channel") || "Yangiliklar kanali"}</span>
-            </div>
-            <div className="profile-item-right">
-                <span className="blue-text">@starsjoy</span>
-                <span className="arrow">›</span>
-            </div>
-            </div>
-        </a>
-      </div>
-
-      <div className="profile-group">
-        <div className="profile-item" onClick={() => navigate("/referral")}>
-          <div className="profile-item-left">
-            <div className="icon-circle icon-balance">💲</div>
-            <span>{t("referral.balance") || "Balans"}</span>
           </div>
-          <div className="profile-item-right">
-            <span className="blue-text">{user.balance} {t("referral.rewardStars") || "Stars"}</span>
-            <span className="arrow">›</span>
+          <div className="settings-item-right">
+            <span className="settings-item-value">{langLabels[language]}</span>
+            <span className="settings-arrow">›</span>
           </div>
         </div>
 
-        <div className="profile-item" onClick={() => navigate("/referral")}>
-          <div className="profile-item-left">
-            <div className="icon-circle icon-friends">👥</div>
-            <span>{t("referral.friends") || "Do'stlar"}</span>
+        {/* 2. Mening buyurtmalarim */}
+        <div className="settings-item" onClick={() => navigate("/history")}>
+          <div className="settings-item-left">
+            <div className="settings-icon icon-orders">📦</div>
+            <div className="settings-item-text">
+              <span className="settings-item-title">{t("profile.myOrders") || "Mening buyurtmalarim"}</span>
+              <span className="settings-item-desc">{t("profile.myOrdersDesc") || "Xaridlar tarixi"}</span>
+            </div>
           </div>
-          <div className="profile-item-right">
-            <span className="blue-text">{user.friends}</span>
-            <span className="arrow">›</span>
+          <div className="settings-item-right">
+            <span className="settings-arrow">›</span>
+          </div>
+        </div>
+
+        {/* 3. Referral Balans */}
+        <div className="settings-item" onClick={() => navigate("/referral")}>
+          <div className="settings-item-left">
+            <div className="settings-icon icon-balance">💰</div>
+            <div className="settings-item-text">
+              <span className="settings-item-title">{t("referral.balance") || "Referral Balans"}</span>
+              <span className="settings-item-desc">{t("referral.rewardStars") || "Yulduzlar"}</span>
+            </div>
+          </div>
+          <div className="settings-item-right">
+            <span className="settings-item-value">{user.balance} ⭐</span>
+            <span className="settings-arrow">›</span>
+          </div>
+        </div>
+
+        {/* 4. Do'stlar soni */}
+        <div className="settings-item" onClick={() => navigate("/referral")}>
+          <div className="settings-item-left">
+            <div className="settings-icon icon-friends">👥</div>
+            <div className="settings-item-text">
+              <span className="settings-item-title">{t("profile.friendsCount") || "Do'stlar soni"}</span>
+              <span className="settings-item-desc">{t("profile.friendsCountDesc") || "Referral dasturi"}</span>
+            </div>
+          </div>
+          <div className="settings-item-right">
+            <span className="settings-item-value">{user.friends}</span>
+            <span className="settings-arrow">›</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Support & Channel */}
+      <div className="settings-group">
+        {/* 5. Yordam */}
+        <div className="settings-item" onClick={() => {
+          try { WebApp.openTelegramLink("https://t.me/starsjoy_bot"); } catch { window.open("https://t.me/starsjoy_bot", "_blank"); }
+        }}>
+          <div className="settings-item-left">
+            <div className="settings-icon icon-support">🛟</div>
+            <div className="settings-item-text">
+              <span className="settings-item-title">{t("profile.support") || "Yordam"}</span>
+              <span className="settings-item-desc">{t("profile.supportDesc") || "Savollar va muammolar"}</span>
+            </div>
+          </div>
+          <div className="settings-item-right">
+            <span className="settings-item-value">@starsjoy_bot</span>
+            <span className="settings-arrow">›</span>
+          </div>
+        </div>
+
+        {/* 6. Yangiliklar kanali */}
+        <div className="settings-item" onClick={() => {
+          try { WebApp.openTelegramLink("https://t.me/starsjoy"); } catch { window.open("https://t.me/starsjoy", "_blank"); }
+        }}>
+          <div className="settings-item-left">
+            <div className="settings-icon icon-channel">📢</div>
+            <div className="settings-item-text">
+              <span className="settings-item-title">{t("profile.channel") || "Yangiliklar kanali"}</span>
+              <span className="settings-item-desc">{t("profile.channelDesc") || "Yangiliklar va updates"}</span>
+            </div>
+          </div>
+          <div className="settings-item-right">
+            <span className="settings-item-value">@starsjoy</span>
+            <span className="settings-arrow">›</span>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="profile-footer">
+      <div className="settings-footer">
         <p className="footer-copyright">© 2026 Starsjoy</p>
         <p className="footer-rights">Barcha huquqlar himoyalangan</p>
         <div className="footer-divider"></div>
         <p className="footer-version">v3.1.1</p>
       </div>
+
+      {/* Language Modal */}
+      {showLanguageModal && (
+        <div className="language-modal-overlay" onClick={() => setShowLanguageModal(false)}>
+          <div className="language-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-sticker-wrap">
+              <TGSSticker stickerPath={tilSticker} className="modal-top-sticker" />
+            </div>
+            <p className="modal-subtitle">{t("common.selectLanguage") || "Tilni tanlang"}</p>
+            <div className="language-options">
+              <label className={`language-option ${selectedLanguage === 'uz' ? 'selected' : ''}`}>
+                <input type="radio" name="language" value="uz" checked={selectedLanguage === 'uz'} onChange={(e) => setSelectedLanguage(e.target.value)} />
+                <span className="language-name">O'zbekcha</span>
+              </label>
+              <label className={`language-option ${selectedLanguage === 'en' ? 'selected' : ''}`}>
+                <input type="radio" name="language" value="en" checked={selectedLanguage === 'en'} onChange={(e) => setSelectedLanguage(e.target.value)} />
+                <span className="language-name">English</span>
+              </label>
+              <label className={`language-option ${selectedLanguage === 'ru' ? 'selected' : ''}`}>
+                <input type="radio" name="language" value="ru" checked={selectedLanguage === 'ru'} onChange={(e) => setSelectedLanguage(e.target.value)} />
+                <span className="language-name">Русский</span>
+              </label>
+            </div>
+            <button className="modal-confirm-btn" onClick={handleLanguageConfirm}>
+              {t("common.confirm") || "Tasdiqlash"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

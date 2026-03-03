@@ -18,10 +18,13 @@
   },
   "dashboard": {
     "title": "Starsjoy",
+    "comingSoon": "Вскоре будет",
     "home": "Главная",
     "referral": "Реферал",
     "profile": "Профиль",
     "buyStars": "Купить звезды",
+    "starsDesc": "Купите звёзды Telegram",
+    "buyGift": "Купить подарок",
     "buyPremium": "Купить премиум",
     "leaderboard": "Статистика торговли",
     "stat": "Статистика",
@@ -130,7 +133,11 @@
     "somInsufficient": "Минимум 11 000 сум"
   },
   "profile": {
-    "title": "Профиль",
+    "title": "Настройки",
+    "myOrders": "Мои заказы",
+    "myOrdersDesc": "История покупок",
+    "friendsCount": "Друзья",
+    "friendsCountDesc": "Реферальная программа",
     "referralStats": "Статистика реферала",
     "settings": "Настройки",
     "account": "Аккаунт",
@@ -200,5 +207,21 @@
     "spent": "Потрачено",
     "purchases": "Покупки",
     "alreadyClaimed": "Вы уже получили эту награду!"
+  },
+  "statistics": {
+    "title": "Статистика",
+    "sales": "Продажи",
+    "referral": "Рефералы",
+    "noOrders": "Данных пока нет",
+    "noReferrals": "Рефералов пока нет",
+    "myPosition": "Ваша позиция",
+    "noPurchases": "Вы ещё не совершали покупок",
+    "noFriendsYet": "Вы ещё не приглашали друзей",
+    "friends": "друзей",
+    "loadError": "Ошибка загрузки статистики",
+    "period_all": "Всё время",
+    "period_daily": "Сегодня",
+    "period_weekly": "Неделя",
+    "period_monthly": "Месяц"
   }
 }
