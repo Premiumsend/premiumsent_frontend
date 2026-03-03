@@ -249,15 +249,6 @@ export default function Dashboard() {
     };
   }, []);
 
-  /* ================= CHANNEL BANNER ================= */
-  useEffect(() => {
-    if (splashVisible) return;
-    const timer = setTimeout(() => {
-      setShowChannelBanner(true);
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, [splashVisible]);
-
   /* ================= UI ================= */
 
   // Splash screen - Starsjoy Premium Brand
@@ -498,42 +489,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Channel Subscribe Bottom Sheet - Glass Style */}
-      {showChannelBanner && (
-        <div className="subscribe-sheet-overlay" onClick={() => setShowChannelBanner(false)}>
-          <div className="subscribe-sheet glass" onClick={(e) => e.stopPropagation()}>
-            <div className="subscribe-sheet-handle"></div>
-            <button className="subscribe-sheet-close" onClick={() => setShowChannelBanner(false)}>✕</button>
-            <div className="subscribe-sheet-content">
-              <div className="subscribe-channel-info">
-                <img
-                  src={starsjoyAvatar}
-                  alt="Starsjoy"
-                  className="subscribe-channel-avatar"
-                />
-                <div className="subscribe-channel-details">
-                  <h3 className="subscribe-channel-name">Starsjoy</h3>
-                  <span className="subscribe-channel-link">@starsjoy</span>
-                </div>
-              </div>
-              <p className="subscribe-sheet-text">
-                {t("dashboard.subscribeChannel") || "Yangiliklar va maxsus takliflardan xabardor bo'ling!"}
-              </p>
-              <button className="subscribe-sheet-btn pulse-glow" onClick={() => {
-                setShowChannelBanner(false);
-                try {
-                  WebApp.openTelegramLink("https://t.me/starsjoy");
-                } catch {
-                  window.open("https://t.me/starsjoy", "_blank");
-                }
-              }}>
-                <span className="subscribe-btn-icon">📢</span>
-                {t("dashboard.subscribe") || "Kanalga qo'shilish"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
