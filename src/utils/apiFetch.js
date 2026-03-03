@@ -5,7 +5,9 @@
  * Bu backendda foydalanuvchi haqiqiyligini tekshirish uchun kerak.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+// Production: relative paths (/api/...) — Nginx proxy ishlaydi
+// Development: http://localhost:5001 — local backend
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 export default function apiFetch(url, options = {}) {
   const initData = window?.Telegram?.WebApp?.initData || '';
