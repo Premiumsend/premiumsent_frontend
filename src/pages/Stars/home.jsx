@@ -537,13 +537,11 @@ export default function Home() {
             {/* PENDING - To'lov kutilmoqda */}
             {status === "pending" && (
               <div className="pending-waiting-section">
-                {/* Modal Header */}
                 <div className="modal-header-bar">
                   <span className="modal-header-title">⏳ To'lov kutilmoqda</span>
                   <button className="modal-close-x" onClick={() => setShowModal(false)}>✕</button>
                 </div>
 
-                {/* Waiting Animation */}
                 <div className="waiting-animation-wrap">
                   <div className="waiting-circle-outer">
                     <div className="waiting-circle-inner">
@@ -558,7 +556,6 @@ export default function Home() {
                 <h3 className="waiting-title">To'lov qidirilmoqda...</h3>
                 <p className="waiting-subtitle">To'lovingiz avtomatik aniqlanadi</p>
 
-                {/* Payment Info Mini */}
                 <div className="waiting-payment-info">
                   <div className="waiting-info-row">
                     <span className="waiting-label">Karta:</span>
@@ -573,7 +570,6 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Timer */}
                 <div className="waiting-timer">
                   <span className="timer-icon-sm">⏱️</span>
                   <span>{formatTime(countdown)}</span>
@@ -700,10 +696,11 @@ export default function Home() {
             {/* EXPIRED */}
             {status === "expired" && (
               <div className="modal-result-section">
+                <button className="modal-close-x expired-x" onClick={() => setShowModal(false)}>✕</button>
                 <div className="modal-result-icon expired-bg">⏰</div>
                 <h3 className="modal-result-title">Vaqt tugadi</h3>
                 <p className="modal-result-desc">To'lov muddati o'tib ketdi. Qaytadan urinib ko'ring.</p>
-                <button className="modal-close-btn" onClick={() => setShowModal(false)}>Yopish</button>
+                <button className="btn-go-home" onClick={goToHome}>🏠 Bosh sahifaga qaytish</button>
               </div>
             )}
           </div>

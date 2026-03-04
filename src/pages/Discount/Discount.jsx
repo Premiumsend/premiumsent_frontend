@@ -18,7 +18,7 @@ export default function Discount() {
   const [username, setUsername] = useState("");
   const [selectedOption, setSelectedOption] = useState(null);
   const [order, setOrder] = useState(null);
-  const [status, setStatus] = useState("pending");
+  const [status, setStatus] = useState("payment_info");
   const [txId, setTxId] = useState(null);
   const [copied, setCopied] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -164,16 +164,19 @@ export default function Discount() {
 
         if (elapsed < POLLING_DURATION) {
           setOrder(parsed.order);
-          setStatus(parsed.status || "pending");
+          setStatus(parsed.status || "payment_info");
 
           const remainingMs = POLLING_DURATION - elapsed;
           const remainingSec = Math.floor(remainingMs / 1000);
           setCountdown(remainingSec);
 
-          startPolling(parsed.order);
+          // Only start polling if status is pending (not payment_info)
+          if (parsed.status === "pending" || parsed.status === "payment_received") {
+            startPolling(parsed.order);
+          }
           startCountdownTimer(remainingSec);
 
-          if (parsed.status === "pending" || parsed.status === "payment_received") {
+          if (parsed.status === "payment_info" || parsed.status === "pending" || parsed.status === "payment_received") {
             setShowModal(true);
           }
         } else {
@@ -260,11 +263,11 @@ export default function Discount() {
     }
   };
 
-  const saveOrderToStorage = (orderData) => {
+  const saveOrderToStorage = (orderData, orderStatus = "payment_info") => {
     const data = {
       order: orderData,
       createdAt: new Date().toISOString(),
-      status: "pending",
+      status: orderStatus,
     };
     localStorage.setItem("pendingDiscountOrder", JSON.stringify(data));
   };
@@ -305,11 +308,10 @@ export default function Discount() {
 
       const newOrder = await res.json();
       setOrder(newOrder);
-      setStatus("pending");
+      setStatus("payment_info");
       setShowModal(true);
 
-      saveOrderToStorage(newOrder);
-      startPolling(newOrder);
+      saveOrderToStorage(newOrder, "payment_info");
       startCountdownTimer(300);
     } catch (err) {
       console.error("❌ Order yaratishda xato:", err);
@@ -321,6 +323,22 @@ export default function Discount() {
     const min = Math.floor(sec / 60);
     const s = sec % 60;
     return `${min.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
+
+  // To'lov qildim bosilganda
+  const handlePaymentDone = () => {
+    setStatus("pending");
+    // Update localStorage
+    const savedOrder = localStorage.getItem("pendingDiscountOrder");
+    if (savedOrder) {
+      const parsed = JSON.parse(savedOrder);
+      parsed.status = "pending";
+      localStorage.setItem("pendingDiscountOrder", JSON.stringify(parsed));
+    }
+    // Start polling
+    if (order) {
+      startPolling(order);
+    }
   };
 
   return (
@@ -433,11 +451,11 @@ export default function Discount() {
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            {/* PENDING */}
-            {status === "pending" && (
-              <div className="pending-section">
+            {/* PAYMENT INFO - To'lov ma'lumotlari */}
+            {status === "payment_info" && (
+              <div className="payment-info-section">
                 <div className="modal-header-bar">
-                  <span className="modal-header-title">To'lov ma'lumotlari</span>
+                  <span className="modal-header-title">💳 To'lov ma'lumotlari</span>
                   <button className="modal-close-x" onClick={() => setShowModal(false)}>✕</button>
                 </div>
 
@@ -496,20 +514,61 @@ export default function Discount() {
                   </div>
                 </div>
 
-                <div className="modal-status-bar">
+                <div className="modal-timer-bar">
                   <div className="modal-timer">
-                    <div className="modal-timer-icon">⏳</div>
-                    <span>{formatTime(countdown)}</span>
-                  </div>
-                  <div className="modal-waiting">
-                    <div className="modal-spinner"></div>
-                    <span>To'lov kutilmoqda...</span>
+                    <span className="timer-icon">⏳</span>
+                    <span className="timer-text">{formatTime(countdown)}</span>
                   </div>
                 </div>
 
-                <button className="modal-close-btn" onClick={() => setShowModal(false)}>
-                  Yopish
+                <button className="btn-payment-done" onClick={handlePaymentDone}>
+                  ✅ To'lov qildim
                 </button>
+                <p className="modal-close-hint">To'lovni amalga oshiring va tugmani bosing</p>
+              </div>
+            )}
+
+            {/* PENDING - To'lov kutilmoqda */}
+            {status === "pending" && (
+              <div className="pending-waiting-section">
+                <div className="modal-header-bar">
+                  <span className="modal-header-title">⏳ To'lov kutilmoqda</span>
+                  <button className="modal-close-x" onClick={() => setShowModal(false)}>✕</button>
+                </div>
+
+                <div className="waiting-animation-wrap">
+                  <div className="waiting-circle-outer">
+                    <div className="waiting-circle-inner">
+                      <div className="waiting-icon">🔍</div>
+                    </div>
+                  </div>
+                  <div className="waiting-dots">
+                    <span></span><span></span><span></span>
+                  </div>
+                </div>
+
+                <h3 className="waiting-title">To'lov qidirilmoqda...</h3>
+                <p className="waiting-subtitle">To'lovingiz avtomatik aniqlanadi</p>
+
+                <div className="waiting-payment-info">
+                  <div className="waiting-info-row">
+                    <span className="waiting-label">Karta:</span>
+                    <span className="waiting-value">{CARD_NUMBER}</span>
+                    <button className="modal-copy-btn-sm" onClick={handleCopy}>
+                      {copied ? "✓" : "📋"}
+                    </button>
+                  </div>
+                  <div className="waiting-info-row highlight">
+                    <span className="waiting-label">Summa:</span>
+                    <span className="waiting-value bold">{formatAmount(order?.amount)} so'm</span>
+                  </div>
+                </div>
+
+                <div className="waiting-timer">
+                  <span className="timer-icon-sm">⏱️</span>
+                  <span>{formatTime(countdown)}</span>
+                </div>
+
                 <p className="modal-close-hint">Oyna yopilsa ham to'lov kuzatiladi</p>
               </div>
             )}
@@ -631,10 +690,11 @@ export default function Discount() {
             {/* EXPIRED */}
             {status === "expired" && (
               <div className="modal-result-section">
+                <button className="modal-close-x expired-x" onClick={() => setShowModal(false)}>✕</button>
                 <div className="modal-result-icon expired-bg">⏰</div>
                 <h3 className="modal-result-title">Vaqt tugadi</h3>
                 <p className="modal-result-desc">To'lov muddati o'tib ketdi. Qaytadan urinib ko'ring.</p>
-                <button className="modal-close-btn" onClick={() => setShowModal(false)}>Yopish</button>
+                <button className="btn-go-home" onClick={goToHome}>🏠 Bosh sahifaga qaytish</button>
               </div>
             )}
           </div>
