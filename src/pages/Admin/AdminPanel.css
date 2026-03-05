@@ -1531,3 +1531,101 @@ html, body {
 .delete-btn:hover {
   background: rgba(239, 68, 68, 0.3);
 }
+
+/* ======================================== */
+/* DAILY STATS TABLE */
+/* ======================================== */
+
+.daily-stats-table {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.daily-stats-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(102, 126, 234, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.daily-stats-header span:last-child,
+.daily-stats-row span:last-child {
+  text-align: right;
+}
+
+.daily-stats-header span:nth-child(2),
+.daily-stats-header span:nth-child(3),
+.daily-stats-row span:nth-child(2),
+.daily-stats-row span:nth-child(3) {
+  text-align: center;
+}
+
+.daily-stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  transition: background 0.2s;
+}
+
+.daily-stats-row:last-child {
+  border-bottom: none;
+}
+
+.daily-stats-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.daily-stats-row.has-data {
+  color: #fff;
+}
+
+.daily-stats-row.has-data .daily-stars {
+  color: #ffd700;
+}
+
+.daily-stats-row.has-data .daily-amount {
+  color: #4ee0ff;
+}
+
+.daily-stats-total {
+  background: rgba(102, 126, 234, 0.15);
+  border-top: 1px solid rgba(102, 126, 234, 0.3);
+  color: #fff !important;
+}
+
+.daily-stats-total .daily-stars {
+  color: #ffd700 !important;
+}
+
+.daily-stats-total .daily-amount {
+  color: #4ee0ff !important;
+}
+
+.daily-date {
+  font-weight: 500;
+}
+
+.daily-count {
+  font-weight: 500;
+}
+
+.daily-stars {
+  font-weight: 600;
+}
+
+.daily-amount {
+  font-weight: 600;
+}

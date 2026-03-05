@@ -118,11 +118,12 @@ export default function AdminPanel() {
     gift: { count: 0, totalStars: 0, totalAmount: 0 },
     total: { count: 0, totalAmount: 0 }
   });
+  const [dailyStats, setDailyStats] = useState([]); // [{date, stars, amount, count}]
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   // Wallet & Prices state
   const [walletBalance, setWalletBalance] = useState({ mainnet: 0, testnet: 0 });
-  const [starPrices, setStarPrices] = useState([]);
+  const [starPrices, setStarPrices] = useState({ priceFor50: 0, pricePerStar: 0, currency: "TON", availableStars: 0 });
   const [walletLoading, setWalletLoading] = useState(false);
 
   // Discount packages state
@@ -163,21 +164,22 @@ export default function AdminPanel() {
   const fetchWalletAndPrices = async () => {
     setWalletLoading(true);
     try {
-      // Fetch balance and prices in parallel
-      const [balanceRes, pricesRes] = await Promise.all([
-        fetch("https://robynhood.parssms.info/api/balance"),
-        fetch("https://robynhood.parssms.info/api/prices/list")
-      ]);
+      const res = await apiFetch("/api/admin/wallet-info");
+      const data = await res.json();
 
-      const balanceData = await balanceRes.json();
-      const pricesData = await pricesRes.json();
+      if (data.success) {
+        setWalletBalance({
+          mainnet: data.wallet.mainnet_balance || 0,
+          testnet: data.wallet.testnet_balance || 0
+        });
 
-      setWalletBalance({
-        mainnet: balanceData.mainnet_balance || 0,
-        testnet: balanceData.testnet_balance || 0
-      });
-
-      setStarPrices(pricesData || []);
+        setStarPrices({
+          priceFor50: data.stars_price.price_for_50 || 0,
+          pricePerStar: data.stars_price.price_per_star || 0,
+          currency: data.stars_price.currency || "TON",
+          availableStars: data.available_stars || 0
+        });
+      }
     } catch (err) {
       console.error("❌ Wallet/Prices fetch error:", err);
     } finally {
@@ -185,17 +187,14 @@ export default function AdminPanel() {
     }
   };
 
-  // Get star price from prices list
+  // Get star price (per star)
   const getStarPrice = () => {
-    const starItem = starPrices.find(p => p.product_type === "stars" || p.item_name?.toLowerCase().includes("star"));
-    return starItem?.price || 0;
+    return starPrices?.pricePerStar || 0;
   };
 
-  // Calculate available stars
+  // Get available stars (pre-calculated from backend)
   const getAvailableStars = () => {
-    const price = getStarPrice();
-    if (price <= 0) return 0;
-    return Math.floor(walletBalance.mainnet / price);
+    return starPrices?.availableStars || 0;
   };
 
   // Fetch wallet when analytics tab is active
@@ -225,13 +224,17 @@ export default function AdminPanel() {
       // Fetch all data
       const [starsRes, premiumRes, giftRes] = await Promise.all([
         apiFetch("/api/transactions/all"),
-        apiFetch("/api/admin/premium-orders"),
-        apiFetch("/api/admin/gift-orders")
+        apiFetch("/api/admin/premium/list"),
+        apiFetch("/api/admin/gift/list")
       ]);
 
       const starsData = await starsRes.json();
-      const premiumData = await premiumRes.json();
-      const giftData = await giftRes.json();
+      const premiumJson = await premiumRes.json();
+      const giftJson = await giftRes.json();
+
+      // Extract arrays (stars is direct array, premium/gift have .orders)
+      const premiumData = premiumJson.orders || [];
+      const giftData = giftJson.orders || [];
 
       // Filter by date and completed status
       const filterByDate = (items, dateField = "created_at") => {
@@ -270,6 +273,31 @@ export default function AdminPanel() {
           totalAmount: starsStats.totalAmount + premiumStats.totalAmount + giftStats.totalAmount
         }
       });
+
+      // Calculate daily breakdown from stars transactions (last 7 days)
+      const completedStars = starsData.filter(tx => tx.status === "stars_sent" || tx.status === "completed");
+      const dailyMap = {};
+      
+      // Get last 7 days
+      const today = new Date();
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().split('T')[0];
+        dailyMap[key] = { date: key, stars: 0, amount: 0, count: 0 };
+      }
+
+      // Aggregate transactions by day
+      completedStars.forEach(tx => {
+        const txDate = new Date(tx.created_at).toISOString().split('T')[0];
+        if (dailyMap[txDate]) {
+          dailyMap[txDate].stars += tx.stars || 0;
+          dailyMap[txDate].amount += tx.amount || 0;
+          dailyMap[txDate].count += 1;
+        }
+      });
+
+      setDailyStats(Object.values(dailyMap));
     } catch (err) {
       console.error("❌ Analytics fetch error:", err);
     } finally {
@@ -1073,10 +1101,10 @@ export default function AdminPanel() {
                 <div className="wallet-card price-card">
                   <div className="wallet-card-header">
                     <span className="wallet-icon">💵</span>
-                    <span className="wallet-label">Star Narxi</span>
+                    <span className="wallet-label">50 Stars Narxi</span>
                   </div>
-                  <div className="wallet-value">{getStarPrice().toFixed(6)} TON</div>
-                  <div className="wallet-sub">1 star uchun</div>
+                  <div className="wallet-value">{(starPrices.priceFor50 || 0).toFixed(4)} TON</div>
+                  <div className="wallet-sub">1 star = {getStarPrice().toFixed(6)} TON</div>
                 </div>
 
                 {/* Available Stars Card */}
@@ -1193,6 +1221,37 @@ export default function AdminPanel() {
                     <div className="analytics-card-stat">
                       <span>Summa:</span>
                       <strong>{analyticsData.gift.totalAmount.toLocaleString()} so'm</strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Daily Stats Section */}
+                <div className="analytics-section" style={{marginTop: '16px'}}>
+                  <div className="analytics-section-header">
+                    <span className="section-icon">📅</span>
+                    <h3>Kunlik Stars Statistikasi (oxirgi 7 kun)</h3>
+                  </div>
+                  
+                  <div className="daily-stats-table">
+                    <div className="daily-stats-header">
+                      <span>Sana</span>
+                      <span>Buyurtmalar</span>
+                      <span>Stars</span>
+                      <span>Summa</span>
+                    </div>
+                    {dailyStats.map((day, idx) => (
+                      <div key={idx} className={`daily-stats-row ${day.count > 0 ? 'has-data' : ''}`}>
+                        <span className="daily-date">{new Date(day.date).toLocaleDateString('uz-UZ', {day: '2-digit', month: 'short'})}</span>
+                        <span className="daily-count">{day.count}</span>
+                        <span className="daily-stars">{day.stars.toLocaleString()} ⭐</span>
+                        <span className="daily-amount">{day.amount.toLocaleString()}</span>
+                      </div>
+                    ))}
+                    <div className="daily-stats-row daily-stats-total">
+                      <span className="daily-date"><strong>Jami:</strong></span>
+                      <span className="daily-count"><strong>{dailyStats.reduce((s, d) => s + d.count, 0)}</strong></span>
+                      <span className="daily-stars"><strong>{dailyStats.reduce((s, d) => s + d.stars, 0).toLocaleString()} ⭐</strong></span>
+                      <span className="daily-amount"><strong>{dailyStats.reduce((s, d) => s + d.amount, 0).toLocaleString()}</strong></span>
                     </div>
                   </div>
                 </div>
