@@ -95,7 +95,7 @@
     "orderFailed": "Premium Failed"
   },
   "referral": {
-      "topReferrals": "Top 10 Referral Users",
+    "topReferrals": "Top 10 Referral Users",
     "title": "Referral Program",
     "rewardStarsDesc": "When your friend buys 50 stars, you get a bonus.",
     "premiumTitle": "Premium",
@@ -103,6 +103,12 @@
     "specialProgram": "Special Program",
     "new": "NEW!",
     "howToEarn": "How to Earn",
+    "step1Title": "Subscribe Bonus",
+    "step1Desc": "Friend joins via your link and subscribes to channel",
+    "step2Title": "Stars Bonus",
+    "step2Desc": "Your referral buys every 50 stars",
+    "step3Title": "Premium Bonus",
+    "step3Desc": "Your referral buys Premium subscription",
     "personalLink": "Personal Referral Link",
     "shareWithFriends": "Share with Friends",
     "statistics": "Statistics",

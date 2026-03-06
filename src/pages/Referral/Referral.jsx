@@ -227,28 +227,29 @@ export default function Referral() {
 
           {/* Bonus Info Section */}
           <div className="reward-section">
-            <h2>{t("referral.howToEarn") || "Qanday ishlash mumkin?"}</h2>
+            <h2>{t("referral.howToEarn") || "Pul ishlash tartibi"}</h2>
             <div className="earn-steps-list">
               <div className="earn-step">
                 <div className="step-number">1</div>
                 <div className="step-content">
-                  <span className="step-title">{t("referral.step1Title") || "Havolani ulashing"}</span>
-                  <span className="step-desc">{t("referral.step1Desc") || "Shaxsiy havolangizni do'stlarga yuboring"}</span>
+                  <span className="step-title">{t("referral.step1Title") || "Obuna bonus"}</span>
+                  <span className="step-desc">{t("referral.step1Desc") || "Do'stingiz havolangiz orqali kirib, kanalga obuna bo'lsa"}</span>
                 </div>
+                <div className="step-bonus small">+2 ⭐</div>
               </div>
               <div className="earn-step">
                 <div className="step-number">2</div>
                 <div className="step-content">
-                  <span className="step-title">{t("referral.step2Title") || "Obuna bonus"}</span>
-                  <span className="step-desc">{t("referral.step2Desc") || "Do'stingiz kanalga obuna bo'lsa"}</span>
+                  <span className="step-title">{t("referral.step2Title") || "Stars bonus"}</span>
+                  <span className="step-desc">{t("referral.step2Desc") || "Referalingiz har 50 stars olganida"}</span>
                 </div>
-                <div className="step-bonus small">+2 ⭐</div>
+                <div className="step-bonus small">+5 ⭐</div>
               </div>
               <div className="earn-step featured">
                 <div className="step-number">3</div>
                 <div className="step-content">
-                  <span className="step-title">{t("referral.step3Title") || "Xarid bonus"}</span>
-                  <span className="step-desc">{t("referral.step3Desc") || "Do'stingiz birinchi xarid qilsa"}</span>
+                  <span className="step-title">{t("referral.step3Title") || "Premium bonus"}</span>
+                  <span className="step-desc">{t("referral.step3Desc") || "Referalingiz Premium obuna olsa"}</span>
                 </div>
                 <div className="step-bonus big">+15 ⭐</div>
               </div>
