@@ -1328,7 +1328,7 @@ export default function AdminPanel() {
                         <div className="detail-grid">
                           <div className="detail-item">
                             <span className="detail-label">Kimdan</span>
-                            <span className="detail-value">@{tx.username}</span>
+                            <span className="detail-value">@{tx.sender_username || tx.owner_user_id}</span>
                           </div>
                           <div className="detail-item">
                             <span className="detail-label">Kimga</span>
@@ -1347,16 +1347,16 @@ export default function AdminPanel() {
                             <span className="detail-value">{tx.amount?.toLocaleString()} so'm</span>
                           </div>
                           <div className="detail-item">
-                            <span className="detail-label">Card</span>
-                            <span className="detail-value">**** {tx.card_last4 || "----"}</span>
+                            <span className="detail-label">Payment</span>
+                            <span className="detail-value">{tx.payment_method || "card"}</span>
                           </div>
                           <div className="detail-item">
                             <span className="detail-label">Anonim</span>
-                            <span className="detail-value">{tx.anonymous ? "Ha ✅" : "Yo'q"}</span>
+                            <span className="detail-value">{tx.gift_anonymous ? "Ha ✅" : "Yo'q"}</span>
                           </div>
                           <div className="detail-item">
                             <span className="detail-label">Izoh</span>
-                            <span className="detail-value">{tx.comment || "-"}</span>
+                            <span className="detail-value">{tx.gift_comment || "-"}</span>
                           </div>
                           <div className="detail-item">
                             <span className="detail-label">Created</span>
@@ -1529,7 +1529,7 @@ export default function AdminPanel() {
                       <div className="order-main">
                         <span className="order-id">#{tx.id}</span>
                         <span className="order-user">@{tx.username}</span>
-                        <span className="order-stars">{tx.muddat_oy || tx.months || 1} oy 💎</span>
+                        <span className="order-stars">{tx.months || 1} oy 💎</span>
                       </div>
                       <div 
                         className="order-status"
@@ -1544,19 +1544,23 @@ export default function AdminPanel() {
                         <div className="detail-grid">
                           <div className="detail-item">
                             <span className="detail-label">Recipient</span>
-                            <span className="detail-value">@{tx.recipient || tx.username}</span>
+                            <span className="detail-value">@{tx.username}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Recipient ID</span>
+                            <span className="detail-value">{tx.recipient || "-"}</span>
                           </div>
                           <div className="detail-item">
                             <span className="detail-label">Muddat</span>
-                            <span className="detail-value">{tx.muddat_oy || 1} oy</span>
+                            <span className="detail-value">{tx.months || 1} oy</span>
                           </div>
                           <div className="detail-item">
                             <span className="detail-label">Amount</span>
                             <span className="detail-value">{tx.amount?.toLocaleString()} so'm</span>
                           </div>
                           <div className="detail-item">
-                            <span className="detail-label">Card</span>
-                            <span className="detail-value">**** {tx.card_last4 || "----"}</span>
+                            <span className="detail-label">Payment</span>
+                            <span className="detail-value">{tx.payment_method || "card"}</span>
                           </div>
                           <div className="detail-item">
                             <span className="detail-label">Transaction ID</span>

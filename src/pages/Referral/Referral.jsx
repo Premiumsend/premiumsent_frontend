@@ -32,16 +32,21 @@ export default function Referral() {
   // Referral leaderboard
   const [refLeaderboard, setRefLeaderboard] = useState([]);
   const [myRefRank, setMyRefRank] = useState(null);
+  const [refPeriod, setRefPeriod] = useState("daily");
 
   // My friends state (referrer_username orqali)
   const [myFriends, setMyFriends] = useState([]);
   const [friendsCount, setFriendsCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     if (!username) return;
     const loadLeaderboard = async () => {
       try {
-        const res = await apiFetch(`/api/referral/leaderboard?username=${username}`);
+        const params = new URLSearchParams();
+        params.append("username", username);
+        params.append("period", refPeriod);
+        const res = await apiFetch(`/api/referral/leaderboard?${params.toString()}`);
         const json = await res.json();
         setRefLeaderboard(json.top10 || []);
         setMyRefRank(json.me || null);
@@ -50,7 +55,7 @@ export default function Referral() {
       }
     };
     loadLeaderboard();
-  }, [username]);
+  }, [username, refPeriod]);
 
   // Get Telegram username
   useEffect(() => {
@@ -141,6 +146,7 @@ export default function Referral() {
       if (myFriendsRes.ok) {
         const mfData = await myFriendsRes.json();
         setMyFriends(mfData.friends || []);
+        setPendingCount(mfData.pending_count || 0);
       }
 
       // Load withdrawal history
@@ -224,6 +230,11 @@ export default function Referral() {
               </div>
               <div className="ref-stats-right">
                 <span className="ref-stats-value">{friendsCount}</span>
+                {pendingCount > 0 && (
+                  <span className="ref-stats-pending" title="Kanalga obuna kutilmoqda">
+                    (+{pendingCount} ⏳)
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -317,15 +328,31 @@ export default function Referral() {
           {/* Referral Leaderboard */}
           <div className="ref-leaderboard-section">
             <h2>{t("referral.topReferrals") || "Top foydalanuvchilar"}</h2>
+            
+            {/* Period Filter */}
+            <div className="ref-period-filters">
+              {["daily", "weekly", "monthly"].map((p) => (
+                <button
+                  key={p}
+                  className={`ref-period-btn ${refPeriod === p ? "active" : ""}`}
+                  onClick={() => setRefPeriod(p)}
+                >
+                  {t(`statistics.period_${p}`) || 
+                    (p === "daily" ? "Bugun" : p === "weekly" ? "Hafta" : "Oy")
+                  }
+                </button>
+              ))}
+            </div>
+            
             <div className="ref-leaderboard-list">
               {refLeaderboard.length > 0 ? (
                 <>
                   {refLeaderboard.map((u, i) => (
-                    <div key={u.username} className="ref-leaderboard-row">
+                    <div key={u.user_id || i} className="ref-leaderboard-row">
                       <span className="ref-rank">
                         {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${u.rank}`}
                       </span>
-                      <span className="ref-user">@{u.username}</span>
+                      <span className="ref-user">{u.nickname}</span>
                       <span className="ref-count">{u.referrals} {t("referral.friendsShort") || "do'st"}</span>
                     </div>
                   ))}
@@ -334,7 +361,7 @@ export default function Referral() {
                       <hr className="leaderboard-divider" />
                       <div className="ref-leaderboard-row me">
                         <span className="ref-rank">#{myRefRank.rank}</span>
-                        <span className="ref-user">@{myRefRank.username} ({t("common.you") || "siz"})</span>
+                        <span className="ref-user">{myRefRank.nickname} ({t("common.you") || "siz"})</span>
                         <span className="ref-count">{myRefRank.referrals} {t("referral.friendsShort") || "do'st"}</span>
                       </div>
                     </>

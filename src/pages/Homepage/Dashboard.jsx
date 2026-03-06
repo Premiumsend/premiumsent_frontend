@@ -105,6 +105,10 @@ export default function Dashboard() {
         WebApp?.initDataUnsafe?.user?.username ||
         window?.Telegram?.WebApp?.initDataUnsafe?.user?.username;
 
+      const tgUserId =
+        WebApp?.initDataUnsafe?.user?.id ||
+        window?.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+
       const tgPhoto =
         WebApp?.initDataUnsafe?.user?.photo_url ||
         window?.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url;
@@ -115,6 +119,7 @@ export default function Dashboard() {
         localStorage.setItem("username", clean);
         setIsTelegram(true);
         if (tgPhoto) setUserPhoto(tgPhoto);
+        if (tgUserId) localStorage.setItem("userId", String(tgUserId));
 
         // Auto register
         registerUser(clean);
@@ -176,7 +181,9 @@ export default function Dashboard() {
         setLoading(true);
         setError(null);
 
-        const res = await apiFetch(`/api/user/history/${username}`);
+        const uid = localStorage.getItem("userId");
+        if (!uid) return;
+        const res = await apiFetch(`/api/user/history/${uid}`);
         const json = await res.json();
 
         const orders = json || [];

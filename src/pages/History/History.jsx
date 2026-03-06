@@ -15,6 +15,7 @@ export default function History() {
 
   // State
   const [username, setUsername] = useState(null);
+  const [userId, setUserId] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -24,31 +25,37 @@ export default function History() {
   const formatAmount = (num) =>
     Number(num || 0).toLocaleString("ru-RU");
 
-  // Get Telegram username
+  // Get Telegram user info
   useEffect(() => {
     try {
       WebApp.ready();
       const tgUser =
         WebApp?.initDataUnsafe?.user?.username ||
         window?.Telegram?.WebApp?.initDataUnsafe?.user?.username;
+      const tgUserId =
+        WebApp?.initDataUnsafe?.user?.id ||
+        window?.Telegram?.WebApp?.initDataUnsafe?.user?.id;
 
       if (tgUser) {
         const clean = tgUser.replace("@", "");
         setUsername(clean);
-        loadHistory(clean);
+      }
+      if (tgUserId) {
+        setUserId(String(tgUserId));
+        loadHistory(String(tgUserId));
       }
     } catch (err) {
       console.error("Telegram error:", err);
     }
   }, []);
 
-  // Load user history
-  const loadHistory = async (user) => {
+  // Load user history by userId (owner_user_id)
+  const loadHistory = async (uid) => {
     try {
       setLoading(true);
       setError(null);
 
-      const res = await apiFetch(`/api/user/history/${user}`);
+      const res = await apiFetch(`/api/user/history/${uid}`);
       const json = await res.json();
 
       const orders = json || [];

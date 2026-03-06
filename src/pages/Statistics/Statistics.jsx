@@ -18,6 +18,7 @@ export default function Statistics() {
   const [isTelegram, setIsTelegram] = useState(false);
   const [statsTab, setStatsTab] = useState("sales");
   const [period, setPeriod] = useState("daily");
+  const [refPeriod, setRefPeriod] = useState("daily");
   const [leaderboard, setLeaderboard] = useState([]);
   const [myRank, setMyRank] = useState(null);
   const [referralBoard, setReferralBoard] = useState([]);
@@ -81,9 +82,10 @@ export default function Statistics() {
   useEffect(() => {
     const loadReferralBoard = async () => {
       try {
-        const res = await apiFetch(
-          `/api/referral/leaderboard${username ? `?username=${username}` : ""}`
-        );
+        const params = new URLSearchParams();
+        if (username) params.append("username", username);
+        params.append("period", refPeriod);
+        const res = await apiFetch(`/api/referral/leaderboard?${params.toString()}`);
         const json = await res.json();
         setReferralBoard(json.top10 || []);
         setMyRefRank(json.me || null);
@@ -92,7 +94,7 @@ export default function Statistics() {
       }
     };
     loadReferralBoard();
-  }, [username]);
+  }, [username, refPeriod]);
 
   const getMedal = (i) => {
     if (i === 0) return "🥇";
@@ -177,11 +179,11 @@ export default function Statistics() {
               <div className="statistics-list">
                 {leaderboard.map((u, i) => (
                   <div
-                    key={u.username}
+                    key={u.owner_user_id || i}
                     className={`statistics-row ${i < 3 ? `top-${i + 1}` : ""}`}
                   >
                     <span className="statistics-rank">{getMedal(i)}</span>
-                    <span className="statistics-user">@{u.username}</span>
+                    <span className="statistics-user">{u.nickname}</span>
                     <span className="statistics-value">
                       {formatAmount(u.total)} so'm
                     </span>
@@ -200,7 +202,7 @@ export default function Statistics() {
                   <div className="statistics-row me">
                     <span className="statistics-rank">#{myRank.rank}</span>
                     <span className="statistics-user">
-                      @{myRank.username}
+                      {myRank.nickname}
                     </span>
                     <span className="statistics-value">
                       {formatAmount(myRank.total)} so'm
@@ -219,6 +221,21 @@ export default function Statistics() {
         {/* REFERRAL TAB */}
         {statsTab === "referral" && !loading && (
           <>
+            {/* Period Filter for Referral */}
+            <div className="statistics-period-filters">
+              {["daily", "weekly", "monthly"].map((p) => (
+                <button
+                  key={p}
+                  className={`statistics-period-btn ${refPeriod === p ? "active" : ""}`}
+                  onClick={() => setRefPeriod(p)}
+                >
+                  {t(`statistics.period_${p}`) || 
+                    (p === "daily" ? "Bugun" : p === "weekly" ? "Hafta" : "Oy")
+                  }
+                </button>
+              ))}
+            </div>
+            
             {referralBoard.length === 0 ? (
               <div className="statistics-empty">
                 {t("statistics.noReferrals") || "Hozircha referallar yo'q"}
@@ -227,11 +244,11 @@ export default function Statistics() {
               <div className="statistics-list">
                 {referralBoard.slice(0, 10).map((u, i) => (
                   <div
-                    key={u.username}
+                    key={u.user_id || i}
                     className={`statistics-row ${i < 3 ? `top-${i + 1}` : ""}`}
                   >
                     <span className="statistics-rank">{getMedal(i)}</span>
-                    <span className="statistics-user">@{u.username}</span>
+                    <span className="statistics-user">{u.nickname}</span>
                     <span className="statistics-value">
                       {u.referrals} {t("statistics.friends") || "do'st"}
                     </span>
@@ -250,7 +267,7 @@ export default function Statistics() {
                   <div className="statistics-row me">
                     <span className="statistics-rank">#{myRefRank.rank}</span>
                     <span className="statistics-user">
-                      @{myRefRank.username}
+                      {myRefRank.nickname}
                     </span>
                     <span className="statistics-value">
                       {myRefRank.referrals} {t("statistics.friends") || "do'st"}

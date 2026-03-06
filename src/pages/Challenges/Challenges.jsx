@@ -48,19 +48,25 @@ export default function Challenges() {
     },
   ];
 
-  // Get Telegram username
+  // Get Telegram user info
   useEffect(() => {
     try {
       WebApp.ready();
       const tgUser =
         WebApp?.initDataUnsafe?.user?.username ||
         window?.Telegram?.WebApp?.initDataUnsafe?.user?.username;
+      const tgUserId =
+        WebApp?.initDataUnsafe?.user?.id ||
+        window?.Telegram?.WebApp?.initDataUnsafe?.user?.id;
 
       if (tgUser) {
         const clean = tgUser.replace("@", "");
         setUsername(clean);
         localStorage.setItem("username", clean);
-        fetchUserProgress(clean);
+      }
+      if (tgUserId) {
+        localStorage.setItem("userId", String(tgUserId));
+        fetchUserProgress(String(tgUserId));
       } else {
         setLoading(false);
       }
@@ -70,13 +76,13 @@ export default function Challenges() {
     }
   }, []);
 
-  // Fetch user progress from backend
-  const fetchUserProgress = async (user) => {
+  // Fetch user progress from backend (by userId)
+  const fetchUserProgress = async (uid) => {
     try {
       setLoading(true);
       
-      // Get user history/transactions
-      const res = await apiFetch(`/api/user/history/${user}`);
+      // Get user history/transactions by owner_user_id
+      const res = await apiFetch(`/api/user/history/${uid}`);
       const history = await res.json();
 
       if (Array.isArray(history)) {
