@@ -228,37 +228,29 @@ export default function Referral() {
           {/* Bonus Info Section */}
           <div className="reward-section">
             <h2>{t("referral.howToEarn") || "Qanday ishlash mumkin?"}</h2>
-            <div className="reward-tiers">
-              <div className="reward-card">
-                <div className="reward-icon">📢</div>
-                <div className="reward-content">
-                  <h3>{t("referral.subscribeBonus") || "Kanalga obuna"}</h3>
-                  <p className="reward-desc">
-                    {t("referral.subscribeBonusDesc") || "Do'stingiz kanalga obuna bo'lsa"}
-                  </p>
-                  <div className="reward-amount bonus-small">+2 ⭐</div>
+            <div className="earn-steps-list">
+              <div className="earn-step">
+                <div className="step-number">1</div>
+                <div className="step-content">
+                  <span className="step-title">{t("referral.step1Title") || "Havolani ulashing"}</span>
+                  <span className="step-desc">{t("referral.step1Desc") || "Shaxsiy havolangizni do'stlarga yuboring"}</span>
                 </div>
               </div>
-
-              <div className="reward-card featured">
-                <div className="reward-icon">🛒</div>
-                <div className="reward-content">
-                  <h3>{t("referral.purchaseBonus") || "Birinchi xarid"}</h3>
-                  <p className="reward-desc">
-                    {t("referral.purchaseBonusDesc") || "Do'stingiz birinchi xarid qilsa"}
-                  </p>
-                  <div className="reward-amount bonus-big">+15 ⭐</div>
+              <div className="earn-step">
+                <div className="step-number">2</div>
+                <div className="step-content">
+                  <span className="step-title">{t("referral.step2Title") || "Obuna bonus"}</span>
+                  <span className="step-desc">{t("referral.step2Desc") || "Do'stingiz kanalga obuna bo'lsa"}</span>
                 </div>
+                <div className="step-bonus small">+2 ⭐</div>
               </div>
-            </div>
-
-            <div className="bonus-info-box">
-              <div className="bonus-info-icon">💡</div>
-              <div className="bonus-info-text">
-                <p><strong>{t("referral.howItWorks") || "Qanday ishlaydi?"}</strong></p>
-                <p>{t("referral.step1") || "1. Havolani do'stingizga yuboring"}</p>
-                <p>{t("referral.step2") || "2. Do'stingiz kanalga obuna bo'lsa — +2 ⭐ olasiz"}</p>
-                <p>{t("referral.step3") || "3. Do'stingiz xarid qilsa — +15 ⭐ qo'shimcha olasiz"}</p>
+              <div className="earn-step featured">
+                <div className="step-number">3</div>
+                <div className="step-content">
+                  <span className="step-title">{t("referral.step3Title") || "Xarid bonus"}</span>
+                  <span className="step-desc">{t("referral.step3Desc") || "Do'stingiz birinchi xarid qilsa"}</span>
+                </div>
+                <div className="step-bonus big">+15 ⭐</div>
               </div>
             </div>
           </div>

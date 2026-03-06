@@ -160,188 +160,84 @@
   color: var(--text-primary);
 }
 
-.reward-tiers {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.reward-card {
+/* Earn Steps List */
+.earn-steps-list {
   background: var(--bg-primary);
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: var(--shadow-sm);
+  border-radius: 14px;
   border: 1px solid var(--border-primary);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  transition: all 0.2s ease;
-  position: relative;
   overflow: hidden;
 }
 
-.reward-card:active {
-  transform: scale(0.98);
-}
-
-.reward-img {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-  border-radius: 10px;
-}
-
-.reward-content {
-  flex: 1;
-}
-
-.reward-card h3 {
-  margin: 0 0 3px 0;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.reward-desc {
-  margin: 0 0 5px 0;
-  font-size: 11px;
-  color: var(--text-tertiary);
-  line-height: 1.3;
-}
-
-.reward-amount {
-  display: inline-block;
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-  color: #1a1a1a;
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.reward-amount.special {
-  background: linear-gradient(135deg, var(--color-primary) 0%, #7c3aed 100%);
-  color: white;
-  font-size: 10px;
-}
-
-/* Bonus Info Box */
-.bonus-info-box {
-  background: var(--bg-primary);
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-primary);
-}
-
-.bonus-info-box h3 {
-  margin: 0 0 14px 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-primary);
+.earn-step {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.bonus-info-box h3 .reward-icon {
-  font-size: 18px;
-}
-
-.bonus-grid {
-  display: flex;
+  padding: 14px 16px;
   gap: 12px;
-  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-primary);
+  transition: background 0.2s ease;
 }
 
-.bonus-small,
-.bonus-big {
-  flex: 1;
-  border-radius: 12px;
-  padding: 14px;
-  text-align: center;
+.earn-step:last-child {
+  border-bottom: none;
 }
 
-.bonus-small {
-  background: linear-gradient(145deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%);
-  border: 1px solid rgba(59, 130, 246, 0.25);
+.earn-step.featured {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.08) 0%, rgba(251, 191, 36, 0.02) 100%);
 }
 
-.bonus-big {
-  background: linear-gradient(145deg, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.08) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.35);
-}
-
-.bonus-small .bonus-value,
-.bonus-big .bonus-value {
-  font-size: 26px;
-  font-weight: 800;
-  display: block;
-  margin-bottom: 4px;
-}
-
-.bonus-small .bonus-value {
-  color: #3b82f6;
-}
-
-.bonus-big .bonus-value {
-  color: #f59e0b;
-}
-
-.bonus-small .bonus-label,
-.bonus-big .bonus-label {
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.3;
-  display: block;
-}
-
-.bonus-small .bonus-label {
-  color: #60a5fa;
-}
-
-.bonus-big .bonus-label {
-  color: #fbbf24;
-}
-
-.bonus-info-subtitle {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  margin: 0 0 10px 0;
-}
-
-.bonus-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.bonus-step {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.step-num {
-  width: 22px;
-  height: 22px;
-  min-width: 22px;
+.step-number {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
   background: var(--color-primary);
   color: white;
   border-radius: 50%;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.step-text {
-  font-size: 12px;
-  color: var(--text-secondary);
-  line-height: 1.4;
-  padding-top: 2px;
+.earn-step.featured .step-number {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.step-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.step-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.step-desc {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.step-bonus {
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.step-bonus.small {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.08) 100%);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.step-bonus.big {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(251, 191, 36, 0.1) 100%);
+  color: #f59e0b;
+  border: 1px solid rgba(251, 191, 36, 0.35);
 }
 
 /* ===============================
