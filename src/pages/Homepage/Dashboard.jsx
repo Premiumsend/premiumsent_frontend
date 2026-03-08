@@ -341,7 +341,7 @@ export default function Dashboard() {
           {/* Referral Invite Banner */}
           <div 
             className="referral-invite-banner"
-            onClick={() => setTab("referral")}
+            onClick={() => navigate("/referral")}
           >
             <div className="referral-banner-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -368,7 +368,7 @@ export default function Dashboard() {
               className="referral-banner-button"
               onClick={(e) => {
                 e.stopPropagation();
-                setTab("referral");
+                navigate("/referral");
               }}
             >
               {t("dashboard.getLink") || "Havola olish"}
@@ -470,15 +470,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {tab === "referral" && (
-        <div className="overlay-modal_dashboard">
-          <iframe
-            src="/referral"
-            className="iframe-modal_dashboard"
-            title="Referral"
-          ></iframe>
-        </div>
-      )}
+
 
       {tab === "profile" && (
         <div className="overlay-modal_dashboard">

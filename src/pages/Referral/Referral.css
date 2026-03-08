@@ -7,8 +7,32 @@
   background: var(--bg-secondary);
   color: var(--text-primary);
   padding: 14px;
-  padding-bottom: 100px;
+  padding-bottom: 20px;
   transition: all 0.3s ease;
+}
+
+/* Back Button */
+.referral-page .btn-back-top {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--color-primary);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  font-weight: 600;
+}
+
+.referral-page .btn-back-top svg {
+  width: 18px;
+  height: 18px;
+}
+
+.referral-page .btn-back-top:hover {
+  opacity: 0.8;
 }
 
 /* ===============================

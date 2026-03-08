@@ -1,12 +1,24 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import lottie from 'lottie-web';
 import pako from 'pako';
 
-export function TGSSticker({ stickerPath, className }) {
+export const TGSSticker = forwardRef(({ stickerPath, className, autoplay = true, loop = true, onMouseEnter, onMouseLeave }, ref) => {
   const containerRef = useRef(null);
   const animationRef = useRef(null);
+  const isLoadedRef = useRef(false);
 
+  // Expose play/pause methods to parent
+  useImperativeHandle(ref, () => ({
+    play: () => animationRef.current?.play(),
+    pause: () => animationRef.current?.pause(),
+    stop: () => animationRef.current?.stop(),
+    goToAndStop: (frame) => animationRef.current?.goToAndStop(frame, true),
+  }));
+
+  // Load animation only when stickerPath changes
   useEffect(() => {
+    isLoadedRef.current = false;
+    
     const fetchAndPlay = async () => {
       try {
         const response = await fetch(stickerPath);
@@ -26,10 +38,17 @@ export function TGSSticker({ stickerPath, className }) {
           animationRef.current = lottie.loadAnimation({
             container: containerRef.current,
             renderer: 'svg',
-            loop: true,
-            autoplay: true,
+            loop: loop,
+            autoplay: autoplay,
             animationData: animationData,
           });
+          
+          isLoadedRef.current = true;
+          
+          // Agar autoplay false bo'lsa, birinchi frameda to'xtat
+          if (!autoplay && animationRef.current) {
+            animationRef.current.goToAndStop(0, true);
+          }
         }
       } catch (error) {
         console.error(`Error loading sticker ${stickerPath}:`, error);
@@ -45,5 +64,26 @@ export function TGSSticker({ stickerPath, className }) {
     };
   }, [stickerPath]);
 
-  return <div ref={containerRef} className={className} />;
-}
+  // Handle autoplay changes without reloading
+  useEffect(() => {
+    if (!isLoadedRef.current || !animationRef.current) return;
+    
+    if (autoplay) {
+      animationRef.current.play();
+    } else {
+      animationRef.current.pause();
+    }
+  }, [autoplay]);
+
+  return (
+    <div 
+      ref={containerRef} 
+      className={className}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    />
+  );
+});
+
+// Named export uchun backward compatibility
+export { TGSSticker as default };

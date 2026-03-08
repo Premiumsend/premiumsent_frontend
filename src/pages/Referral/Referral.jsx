@@ -36,6 +36,22 @@ export default function Referral() {
   const [friendsCount, setFriendsCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
 
+  // Telegram Mini App Back Button
+  useEffect(() => {
+    try {
+      WebApp.BackButton.show();
+      const handleBackClick = () => navigate("/");
+      WebApp.BackButton.onClick(handleBackClick);
+      
+      return () => {
+        WebApp.BackButton.offClick(handleBackClick);
+        WebApp.BackButton.hide();
+      };
+    } catch (err) {
+      console.error("BackButton error:", err);
+    }
+  }, [navigate]);
+
   // Get Telegram user info
   useEffect(() => {
     const initTelegram = async () => {

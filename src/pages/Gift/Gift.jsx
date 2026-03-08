@@ -2,29 +2,37 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "../../context/LanguageContext";
 import apiFetch from "../../utils/apiFetch";
-import yurakImg from "../../assets/yurak_new.png";
-import ayiqImg from "../../assets/ayiq_new.png";
+import { TGSSticker } from "../../components/TGSSticker";
+import WebApp from "@twa-dev/sdk";
 import "./gift.css";
 
 const CARD_NUMBER = import.meta.env.VITE_CARD_NUMBER;
 const CARD_NAME = import.meta.env.VITE_CARD_NAME;
 
+// Gift IDlar - har bir gift fayl nomi gift ID ga mos keladi (masalan: 5170145012310081615.tgs)
 const GIFTS = [
-  { id: "5170145012310081615", emoji: "\u{1F49D}", stars: 15 },
-  { id: "5170233102089322756", emoji: "\u{1F9F8}", stars: 15 },
-  { id: "5170250947678437525", emoji: "\u{1F381}", stars: 25 },
-  { id: "5168103777563050263", emoji: "\u{1F339}", stars: 25 },
-  { id: "5170144170496491616", emoji: "\u{1F382}", stars: 50 },
-  { id: "5170314324215857265", emoji: "\u{1F490}", stars: 50 },
-  { id: "5170564780938756245", emoji: "\u{1F680}", stars: 50 },
-  { id: "6028601630662853006", emoji: "\u{1F37E}", stars: 50 },
-  { id: "5922558454332916696", emoji: "\u{1F384}", stars: 50 },
-  { id: "5801108895304779062", emoji: "\u{1F381}", stars: 50, image: yurakImg },
-  { id: "5800655655995968830", emoji: "\u{1F381}", stars: 50, image: ayiqImg },
-  { id: "5168043875654172773", emoji: "\u{1F3C6}", stars: 100 },
-  { id: "5170690322832818290", emoji: "\u{1F48D}", stars: 100 },
-  { id: "5170521118301225164", emoji: "\u{1F48E}", stars: 100 },
+  { id: "5170145012310081615", stars: 15 },
+  { id: "5170233102089322756", stars: 15 },
+  { id: "5170250947678437525", stars: 25 },
+  { id: "5168103777563050263", stars: 25 },
+  { id: "5170144170496491616", stars: 50 },
+  { id: "5170314324215857265", stars: 50 },
+  { id: "5170564780938756245", stars: 50 },
+  { id: "6028601630662853006", stars: 50 },
+  { id: "5922558454332916696", stars: 50 },
+  { id: "5801108895304779062", stars: 50 },
+  { id: "5800655655995968830", stars: 50 },
+  { id: "5866352046986232958", stars: 50 },
+  { id: "5956217000635139069", stars: 50 },
+  { id: "5168043875654172773", stars: 100 },
+  { id: "5170690322832818290", stars: 100 },
+  { id: "5170521118301225164", stars: 100 },
 ];
+
+// Gift ID dan TGS sticker path olish
+const getGiftStickerPath = (giftId) => {
+  return new URL(`../../assets/${giftId}.tgs`, import.meta.url).href;
+};
 
 // Narxlar (so'mda)
 const PRICE_MAP = { 15: 3500, 25: 5500, 50: 11000, 100: 22000 };
@@ -48,6 +56,7 @@ export default function Gift() {
 
   // Step 2: Gift selection
   const [selectedGift, setSelectedGift] = useState(null);
+  const [hoveredGift, setHoveredGift] = useState(null);
 
   // Step 3: Options
   const [isAnonymous, setIsAnonymous] = useState(false);
@@ -64,6 +73,22 @@ export default function Gift() {
 
   const pollingRef = useRef(null);
   const countdownRef = useRef(null);
+
+  // Telegram Mini App Back Button
+  useEffect(() => {
+    try {
+      WebApp.BackButton.show();
+      const handleBackClick = () => navigate("/");
+      WebApp.BackButton.onClick(handleBackClick);
+      
+      return () => {
+        WebApp.BackButton.offClick(handleBackClick);
+        WebApp.BackButton.hide();
+      };
+    } catch (err) {
+      console.error("BackButton error:", err);
+    }
+  }, [navigate]);
 
   // Telegram username
   const fillMyUsername = () => {
@@ -278,14 +303,6 @@ export default function Gift() {
 
   return (
     <div className="gift-container">
-      {/* Back Button */}
-      <button className="btn-back-top" onClick={() => navigate("/")}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-        Orqaga
-      </button>
-
       {/* Header */}
       <div className="gift-page-title">
         <h1>{t("gift.title")}</h1>
@@ -404,12 +421,17 @@ export default function Gift() {
               key={gift.id}
               className={`gift-card ${selectedGift?.id === gift.id ? "selected" : ""}`}
               onClick={() => setSelectedGift(gift)}
+              onMouseEnter={() => setHoveredGift(gift.id)}
+              onMouseLeave={() => setHoveredGift(null)}
+              onTouchStart={() => setHoveredGift(gift.id)}
+              onTouchEnd={() => setTimeout(() => setHoveredGift(null), 500)}
             >
-              {gift.image ? (
-                <img src={gift.image} alt="" className="gift-card-img" />
-              ) : (
-                <span className="gift-emoji">{gift.emoji}</span>
-              )}
+              <TGSSticker
+                stickerPath={getGiftStickerPath(gift.id)}
+                className="gift-tgs-sticker"
+                autoplay={hoveredGift === gift.id || selectedGift?.id === gift.id}
+                loop={true}
+              />
               <span className="gift-price-label">{formatAmount(PRICE_MAP[gift.stars])} so'm</span>
             </div>
           ))}
@@ -450,11 +472,10 @@ export default function Gift() {
 
                 {/* Gift preview */}
                 <div className="gift-modal-preview">
-                  {selectedGift?.image ? (
-                    <img src={selectedGift.image} alt="" className="gift-modal-img" />
-                  ) : (
-                    <span className="gift-modal-emoji">{selectedGift?.emoji || "🎁"}</span>
-                  )}
+                  <TGSSticker
+                    stickerPath={getGiftStickerPath(selectedGift?.id)}
+                    className="gift-modal-tgs"
+                  />
                   <div>
                     <div className="gift-modal-recipient">@{order?.recipient_username}</div>
                     <div className="gift-modal-stars">{order?.stars} ⭐</div>
@@ -539,7 +560,11 @@ export default function Gift() {
                 <div className="gift-success-icon">✅</div>
                 <h3>{t("gift.success")}</h3>
                 <p className="gift-success-detail">
-                  {selectedGift?.emoji} → @{order?.recipient_username}
+                  <TGSSticker
+                    stickerPath={getGiftStickerPath(selectedGift?.id)}
+                    className="gift-success-tgs"
+                  />
+                  → @{order?.recipient_username}
                 </p>
                 <button className="gift-modal-action-btn" onClick={resetAll}>
                   {t("gift.sendAnother")}
