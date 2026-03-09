@@ -52,7 +52,8 @@ export default function Home() {
   const [order, setOrder] = useState(null);
   const [status, setStatus] = useState("pending");
   const [txId, setTxId] = useState(null);
-  const [copied, setCopied] = useState(false);
+  const [copiedCard, setCopiedCard] = useState(false);
+  const [copiedAmount, setCopiedAmount] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [timer, setTimer] = useState(20);
   const [profile, setProfile] = useState(null);
@@ -170,15 +171,15 @@ export default function Home() {
   // Copy card
   const handleCopy = () => {
     navigator.clipboard.writeText(CARD_NUMBER);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopiedCard(true);
+    setTimeout(() => setCopiedCard(false), 2000);
   };
 
   // Copy amount
   const handleCopyamount = () => {
     navigator.clipboard.writeText(order?.amount);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopiedAmount(true);
+    setTimeout(() => setCopiedAmount(false), 2000);
   };
 
   // ============================================
@@ -482,17 +483,34 @@ export default function Home() {
                   position: 'relative'
                 }}
               >
+                {/* Chegirma badge - burchakda */}
+                {hasDiscount && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-8px',
+                    right: '10px',
+                    background: 'linear-gradient(135deg, #ff6b6b, #ee5a24)',
+                    color: '#fff',
+                    fontSize: '10px',
+                    fontWeight: '700',
+                    padding: '3px 8px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 8px rgba(238, 90, 36, 0.4)'
+                  }}>
+                    -{discountPkg.discount_percent}%
+                  </span>
+                )}
                 <span style={{color: '#fff', fontSize: '14px', fontWeight: '500', flex: 1, display: 'flex', alignItems: 'center'}}>
                   <StarIcon />
                   {starAmount >= 1000 ? (starAmount / 1000) + 'K' : starAmount} Stars
                 </span>
-                <span style={{color: hasDiscount ? '#ff6b6b' : '#4ee0ff', fontSize: '13px', fontWeight: '600'}}>
+                <span style={{color: hasDiscount ? '#ffd700' : '#4ee0ff', fontSize: '13px', fontWeight: '600'}}>
                   {hasDiscount ? (
                     <>
-                      <span style={{textDecoration: 'line-through', opacity: 0.6, marginRight: '6px'}}>
+                      <span style={{textDecoration: 'line-through', opacity: 0.6, marginRight: '6px', color: '#ffd700'}}>
                         {formatAmount(starAmount * NARX)}
                       </span>
-                      {formatAmount(discountPkg.discounted_price)} UZS
+                      <span style={{color: '#ffd700'}}>{formatAmount(discountPkg.discounted_price)} UZS</span>
                     </>
                   ) : (
                     <>{formatAmount(starAmount * NARX)} UZS</>
@@ -564,7 +582,7 @@ export default function Home() {
                     <div className="modal-pay-row">
                       <span className="modal-pay-value">{CARD_NUMBER}</span>
                       <button className="modal-copy-btn" onClick={handleCopy}>
-                        {copied ? "✓" : "📋"}
+                        {copiedCard ? "✓" : "📋"}
                       </button>
                     </div>
                   </div>
@@ -581,7 +599,7 @@ export default function Home() {
                     <div className="modal-pay-row">
                       <span className="modal-pay-value bold">{formatAmount(order?.amount)} so'm</span>
                       <button className="modal-copy-btn" onClick={handleCopyamount}>
-                        {copied ? "✓" : "📋"}
+                        {copiedAmount ? "✓" : "📋"}
                       </button>
                     </div>
                   </div>
@@ -641,7 +659,7 @@ export default function Home() {
                     <span className="waiting-label">Karta:</span>
                     <span className="waiting-value">{CARD_NUMBER}</span>
                     <button className="modal-copy-btn-sm" onClick={handleCopy}>
-                      {copied ? "✓" : "📋"}
+                      {copiedCard ? "✓" : "📋"}
                     </button>
                   </div>
                   <div className="waiting-info-row highlight">

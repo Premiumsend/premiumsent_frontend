@@ -198,8 +198,13 @@ export default function AdminPanel() {
 
       // Bot stars balance
       const botStarsData = await botStarsRes.json();
+      console.log("🤖 Bot stars response:", botStarsData);
       if (botStarsData.success) {
         setBotStarsBalance(botStarsData.bot_stars_balance || 0);
+        console.log("✅ Bot stars balance set:", botStarsData.bot_stars_balance);
+      } else {
+        console.warn("⚠️ Bot stars fetch muvaffaqiyatsiz:", botStarsData.message || botStarsData.error);
+        setBotStarsBalance(0);
       }
     } catch (err) {
       console.error("❌ Wallet/Prices fetch error:", err);
@@ -257,15 +262,15 @@ export default function AdminPanel() {
       const premiumData = premiumJson.orders || [];
       const giftData = giftJson.orders || [];
 
-      // Filter by date and completed status
+      // Filter by date and sent status only
       const filterByDate = (items, dateField = "created_at") => {
         if (!startDate) return items;
         return items.filter(item => new Date(item[dateField]) >= startDate);
       };
 
-      const filteredStars = filterByDate(starsData).filter(tx => tx.status === "stars_sent" || tx.status === "completed");
-      const filteredPremium = filterByDate(premiumData).filter(tx => tx.status === "premium_sent" || tx.status === "completed");
-      const filteredGift = filterByDate(giftData).filter(tx => tx.status === "gift_sent" || tx.status === "completed");
+      const filteredStars = filterByDate(starsData).filter(tx => tx.status === "stars_sent");
+      const filteredPremium = filterByDate(premiumData).filter(tx => tx.status === "premium_sent");
+      const filteredGift = filterByDate(giftData).filter(tx => tx.status === "gift_sent");
 
       // Calculate analytics
       const starsStats = {
@@ -295,8 +300,11 @@ export default function AdminPanel() {
         }
       });
 
-      // Calculate daily breakdown from stars transactions (last 7 days)
-      const completedStars = starsData.filter(tx => tx.status === "stars_sent" || tx.status === "completed");
+      // Calculate daily breakdown from all sent transactions (last 7 days)
+      const completedStars = starsData.filter(tx => tx.status === "stars_sent");
+      const completedPremium = premiumData.filter(tx => tx.status === "premium_sent");
+      const completedGift = giftData.filter(tx => tx.status === "gift_sent");
+      
       const dailyMap = {};
       
       // Get last 7 days
@@ -308,15 +316,21 @@ export default function AdminPanel() {
         dailyMap[key] = { date: key, stars: 0, amount: 0, count: 0 };
       }
 
-      // Aggregate transactions by day
-      completedStars.forEach(tx => {
-        const txDate = new Date(tx.created_at).toISOString().split('T')[0];
-        if (dailyMap[txDate]) {
-          dailyMap[txDate].stars += tx.stars || 0;
-          dailyMap[txDate].amount += tx.amount || 0;
-          dailyMap[txDate].count += 1;
-        }
-      });
+      // Aggregate all transactions by day
+      const aggregateToDaily = (transactions) => {
+        transactions.forEach(tx => {
+          const txDate = new Date(tx.created_at).toISOString().split('T')[0];
+          if (dailyMap[txDate]) {
+            dailyMap[txDate].stars += tx.stars || 0;
+            dailyMap[txDate].amount += tx.amount || 0;
+            dailyMap[txDate].count += 1;
+          }
+        });
+      };
+
+      aggregateToDaily(completedStars);
+      aggregateToDaily(completedPremium);
+      aggregateToDaily(completedGift);
 
       setDailyStats(Object.values(dailyMap));
     } catch (err) {
@@ -1109,6 +1123,12 @@ export default function AdminPanel() {
             📊 Analitika
           </button>
           <button 
+            className={`hdr-nav-btn ${activeTab === "notifications" ? "active" : ""}`}
+            onClick={() => setActiveTab("notifications")}
+          >
+            🔔 Xabar
+          </button>
+          <button 
             className={`hdr-nav-btn ${activeTab === "settings" ? "active" : ""}`}
             onClick={() => setActiveTab("settings")}
           >
@@ -1142,12 +1162,6 @@ export default function AdminPanel() {
           onClick={() => setActiveTab("users")}
         >
           Users
-        </button>
-        <button 
-          className={`tab ${activeTab === "notifications" ? "active" : ""}`}
-          onClick={() => setActiveTab("notifications")}
-        >
-          🔔 Xabar
         </button>
       </div>
 
@@ -1638,7 +1652,7 @@ export default function AdminPanel() {
                         {/* Actions */}
                         {(tx.status === "pending" || tx.status === "completed" || tx.status === "error") && (
                           <div className="order-actions">
-                            {(tx.status === "completed" || tx.status === "error") && (
+                            {(tx.status === "pending" || tx.status === "completed" || tx.status === "error") && (
                               <button 
                                 className="action-btn send"
                                 onClick={(e) => { e.stopPropagation(); sendGift(tx.id); }}

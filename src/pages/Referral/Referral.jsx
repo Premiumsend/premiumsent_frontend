@@ -206,11 +206,12 @@ export default function Referral() {
     if (!referralLink) return;
 
     try {
-      // Telegram share message - exact format requested
-      const shareText = `Bu bot orqali Telegram Starsni oson sotib olish mumkin:\n\n${referralLink}`;
+      // Telegram share - text birinchi, keyin bo'sh qator, keyin link
+      const shareText = "Bu bot orqali Telegram Starsni oson sotib olish mumkin:";
       
       // Use Telegram's share URL to open "Forward to..." menu
-      const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent("Bu bot orqali Telegram Starsni oson sotib olish mumkin:")}`;
+      // text + \n + url formatida chiqadi, shuning uchun textga \n qo'shamiz
+      const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(shareText + "\n")}`;
       
       // Open Telegram share dialog
       WebApp.openTelegramLink(shareUrl);
