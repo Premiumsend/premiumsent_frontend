@@ -482,24 +482,6 @@ export default function Home() {
                   position: 'relative'
                 }}
               >
-                {/* Chegirma badge */}
-                {hasDiscount && (
-                  <span style={{
-                    position: 'absolute',
-                    top: '-8px',
-                    right: '10px',
-                    background: 'linear-gradient(135deg, #ff6b6b, #ee5a24)',
-                    color: '#fff',
-                    fontSize: '10px',
-                    fontWeight: '700',
-                    padding: '3px 8px',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 8px rgba(238, 90, 36, 0.4)',
-                    animation: 'pulse 2s infinite'
-                  }}>
-                    -{discountPkg.discount_percent}% 🔥
-                  </span>
-                )}
                 <span style={{color: '#fff', fontSize: '14px', fontWeight: '500', flex: 1, display: 'flex', alignItems: 'center'}}>
                   <StarIcon />
                   {starAmount >= 1000 ? (starAmount / 1000) + 'K' : starAmount} Stars
