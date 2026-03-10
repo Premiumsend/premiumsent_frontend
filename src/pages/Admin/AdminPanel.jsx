@@ -1347,12 +1347,12 @@ export default function AdminPanel() {
           {/* Wallet Info List */}
           <div className="info-list wallet-list">
             <div className="info-row">
-              <span className="info-label">⭐ User stars balansi:</span>
-              <span className="info-value gold">{walletLoading ? '...' : botStarsBalance.toLocaleString()} ⭐</span>
-            </div>
-            <div className="info-row">
               <span className="info-label">⭐ Mavjud stars:</span>
               <span className="info-value gold">{walletLoading ? '...' : getAvailableStars().toLocaleString()}</span>
+            </div>
+            <div className="info-row">
+              <span className="info-label">⭐ Userbot balansi:</span>
+              <span className="info-value gold">{walletLoading ? '...' : botStarsBalance.toLocaleString()} ⭐</span>
             </div>
             <div className="info-row">
               <span className="info-label">💎 TON balance:</span>
