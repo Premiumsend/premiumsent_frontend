@@ -492,9 +492,8 @@ export default function Home() {
         <h3 style={{color: '#fff', margin: '24px 0 12px 0', fontSize: '16px', fontWeight: '600'}}>Yoki to'plamni tanlang:</h3>
         <div style={{display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '20px'}}>
           {(showMorePlans ? STARS_OPTIONS : STARS_OPTIONS.slice(0, 3)).map((starAmount, idx) => {
-            // Narx oralig'i: maxPrice - 950 dan maxPrice gacha
+            // Narx: stars * NARX (240 so'm)
             const maxPrice = starAmount * NARX;
-            const minPrice = maxPrice - 950;
             
             return (
               <div
@@ -516,7 +515,7 @@ export default function Home() {
                   {starAmount >= 1000 ? (starAmount / 1000) + 'K' : starAmount} Stars
                 </span>
                 <span style={{color: '#4ee0ff', fontSize: '13px', fontWeight: '600'}}>
-                  {formatAmount(minPrice)} - {formatAmount(maxPrice)} UZS
+                  {formatAmount(maxPrice)} UZS
                 </span>
               </div>
             );
