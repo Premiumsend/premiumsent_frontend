@@ -41,7 +41,8 @@ export default function Premium() {
   const [countdown, setCountdown] = useState(0);
 
   const [loadingBuy, setLoadingBuy] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copiedCard, setCopiedCard] = useState(false);
+  const [copiedAmount, setCopiedAmount] = useState(false);
 
   // Format
   const formatAmount = (num) =>
@@ -155,7 +156,7 @@ export default function Premium() {
 
       setOrder(data.order);
       setShowWarningModal(true);
-      setPaymentStatus("pending");
+      setPaymentStatus("payment_info");
       setCardLast4("");
 
       startCountdown(300); // 5 daqiqa
@@ -237,10 +238,22 @@ export default function Premium() {
     };
   }, []);
 
-  const copy = (t) => {
-    navigator.clipboard.writeText(t);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+  // Copy handlers - alohida animatsiyalar
+  const handleCopyCard = () => {
+    navigator.clipboard.writeText(CARD_NUMBER);
+    setCopiedCard(true);
+    setTimeout(() => setCopiedCard(false), 1500);
+  };
+
+  const handleCopyAmount = () => {
+    navigator.clipboard.writeText(String(order?.amount));
+    setCopiedAmount(true);
+    setTimeout(() => setCopiedAmount(false), 1500);
+  };
+
+  // "To'lov qildim" tugmasi - payment_info dan pending ga o'tish
+  const handlePaymentDone = () => {
+    setPaymentStatus("pending");
   };
 
   // "Tushundim" tugmasi - warning modaldan payment modalga o'tish
@@ -369,12 +382,12 @@ export default function Premium() {
         <div className="modal-overlay">
           <div className="modal-content">
 
-            {/* PENDING - To'lov kutilmoqda */}
-            {paymentStatus === "pending" && (
+            {/* PAYMENT_INFO - To'lov ma'lumotlari va "To'lov qildim" tugmasi */}
+            {paymentStatus === "payment_info" && (
               <div className="pending-section">
                 {/* Modal Header */}
                 <div className="modal-header-bar">
-                  <span className="modal-header-title">Premium xarid qilish</span>
+                  <span className="modal-header-title">💳 Premium xarid qilish</span>
                   <button className="modal-close-x" onClick={() => {
                     stopPolling();
                     stopCountdown();
@@ -403,8 +416,8 @@ export default function Premium() {
                     <div className="modal-pay-label">Karta raqami</div>
                     <div className="modal-pay-row">
                       <span className="modal-pay-value">{CARD_NUMBER}</span>
-                      <button className="modal-copy-btn" onClick={() => copy(CARD_NUMBER)}>
-                        {copied ? "✓" : "📋"}
+                      <button className="modal-copy-btn" onClick={handleCopyCard}>
+                        {copiedCard ? "✓" : "📋"}
                       </button>
                     </div>
                   </div>
@@ -420,8 +433,8 @@ export default function Premium() {
                     <div className="modal-pay-label">To'lov summasi</div>
                     <div className="modal-pay-row">
                       <span className="modal-pay-value bold">{formatAmount(order.amount)} so'm</span>
-                      <button className="modal-copy-btn" onClick={() => copy(order.amount)}>
-                        {copied ? "✓" : "📋"}
+                      <button className="modal-copy-btn" onClick={handleCopyAmount}>
+                        {copiedAmount ? "✓" : "📋"}
                       </button>
                     </div>
                   </div>
@@ -433,16 +446,69 @@ export default function Premium() {
                   <span>Aynan <b>{formatAmount(order.amount)} so'm</b> to'lang! Aks holda to'lov ko'rinmaydi.</span>
                 </div>
 
-                {/* Timer & Status */}
+                {/* Timer */}
                 <div className="modal-status-bar">
                   <div className="modal-timer">
                     <div className="modal-timer-icon">⏳</div>
                     <span>{formatTime(countdown)}</span>
                   </div>
-                  <div className="modal-waiting">
-                    <div className="modal-spinner"></div>
-                    <span>To'lov kutilmoqda...</span>
+                </div>
+
+                {/* To'lov qildim button */}
+                <button className="btn-payment-done" onClick={handlePaymentDone}>
+                  ✅ To'lov qildim
+                </button>
+                <p className="modal-close-hint">To'lovni amalga oshiring va tugmani bosing</p>
+              </div>
+            )}
+
+            {/* PENDING - To'lov kutilmoqda */}
+            {paymentStatus === "pending" && (
+              <div className="pending-section">
+                {/* Modal Header */}
+                <div className="modal-header-bar">
+                  <span className="modal-header-title">⏳ To'lov kutilmoqda</span>
+                  <button className="modal-close-x" onClick={() => {
+                    stopPolling();
+                    stopCountdown();
+                    setShowModal(false);
+                  }}>✕</button>
+                </div>
+
+                {/* Waiting Animation */}
+                <div className="waiting-animation-wrap">
+                  <div className="waiting-circle-outer">
+                    <div className="waiting-circle-inner">
+                      <div className="waiting-icon">🔍</div>
+                    </div>
                   </div>
+                  <div className="waiting-dots">
+                    <span></span><span></span><span></span>
+                  </div>
+                </div>
+
+                <h3 className="waiting-title">To'lov qidirilmoqda...</h3>
+                <p className="waiting-subtitle">To'lovingiz avtomatik aniqlanadi</p>
+
+                {/* Payment Info */}
+                <div className="waiting-payment-info">
+                  <div className="waiting-info-row">
+                    <span className="waiting-label">Karta:</span>
+                    <span className="waiting-value">{CARD_NUMBER}</span>
+                    <button className="modal-copy-btn-sm" onClick={handleCopyCard}>
+                      {copiedCard ? "✓" : "📋"}
+                    </button>
+                  </div>
+                  <div className="waiting-info-row highlight">
+                    <span className="waiting-label">Summa:</span>
+                    <span className="waiting-value bold">{formatAmount(order.amount)} so'm</span>
+                  </div>
+                </div>
+
+                {/* Timer */}
+                <div className="waiting-timer">
+                  <span className="timer-icon-sm">⏱️</span>
+                  <span>{formatTime(countdown)}</span>
                 </div>
 
                 {cardLast4 && (
@@ -451,13 +517,6 @@ export default function Premium() {
                   </div>
                 )}
 
-                <button className="modal-close-btn" onClick={() => {
-                  stopPolling();
-                  stopCountdown();
-                  setShowModal(false);
-                }}>
-                  Bekor qilish
-                </button>
                 <p className="modal-close-hint">Oyna yopilsa ham to'lov kuzatiladi</p>
               </div>
             )}

@@ -69,7 +69,8 @@ export default function Gift() {
   const [showModal, setShowModal] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [countdown, setCountdown] = useState(300);
-  const [copied, setCopied] = useState(false);
+  const [copiedCard, setCopiedCard] = useState(false);
+  const [copiedAmount, setCopiedAmount] = useState(false);
   const [sending, setSending] = useState(false);
 
   const pollingRef = useRef(null);
@@ -298,14 +299,14 @@ export default function Gift() {
   // === Copy handlers ===
   const handleCopyCard = () => {
     navigator.clipboard.writeText(CARD_NUMBER);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    setCopiedCard(true);
+    setTimeout(() => setCopiedCard(false), 1500);
   };
 
   const handleCopyAmount = () => {
     navigator.clipboard.writeText(String(order?.amount));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    setCopiedAmount(true);
+    setTimeout(() => setCopiedAmount(false), 1500);
   };
 
   // === Reset ===
@@ -542,7 +543,7 @@ export default function Gift() {
                     <div className="gift-modal-pay-row">
                       <span className="gift-modal-pay-value">{CARD_NUMBER}</span>
                       <button className="gift-modal-copy-btn" onClick={handleCopyCard}>
-                        {copied ? "✓" : "📋"}
+                        {copiedCard ? "✓" : "📋"}
                       </button>
                     </div>
                   </div>
@@ -561,7 +562,7 @@ export default function Gift() {
                         {formatAmount(order?.amount)} so'm
                       </span>
                       <button className="gift-modal-copy-btn" onClick={handleCopyAmount}>
-                        {copied ? "✓" : "📋"}
+                        {copiedAmount ? "✓" : "📋"}
                       </button>
                     </div>
                   </div>
@@ -616,7 +617,7 @@ export default function Gift() {
                     <div className="gift-modal-pay-row">
                       <span className="gift-modal-pay-value">{CARD_NUMBER}</span>
                       <button className="gift-modal-copy-btn" onClick={handleCopyCard}>
-                        {copied ? "✓" : "📋"}
+                        {copiedCard ? "✓" : "📋"}
                       </button>
                     </div>
                   </div>
@@ -628,7 +629,7 @@ export default function Gift() {
                         {formatAmount(order?.amount)} so'm
                       </span>
                       <button className="gift-modal-copy-btn" onClick={handleCopyAmount}>
-                        {copied ? "✓" : "📋"}
+                        {copiedAmount ? "✓" : "📋"}
                       </button>
                     </div>
                   </div>

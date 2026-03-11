@@ -1189,3 +1189,194 @@
 .warning-understand-btn:active {
   transform: scale(0.98);
 }
+
+/* ================================
+   PAYMENT DONE BUTTON
+================================ */
+.btn-payment-done {
+  width: 100%;
+  padding: 14px 18px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  margin-top: 8px;
+  margin-bottom: 6px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
+}
+
+.btn-payment-done:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 18px rgba(34, 197, 94, 0.4);
+}
+
+.btn-payment-done:active {
+  transform: scale(0.98);
+}
+
+/* ================================
+   WAITING ANIMATION SECTION
+================================ */
+.waiting-animation-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 16px 0 12px 0;
+}
+
+.waiting-circle-outer {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #7c4dff, #b388ff, #7c4dff);
+  padding: 4px;
+  animation: waitingRotate 2s linear infinite;
+}
+
+@keyframes waitingRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.waiting-circle-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.waiting-icon {
+  font-size: 28px;
+  animation: waitingPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes waitingPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.waiting-dots {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.waiting-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #7c4dff;
+  animation: waitingDots 1.4s ease-in-out infinite;
+}
+
+.waiting-dots span:nth-child(2) { animation-delay: 0.2s; }
+.waiting-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes waitingDots {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+.waiting-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 12px 0 4px 0;
+}
+
+.waiting-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Waiting Payment Info */
+.waiting-payment-info {
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 12px 0;
+}
+
+.waiting-info-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+}
+
+.waiting-info-row:not(:last-child) {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.waiting-info-row.highlight {
+  background: rgba(124, 77, 255, 0.1);
+  margin: 6px -12px -10px -12px;
+  padding: 10px 12px;
+  border-radius: 0 0 10px 10px;
+  border: none;
+}
+
+.waiting-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  min-width: 50px;
+}
+
+.waiting-value {
+  font-size: 12px;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.waiting-value.bold {
+  font-weight: 700;
+  color: #b388ff;
+}
+
+.modal-copy-btn-sm {
+  background: var(--bg-tertiary);
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-copy-btn-sm:active {
+  transform: scale(0.95);
+}
+
+/* Waiting Timer */
+.waiting-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(124, 77, 255, 0.1);
+  padding: 6px 14px;
+  border-radius: 16px;
+  margin: 8px 0;
+  border: 1px solid rgba(124, 77, 255, 0.2);
+  font-size: 14px;
+  font-weight: 600;
+  color: #b388ff;
+}
+
+.timer-icon-sm {
+  font-size: 13px;
+}
+
+.waiting-timer span:last-child {
+  font-size: 18px;
+  font-weight: 700;
+  font-family: monospace;
+  color: #b388ff;
+}
