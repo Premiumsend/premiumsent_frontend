@@ -487,7 +487,7 @@ export default function Gift() {
             {/* Anonymous Toggle */}
             <div className="gift-bs-toggle-row">
               <div className="gift-bs-toggle-info">
-                <span className="gift-bs-toggle-title">Ismimni berkitish</span>
+                <span className="gift-bs-toggle-title">Anonim yuborish</span>
               </div>
               <label className="gift-bs-switch">
                 <input
