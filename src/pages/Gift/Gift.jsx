@@ -460,6 +460,9 @@ export default function Gift() {
                   {isAnonymous ? "Anonim" : "Starsjoy Official"}
                 </span>
               </div>
+              {comment && (
+                <p className="gift-bs-message-preview">{comment}</p>
+              )}
               <p className="gift-bs-hint">Bu hadyani profilingizga qo'shishingiz mumkin.</p>
               
               <button type="button" className="gift-bs-view-btn">Ko'rish</button>

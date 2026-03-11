@@ -1551,6 +1551,16 @@
   padding: 16px;
   text-align: center;
   margin-bottom: 16px;
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.gift-bs-message-preview {
+  font-size: 14px;
+  color: #fff;
+  margin: 8px 0 6px 0;
+  word-break: break-word;
 }
 
 .gift-bs-preview-text {
@@ -1580,27 +1590,34 @@
 .gift-bs-sender-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
   margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 
 .gift-bs-sender-avatar {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .gift-bs-sender-label {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .gift-bs-sender-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #fff;
+  background: linear-gradient(135deg, #f0f0f0 0%, #ffffff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .gift-bs-account-note {
