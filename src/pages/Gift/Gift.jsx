@@ -411,27 +411,44 @@ export default function Gift() {
             {/* Drag Handle */}
             <div className="gift-bottom-sheet-handle"></div>
             
-            {/* Header: Recipient */}
+            {/* Header: Recipient Input */}
             <div className="gift-bs-header">
-              <div className="gift-bs-recipient">
-                {profile ? (
-                  <>
-                    <img src={profile.imageUrl || ""} alt="" className="gift-bs-avatar" />
-                    <div className="gift-bs-user-info">
-                      <span className="gift-bs-name">{profile.fullName}</span>
-                      <span className="gift-bs-username">@{profile.username}</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="gift-bs-avatar-placeholder">?</div>
-                    <div className="gift-bs-user-info">
-                      <span className="gift-bs-name">{username || "Foydalanuvchi"}</span>
-                      <span className="gift-bs-username">{username ? `@${username.replace('@', '')}` : "Tanlang"}</span>
-                    </div>
-                  </>
-                )}
-              </div>
+              {profile ? (
+                <div className="gift-bs-recipient-found">
+                  <img src={profile.imageUrl || ""} alt="" className="gift-bs-avatar" />
+                  <div className="gift-bs-user-info">
+                    <span className="gift-bs-name">{profile.fullName}</span>
+                    <span className="gift-bs-username">@{profile.username}</span>
+                  </div>
+                  <button 
+                    className="gift-bs-clear-btn" 
+                    onClick={() => { setUsername(""); setProfile(null); }}
+                  >✕</button>
+                </div>
+              ) : (
+                <div className="gift-bs-recipient-input-row">
+                  <div className="gift-bs-input-wrap">
+                    <span className="gift-bs-input-prefix">@</span>
+                    <input
+                      type="text"
+                      className="gift-bs-username-input"
+                      placeholder="username kiriting"
+                      value={username.replace('@', '')}
+                      onChange={(e) => setUsername(e.target.value)}
+                      autoComplete="off"
+                    />
+                    {loadingProfile && <span className="gift-bs-input-loader">⏳</span>}
+                  </div>
+                  {window?.Telegram?.WebApp?.initDataUnsafe?.user?.username && (
+                    <button 
+                      className="gift-bs-self-btn"
+                      onClick={() => setUsername(window.Telegram.WebApp.initDataUnsafe.user.username)}
+                    >
+                      O'zimga
+                    </button>
+                  )}
+                </div>
+              )}
               <button className="gift-bs-close" onClick={handleCloseGiftModal}>✕</button>
             </div>
 

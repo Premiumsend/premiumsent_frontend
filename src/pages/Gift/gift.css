@@ -1468,6 +1468,110 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
+  gap: 10px;
+}
+
+.gift-bs-recipient-found {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 12px;
+  border-radius: 12px;
+}
+
+.gift-bs-recipient-found .gift-bs-avatar {
+  width: 36px;
+  height: 36px;
+}
+
+.gift-bs-clear-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  transition: all 0.2s;
+}
+
+.gift-bs-clear-btn:active {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(0.95);
+}
+
+.gift-bs-recipient-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.gift-bs-input-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0 12px;
+  height: 42px;
+}
+
+.gift-bs-input-prefix {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+}
+
+.gift-bs-username-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  color: #fff;
+  padding: 0 6px;
+  font-family: inherit;
+}
+
+.gift-bs-username-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.gift-bs-input-loader {
+  font-size: 14px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.gift-bs-self-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.gift-bs-self-btn:active {
+  transform: scale(0.96);
+  opacity: 0.9;
 }
 
 .gift-bs-recipient {
