@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import starsGif from "../../assets/stars.gif";
 import starsSticker from "../../assets/AnimatedSticker_stars.tgs";
 import { TGSSticker } from "../../components/TGSSticker";
 import { useNavigate } from "react-router-dom";
@@ -47,7 +48,6 @@ export default function Home() {
   const [username, setUsername] = useState("");
   const [stars, setStars] = useState("");
   const [price, setPrice] = useState(0);
-  const [priceLoading, setPriceLoading] = useState(false);
 
   const [order, setOrder] = useState(null);
   const [status, setStatus] = useState("pending");
@@ -61,6 +61,7 @@ export default function Home() {
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [countdown, setCountdown] = useState(300); // 5 daqiqa
   const [showMorePlans, setShowMorePlans] = useState(false);
+  const [discountPackages, setDiscountPackages] = useState([]); // Chegirmali paketlar
 
   // Refs for polling (modal yopilsa ham davom etadi)
   const pollingRef = useRef(null);
@@ -103,15 +104,29 @@ export default function Home() {
       .catch(() => setBackendStatus("Backend offline ❌"));
   }, []);
 
+  // Chegirmali paketlarni yuklash
+  useEffect(() => {
+    apiFetch("/api/discount-packages")
+      .then((res) => res.json())
+      .then((data) => setDiscountPackages(data || []))
+      .catch((err) => console.error("Discount packages error:", err));
+  }, []);
+
   // Stars price - backend dan slot-based narx olish
   useEffect(() => {
-    if (!stars || parseInt(stars) < 50 || parseInt(stars) > 10000) {
+    if (!stars || parseInt(stars) < 50) {
       setPrice(0);
       return;
     }
     
     const starNum = parseInt(stars);
-    setPriceLoading(true);
+    
+    // Chegirma paketi tekshirish
+    const discountPkg = discountPackages.find(pkg => pkg.stars === starNum);
+    if (discountPkg) {
+      setPrice(discountPkg.discounted_price);
+      return;
+    }
     
     // Slot-based narx - backend dan olish
     apiFetch(`/api/stars/price/${starNum}`)
@@ -127,9 +142,8 @@ export default function Home() {
       .catch(() => {
         // Xato bo'lsa fallback
         setPrice(starNum * NARX);
-      })
-      .finally(() => setPriceLoading(false));
-  }, [stars]);
+      });
+  }, [stars, discountPackages]);
 
   // Timer for stars_sent
   useEffect(() => {
@@ -492,14 +506,20 @@ export default function Home() {
         <h3 style={{color: '#fff', margin: '24px 0 12px 0', fontSize: '16px', fontWeight: '600'}}>Yoki to'plamni tanlang:</h3>
         <div style={{display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '20px'}}>
           {(showMorePlans ? STARS_OPTIONS : STARS_OPTIONS.slice(0, 3)).map((starAmount, idx) => {
-            // Narx oralig'i: maxPrice - 950 dan maxPrice gacha
-            const maxPrice = starAmount * NARX;
-            const minPrice = maxPrice - 950;
+            // Chegirmali paketni topish
+            const discountPkg = discountPackages.find(pkg => pkg.stars === starAmount);
+            const hasDiscount = !!discountPkg;
             
             return (
               <div
                 key={idx}
-                onClick={() => setStars(String(starAmount))}
+                onClick={() => {
+                  if (hasDiscount) {
+                    navigate('/discount');
+                  } else {
+                    setStars(String(starAmount));
+                  }
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -508,15 +528,42 @@ export default function Home() {
                   border: stars === String(starAmount) ? '2px solid #667eea' : '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '10px',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  position: 'relative'
                 }}
               >
+                {/* Chegirma badge - burchakda */}
+                {hasDiscount && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-8px',
+                    right: '10px',
+                    background: 'linear-gradient(135deg, #ff6b6b, #ee5a24)',
+                    color: '#fff',
+                    fontSize: '10px',
+                    fontWeight: '700',
+                    padding: '3px 8px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 8px rgba(238, 90, 36, 0.4)'
+                  }}>
+                    -{discountPkg.discount_percent}%
+                  </span>
+                )}
                 <span style={{color: '#fff', fontSize: '14px', fontWeight: '500', flex: 1, display: 'flex', alignItems: 'center'}}>
                   <StarIcon />
                   {starAmount >= 1000 ? (starAmount / 1000) + 'K' : starAmount} Stars
                 </span>
-                <span style={{color: '#4ee0ff', fontSize: '13px', fontWeight: '600'}}>
-                  {formatAmount(minPrice)} - {formatAmount(maxPrice)} UZS
+                <span style={{color: hasDiscount ? '#ffd700' : '#4ee0ff', fontSize: '13px', fontWeight: '600'}}>
+                  {hasDiscount ? (
+                    <>
+                      <span style={{textDecoration: 'line-through', opacity: 0.6, marginRight: '6px', color: '#ffd700'}}>
+                        {formatAmount(starAmount * NARX)}
+                      </span>
+                      <span style={{color: '#ffd700'}}>{formatAmount(discountPkg.discounted_price)} UZS</span>
+                    </>
+                  ) : (
+                    <>{formatAmount(starAmount * NARX)} UZS</>
+                  )}
                 </span>
               </div>
             );
