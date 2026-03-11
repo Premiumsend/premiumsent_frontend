@@ -590,7 +590,7 @@ export default function Home() {
       </div>
 
       <div className="actions">
-        <button className="tg-button" onClick={handlePayment}>
+        <button type="button" className="tg-button" onClick={handlePayment}>
           Stars olish {price > 0 && `- ${formatAmount(price)} so'm`}
         </button>
       </div>
@@ -618,7 +618,7 @@ export default function Home() {
               </div>
             </div>
             
-            <button className="warning-understand-btn" onClick={handleWarningUnderstood}>
+            <button type="button" className="warning-understand-btn" onClick={handleWarningUnderstood}>
               ✅ Tushundim
             </button>
           </div>
@@ -636,7 +636,7 @@ export default function Home() {
                 {/* Modal Header */}
                 <div className="modal-header-bar">
                   <span className="modal-header-title">To'lov ma'lumotlari</span>
-                  <button className="modal-close-x" onClick={() => setShowModal(false)}>✕</button>
+                  <button type="button" className="modal-close-x" onClick={() => setShowModal(false)}>✕</button>
                 </div>
 
                 {/* Profile Card */}
@@ -660,7 +660,7 @@ export default function Home() {
                     <div className="modal-pay-label">Karta raqami</div>
                     <div className="modal-pay-row">
                       <span className="modal-pay-value">{CARD_NUMBER}</span>
-                      <button className="modal-copy-btn" onClick={handleCopy}>
+                      <button type="button" className="modal-copy-btn" onClick={handleCopy}>
                         {copiedCard ? "✓" : "📋"}
                       </button>
                     </div>
@@ -677,7 +677,7 @@ export default function Home() {
                     <div className="modal-pay-label">To'lov summasi</div>
                     <div className="modal-pay-row">
                       <span className="modal-pay-value bold">{formatAmount(order?.amount)} so'm</span>
-                      <button className="modal-copy-btn" onClick={handleCopyamount}>
+                      <button type="button" className="modal-copy-btn" onClick={handleCopyamount}>
                         {copiedAmount ? "✓" : "📋"}
                       </button>
                     </div>
@@ -704,7 +704,7 @@ export default function Home() {
                 </div>
 
                 {/* Pay Button */}
-                <button className="btn-payment-done" onClick={handlePaymentDone}>
+                <button type="button" className="btn-payment-done" onClick={handlePaymentDone}>
                   ✅ To'lov qildim
                 </button>
                 <p className="modal-close-hint">To'lovni amalga oshiring va tugmani bosing</p>
@@ -716,7 +716,7 @@ export default function Home() {
               <div className="pending-waiting-section">
                 <div className="modal-header-bar">
                   <span className="modal-header-title">⏳ To'lov kutilmoqda</span>
-                  <button className="modal-close-x" onClick={() => setShowModal(false)}>✕</button>
+                  <button type="button" className="modal-close-x" onClick={() => setShowModal(false)}>✕</button>
                 </div>
 
                 <div className="waiting-animation-wrap">
@@ -737,7 +737,7 @@ export default function Home() {
                   <div className="waiting-info-row">
                     <span className="waiting-label">Karta:</span>
                     <span className="waiting-value">{CARD_NUMBER}</span>
-                    <button className="modal-copy-btn-sm" onClick={handleCopy}>
+                    <button type="button" className="modal-copy-btn-sm" onClick={handleCopy}>
                       {copiedCard ? "✓" : "📋"}
                     </button>
                   </div>
@@ -829,7 +829,7 @@ export default function Home() {
                     <span className="modal-txid-label">Tranzaksiya ID</span>
                     <div className="modal-txid-row">
                       <code>{txId}</code>
-                      <button className="modal-copy-btn" onClick={() => navigator.clipboard.writeText(txId)}>
+                      <button type="button" className="modal-copy-btn" onClick={() => navigator.clipboard.writeText(txId)}>
                         📋
                       </button>
                     </div>
@@ -843,11 +843,11 @@ export default function Home() {
             {/* EXPIRED */}
             {status === "expired" && (
               <div className="modal-result-section">
-                <button className="modal-close-x expired-x" onClick={() => setShowModal(false)}>✕</button>
+                <button type="button" className="modal-close-x expired-x" onClick={() => setShowModal(false)}>✕</button>
                 <div className="modal-result-icon expired-bg">⏰</div>
                 <h3 className="modal-result-title">Vaqt tugadi</h3>
                 <p className="modal-result-desc">To'lov muddati o'tib ketdi. Qaytadan urinib ko'ring.</p>
-                <button className="btn-go-home" onClick={goToHome}>🏠 Bosh sahifaga qaytish</button>
+                <button type="button" className="btn-go-home" onClick={goToHome}>🏠 Bosh sahifaga qaytish</button>
               </div>
             )}
           </div>
