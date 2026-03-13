@@ -2127,7 +2127,7 @@ export default function AdminPanel() {
       {/* ==================== REFERRALS TAB ==================== */}
       {activeTab === "referrals" && (
         <div className="tab-content referrals-tab">
-          <h3 className="settings-section-title">👥 Referral Requests</h3>
+          
           <p className="settings-section-desc">Foydalanuvchilarning referral so'rovlarini tasdiqlang yoki rad qiling</p>
 
           {/* Filter Buttons */}
@@ -2150,9 +2150,9 @@ export default function AdminPanel() {
                   transition: 'all 0.2s ease'
                 }}
               >
-                {f === 'pending' ? `⏳ Kutilmoqda (${referralRequests.filter(r => !r.is_accepted && !r.rejected_at).length})` : 
-                 f === 'accepted' ? `✅ Tasdiqlandi (${referralRequests.filter(r => r.is_accepted).length})` :
-                 f === 'rejected' ? `❌ Rad etildi (${referralRequests.filter(r => r.rejected_at).length})` :
+                {f === 'pending' ? `Kutilmoqda (${referralRequests.filter(r => !r.is_accepted && !r.rejected_at).length})` : 
+                 f === 'accepted' ? `Tasdiqlandi (${referralRequests.filter(r => r.is_accepted).length})` :
+                 f === 'rejected' ? `Rad etildi (${referralRequests.filter(r => r.rejected_at).length})` :
                  'Barchasi'}
               </button>
             ))}
