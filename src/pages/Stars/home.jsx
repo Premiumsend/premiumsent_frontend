@@ -43,8 +43,8 @@ export default function Home() {
   // Stars options
   const STARS_OPTIONS = [50, 100, 200, 350, 500, 750, 1000, 2000, 5000, 10000];
 
-  // Discount packages
-  const [discountPackages, setDiscountPackages] = useState([]);
+  // Discount packages map: { [stars]: { discount, discountedPrice, basePrice } }
+  const [discountMap, setDiscountMap] = useState({});
 
   const [backendStatus, setBackendStatus] = useState("");
   const [username, setUsername] = useState("");
@@ -106,27 +106,25 @@ export default function Home() {
       .catch(() => setBackendStatus("Backend offline ❌"));
   }, []);
 
-  // Fetch discount packages
+  // Discount paketlarni yuklash
   useEffect(() => {
-    const fetchDiscounts = async () => {
-      try {
-        const res = await apiFetch("/api/discount-packages");
-        const data = await res.json();
-        // Map to expected format
-        const packages = data.map(pkg => ({
-          id: pkg.id,
-          stars: pkg.stars,
-          basePrice: pkg.base_price || pkg.discounted_price,
-          discountedPrice: pkg.current_price,
-          discount: pkg.discount_percent,
-          slotAvailable: pkg.slot_available !== false
-        }));
-        setDiscountPackages(packages.filter(p => p.slotAvailable));
-      } catch (err) {
-        console.error("Discount paketlarni yuklashda xato:", err);
-      }
-    };
-    fetchDiscounts();
+    apiFetch("/api/discount-packages")
+      .then(res => res.json())
+      .then(data => {
+        const map = {};
+        data.forEach(pkg => {
+          if (pkg.slot_available !== false) {
+            map[pkg.stars] = {
+              id: pkg.id,
+              discount: pkg.discount_percent,
+              discountedPrice: pkg.current_price,
+              basePrice: pkg.base_price || pkg.discounted_price,
+            };
+          }
+        });
+        setDiscountMap(map);
+      })
+      .catch(() => {});
   }, []);
 
   // Stars price - backend dan slot-based narx olish
@@ -516,32 +514,31 @@ export default function Home() {
       {/* Stars Options */}
       <div className="preset-options-section">
         <h3 style={{color: '#fff', margin: '24px 0 12px 0', fontSize: '16px', fontWeight: '600'}}>Yoki to'plamni tanlang:</h3>
-        
-        {/* Discount Packages - chegirma bo'lsa ko'rinadi */}
-        {discountPackages.length > 0 && (
-          <div style={{marginBottom: '16px'}}>
-            <div style={{display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px'}}>
-              <span style={{fontSize: '13px', color: '#f9a825', fontWeight: '600'}}>🎉 Chegirma paketlar</span>
-            </div>
-            <div style={{display: 'flex', flexDirection: 'column', gap: '6px'}}>
-              {discountPackages.map((pkg, idx) => (
+        <div style={{display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '20px'}}>
+          {(showMorePlans ? STARS_OPTIONS : STARS_OPTIONS.slice(0, 3)).map((starAmount, idx) => {
+            const maxPrice = starAmount * NARX;
+            const discountPkg = discountMap[starAmount];
+
+            if (discountPkg) {
+              // Bu amount uchun chegirma paket mavjud — discount ko'rinishida chiqar
+              return (
                 <div
-                  key={`discount-${idx}`}
+                  key={idx}
                   onClick={() => navigate('/discount')}
                   style={{
                     position: 'relative',
                     display: 'flex',
                     alignItems: 'center',
-                    padding: '12px 14px',
-                    background: 'linear-gradient(135deg, rgba(249, 168, 37, 0.15) 0%, rgba(255, 204, 2, 0.08) 100%)',
-                    border: '2px solid rgba(249, 168, 37, 0.4)',
-                    borderRadius: '12px',
+                    padding: '10px 14px',
+                    background: 'linear-gradient(135deg, rgba(249,168,37,0.18) 0%, rgba(255,204,2,0.08) 100%)',
+                    border: '2px solid rgba(249,168,37,0.5)',
+                    borderRadius: '10px',
                     cursor: 'pointer',
-                    transition: 'all 0.25s ease',
+                    transition: 'all 0.2s ease',
                     overflow: 'hidden'
                   }}
                 >
-                  {/* Discount badge */}
+                  {/* Chegirma badge */}
                   <div style={{
                     position: 'absolute',
                     top: 0,
@@ -551,42 +548,28 @@ export default function Home() {
                     fontSize: '10px',
                     fontWeight: '700',
                     padding: '3px 10px',
-                    borderRadius: '0 10px 0 10px'
+                    borderRadius: '0 8px 0 8px'
                   }}>
-                    -{pkg.discount}%
+                    -{discountPkg.discount}%
                   </div>
-                  
-                  <div style={{flex: 1, display: 'flex', alignItems: 'center', gap: '6px'}}>
-                    <span style={{fontSize: '22px'}}>⭐</span>
-                    <span style={{fontSize: '16px', fontWeight: '700', color: '#fff'}}>
-                      {formatAmount(pkg.stars)} Stars
-                    </span>
-                  </div>
-                  
+
+                  <span style={{color: '#fff', fontSize: '14px', fontWeight: '500', flex: 1, display: 'flex', alignItems: 'center'}}>
+                    <StarIcon />
+                    {starAmount >= 1000 ? (starAmount / 1000) + 'K' : starAmount} Stars
+                  </span>
+
                   <div style={{textAlign: 'right'}}>
-                    <div style={{fontSize: '14px', fontWeight: '700', color: '#4ee0ff'}}>
-                      {formatAmount(pkg.discountedPrice)} so'm
+                    <div style={{color: '#f9a825', fontSize: '13px', fontWeight: '700'}}>
+                      {formatAmount(discountPkg.discountedPrice)} UZS
                     </div>
-                    <div style={{
-                      fontSize: '10px',
-                      color: 'rgba(255,255,255,0.5)',
-                      textDecoration: 'line-through'
-                    }}>
-                      {formatAmount(pkg.basePrice)} so'm
+                    <div style={{color: 'rgba(255,255,255,0.45)', fontSize: '11px', textDecoration: 'line-through'}}>
+                      {formatAmount(maxPrice)} UZS
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {/* Regular Stars Options */}
-        <div style={{display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '20px'}}>
-          {(showMorePlans ? STARS_OPTIONS : STARS_OPTIONS.slice(0, 3)).map((starAmount, idx) => {
-            // Narx: stars * NARX (240 so'm)
-            const maxPrice = starAmount * NARX;
-            
+              );
+            }
+
             return (
               <div
                 key={idx}
