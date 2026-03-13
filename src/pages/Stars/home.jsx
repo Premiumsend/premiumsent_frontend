@@ -45,6 +45,7 @@ export default function Home() {
 
   // Discount packages map: { [stars]: { discount, discountedPrice, basePrice } }
   const [discountMap, setDiscountMap] = useState({});
+  const [discountLoading, setDiscountLoading] = useState(false);
 
   const [backendStatus, setBackendStatus] = useState("");
   const [username, setUsername] = useState("");
@@ -98,6 +99,32 @@ export default function Home() {
   const formatAmount = (num) =>
     num?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
+  // Discount paketlarni yuklash (refreshable)
+  const fetchDiscountPackages = async () => {
+    setDiscountLoading(true);
+    try {
+      const res = await apiFetch("/api/discount-packages");
+      const data = await res.json();
+      const map = {};
+      data.forEach(pkg => {
+        if (pkg.slot_available !== false) {
+          map[pkg.stars] = {
+            id: pkg.id,
+            discount: pkg.discount_percent,
+            discountedPrice: pkg.current_price,
+            basePrice: pkg.stars * NARX,
+          };
+        }
+      });
+      setDiscountMap(map);
+      console.log("✅ Discount map:", map);
+    } catch (err) {
+      console.error("❌ Discount paketlarni yuklashda xato:", err);
+    } finally {
+      setDiscountLoading(false);
+    }
+  };
+
   // Backend status
   useEffect(() => {
     apiFetch("/api/status")
@@ -106,28 +133,9 @@ export default function Home() {
       .catch(() => setBackendStatus("Backend offline ❌"));
   }, []);
 
-  // Discount paketlarni yuklash
+  // Discount paketlarni yuklash (initial load)
   useEffect(() => {
-    apiFetch("/api/discount-packages")
-      .then(res => res.json())
-      .then(data => {
-        const map = {};
-        data.forEach(pkg => {
-          if (pkg.slot_available !== false) {
-            map[pkg.stars] = {
-              id: pkg.id,
-              discount: pkg.discount_percent,
-              discountedPrice: pkg.current_price,
-              basePrice: pkg.stars * NARX, // To'g'ri asl narx
-            };
-          }
-        });
-        setDiscountMap(map);
-        console.log("✅ Discount map:", map); // Debug
-      })
-      .catch(err => {
-        console.error("❌ Discount paketlarni yuklashda xato:", err);
-      });
+    fetchDiscountPackages();
   }, []);
 
   // Stars price - backend dan slot-based narx olish
@@ -516,7 +524,27 @@ export default function Home() {
 
       {/* Stars Options */}
       <div className="preset-options-section">
-        <h3 style={{color: '#fff', margin: '24px 0 12px 0', fontSize: '16px', fontWeight: '600'}}>Yoki to'plamni tanlang:</h3>
+        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px'}}>
+          <h3 style={{color: '#fff', margin: '24px 0 0 0', fontSize: '16px', fontWeight: '600'}}>Yoki to'plamni tanlang:</h3>
+          <button
+            onClick={fetchDiscountPackages}
+            disabled={discountLoading}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#667eea',
+              cursor: discountLoading ? 'not-allowed' : 'pointer',
+              fontSize: '18px',
+              opacity: discountLoading ? 0.5 : 1,
+              transition: 'all 0.3s ease',
+              transform: discountLoading ? 'rotate(360deg)' : 'rotate(0deg)',
+              animation: discountLoading ? 'spin 1s linear infinite' : 'none'
+            }}
+            title="Chegirma paketlarini yangilash"
+          >
+            🔄
+          </button>
+        </div>
         <div style={{display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '20px'}}>
           {(showMorePlans ? STARS_OPTIONS : STARS_OPTIONS.slice(0, 3)).map((starAmount, idx) => {
             const maxPrice = starAmount * NARX;
