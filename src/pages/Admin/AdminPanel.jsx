@@ -1895,13 +1895,21 @@ export default function AdminPanel() {
           </div>
 
           {/* Search */}
-          <div className="filters">
+          <div className="filters" style={{ padding: '0 10px' }}>
             <input
               type="text"
               placeholder="🔍 Username yoki referral code..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="search-input"
+              style={{
+                width: '100%',
+                padding: '12px 15px',
+                borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'rgba(0,0,0,0.2)',
+                color: '#fff'
+              }}
             />
           </div>
 
@@ -1909,7 +1917,7 @@ export default function AdminPanel() {
           {loading && !autoRefresh ? (
             <div className="loader">⏳ Yuklanmoqda...</div>
           ) : (
-            <div className="users-list">
+            <div className="users-list" style={{ padding: '10px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
               {filteredUsers.length === 0 ? (
                 <div className="empty-state">👤 Foydalanuvchilar yo'q</div>
               ) : (
@@ -1924,7 +1932,8 @@ export default function AdminPanel() {
                       borderRadius: '10px',
                       overflow: 'hidden',
                       border: selectedUserCard?.id === u.id ? '2px solid #667eea' : '1px solid rgba(255,255,255,0.1)',
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
+                      boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
                     }}
                   >
                     {/* User Info Section */}
@@ -2020,15 +2029,19 @@ export default function AdminPanel() {
               )}
 
               {filteredUsers.length > 20 && !showAll && (
-                <button className="show-all-btn" onClick={() => setShowAll(true)}>
-                  👥 Barcha foydalanuvchilar ({filteredUsers.length} ta)
-                </button>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <button className="show-all-btn" onClick={() => setShowAll(true)}>
+                    👥 Barcha foydalanuvchilar ({filteredUsers.length} ta)
+                  </button>
+                </div>
               )}
 
               {showAll && filteredUsers.length > 20 && (
-                <button className="show-all-btn" onClick={() => setShowAll(false)}>
-                  🔼 Faqat 20 tani ko'rish
-                </button>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <button className="show-all-btn" onClick={() => setShowAll(false)}>
+                    🔼 Faqat 20 tani ko'rish
+                  </button>
+                </div>
               )}
             </div>
           )}
