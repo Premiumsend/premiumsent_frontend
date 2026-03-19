@@ -1394,6 +1394,29 @@ html, body {
   cursor: not-allowed;
 }
 
+.settings-submit-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: block;
+}
+
+.settings-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.settings-submit-btn:active {
+  transform: translateY(0);
+}
+
 /* Packages List */
 .packages-list {
   margin-top: 10px;

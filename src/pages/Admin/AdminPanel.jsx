@@ -783,10 +783,8 @@ export default function AdminPanel() {
   // 🎟 Toggle Promocode Status
   const handleTogglePromo = async (code, isActive) => {
     try {
-      await apiFetch(`/api/admin/promocodes/${code}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_active: !isActive })
+      await apiFetch(`/api/admin/promocodes/${code}/toggle`, {
+        method: "PUT"
       });
       fetchPromocodes();
     } catch (err) {
