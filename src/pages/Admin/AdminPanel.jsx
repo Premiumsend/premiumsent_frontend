@@ -1388,17 +1388,18 @@ export default function AdminPanel() {
             🔔 Xabar
           </button>
           <button 
-            className={`hdr-nav-btn ${activeTab === "promocodes" ? "active" : ""}`}
-            onClick={() => setActiveTab("promocodes")}
-          >
-            🎟 Pramakodlar
-          </button>
-          <button 
             className={`hdr-nav-btn ${activeTab === "settings" ? "active" : ""}`}
             onClick={() => setActiveTab("settings")}
           >
              ➕ Chegirma
           </button>
+          <button 
+            className={`hdr-nav-btn ${activeTab === "promocodes" ? "active" : ""}`}
+            onClick={() => setActiveTab("promocodes")}
+          >
+            ➕ Pramakod
+          </button>
+          
         </div>
       </header>
 
@@ -2307,23 +2308,25 @@ export default function AdminPanel() {
       {/* ==================== PROMOCODES TAB ==================== */}
       {activeTab === "promocodes" && (
         <div className="tab-content settings-tab">
-          <h3 className="settings-section-title">🎟️ Pramakodlar Boshqaruvi</h3>
-          <p className="settings-section-desc">Foydalanuvchilar uchun maxsus chegirma kodlarini yarating</p>
+          <div className="section-header">
+            <h3 className="settings-section-title">Pramakodlar Boshqaruvi</h3>
+            <p className="settings-section-desc">Foydalanuvchilar uchun maxsus chegirma kodlarini yarating</p>
+          </div>
 
           <div className="settings-add-package">
             <form className="package-form" onSubmit={handleCreatePromo}>
-              <div className="form-row" style={{display: 'flex', flexWrap: 'wrap', gap: '15px'}}>
-                <div className="form-group" style={{flex: '1 1 200px'}}>
+              <div className="form-row">
+                <div className="form-group">
                   <label>Pramakod KODI</label>
                   <input
                     type="text"
                     required
                     value={promoForm.code}
                     onChange={e => setPromoForm({...promoForm, code: e.target.value.toUpperCase()})}
-                    placeholder="Masalan: MEGA50"
+                    placeholder="Masalan: STARS50"
                   />
                 </div>
-                <div className="form-group" style={{flex: '1 1 200px'}}>
+                <div className="form-group">
                   <label>Chegirma Foizi (%)</label>
                   <input
                     type="number"
@@ -2334,7 +2337,7 @@ export default function AdminPanel() {
                     onChange={e => setPromoForm({...promoForm, discount_percent: parseInt(e.target.value) || 0})}
                   />
                 </div>
-                <div className="form-group" style={{flex: '1 1 200px'}}>
+                <div className="form-group">
                   <label>Maksimal Foydalanish</label>
                   <input
                     type="number"
@@ -2345,21 +2348,22 @@ export default function AdminPanel() {
                   />
                 </div>
               </div>
-              <div className="form-row" style={{display: 'flex', flexWrap: 'wrap', gap: '15px', marginTop: '15px'}}>
-                <div className="form-group" style={{flex: '1 1 200px'}}>
+              <div className="form-row" style={{marginTop: '15px'}}>
+                <div className="form-group">
                   <label>Qaysi bo'lim uchun?</label>
-                  <select
-                    value={promoForm.target_type}
-                    onChange={e => setPromoForm({...promoForm, target_type: e.target.value, target_amount: ''})}
-                    style={{width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'white', outline: 'none'}}
-                  >
-                    <option value="stars" style={{color: 'black'}}>⭐️ Stars</option>
-                    <option value="gift" style={{color: 'black'}}>🎁 Gifts</option>
-                    <option value="premium" style={{color: 'black'}}>💎 Premium</option>
-                    <option value="all" style={{color: 'black'}}>🌐 Barchasi uchun</option>
-                  </select>
+                  <div className="custom-select-wrapper">
+                    <select
+                      value={promoForm.target_type}
+                      onChange={e => setPromoForm({...promoForm, target_type: e.target.value, target_amount: ''})}
+                    >
+                      <option value="stars">Stars</option>
+                      <option value="gift">Gifts</option>
+                      <option value="premium">Premium</option>
+                      <option value="all">Barchasi uchun</option>
+                    </select>
+                  </div>
                 </div>
-                <div className="form-group" style={{flex: '1 1 200px'}}>
+                <div className="form-group">
                   <label>Aniq miqdor (ixtiyoriy)</label>
                   <input
                     type="text"
@@ -2369,8 +2373,8 @@ export default function AdminPanel() {
                   />
                 </div>
               </div>
-              <button className="settings-submit-btn" style={{marginTop: '15px'}} type="submit">
-                🎟️ Yaratish
+              <button className="settings-submit-btn" style={{marginTop: '20px'}} type="submit">
+                Yaratish
               </button>
             </form>
           </div>
@@ -2378,29 +2382,45 @@ export default function AdminPanel() {
           <div className="packages-grid">
             {promoLoading ? <div className="loading-state">Yuklanmoqda...</div> : 
              promocodes.map(promo => (
-              <div key={promo.code} className="package-card" style={{opacity: promo.is_active ? 1 : 0.6}}>
-                <div className="package-info" style={{marginBottom: '10px'}}>
-                  <span className="package-stars" style={{fontSize: '20px'}}>{promo.code}</span>
-                  <span className="package-discount">{promo.discount_percent}% chegirma</span>
+              <div key={promo.code} className={`package-item ${!promo.is_active ? 'inactive' : ''}`}>
+                <div className="package-info" style={{marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                    <span className="package-stars" style={{fontSize: '18px', fontWeight: 'bold', color: '#fff'}}>{promo.code}</span>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(promo.code);
+                        alert(`Skopirovano: ${promo.code}`);
+                      }}
+                      style={{
+                        background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '6px', padding: '4px 8px', color: '#fff', cursor: 'pointer', fontSize: '12px'
+                      }}
+                      title="Nusxalash"
+                    >
+                      Nusxa
+                    </button>
+                  </div>
+                  <span className="package-discount" style={{background: 'rgba(255, 193, 7, 0.2)', color: '#ffc107', padding: '4px 8px', borderRadius: '6px', fontSize: '13px'}}>{promo.discount_percent}%</span>
                 </div>
-                <div style={{fontSize: '13px', color: 'rgba(255,255,255,0.6)', marginBottom: '5px'}}>
-                  Maqsad: <b>{promo.target_type === 'all' ? 'Barchasi' : promo.target_type}</b> {promo.target_amount ? `(${promo.target_amount})` : ''}
+                <div style={{fontSize: '13px', color: 'rgba(255,255,255,0.6)', marginBottom: '8px', display: 'flex', justifyContent: 'space-between'}}>
+                  <span>Maqsad:</span>
+                  <span style={{color: '#fff'}}>{promo.target_type === 'all' ? 'Barchasi' : promo.target_type} {promo.target_amount ? `(${promo.target_amount})` : ''}</span>
                 </div>
-                <div style={{fontSize: '13px', color: 'rgba(255,255,255,0.6)', marginBottom: '15px'}}>
-                  Foydalanildi: {promo.used_count} / {promo.usage_limit}
+                <div style={{fontSize: '13px', color: 'rgba(255,255,255,0.6)', marginBottom: '20px', display: 'flex', justifyContent: 'space-between'}}>
+                  <span>Foydalanildi:</span>
+                  <span style={{color: '#fff'}}>{promo.used_count} / {promo.usage_limit}</span>
                 </div>
-                <div className="package-actions" style={{display: 'flex', gap: '10px'}}>
-                  <button className="delete-btn" style={{flex: 1, padding: '8px', background: promo.is_active ? 'rgba(255,193,7,0.1)' : 'rgba(76,175,80,0.1)', color: promo.is_active ? '#ffc107' : '#4caf50', borderRadius: '8px', border: 'none', cursor: 'pointer'}} onClick={() => handleTogglePromo(promo.code, promo.is_active)}>
-                    {promo.is_active ? 'O\'chirish (Pause)' : 'Yoqish (Active)'}
+                <div className="package-actions" style={{display: 'flex', gap: '8px'}}>
+                  <button className="action-btn" style={{flex: 1, padding: '10px', background: promo.is_active ? 'rgba(255,255,255,0.1)' : 'rgba(76,175,80,0.2)', color: promo.is_active ? '#fff' : '#4caf50', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: '0.2s'}} onClick={() => handleTogglePromo(promo.code, promo.is_active)}>
+                    {promo.is_active ? 'To\'xtatish' : 'Faollashtirish'}
                   </button>
-                  <button className="delete-btn" style={{flex: 1, padding: '8px', background: 'rgba(244,67,54,0.1)', color: '#f44336', borderRadius: '8px', border: 'none', cursor: 'pointer'}} onClick={() => handleDeletePromo(promo.code)}>
-                    🗑️ O'chirish
+                  <button className="action-btn" style={{padding: '10px 15px', background: 'rgba(244,67,54,0.1)', color: '#f44336', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: '0.2s'}} onClick={() => handleDeletePromo(promo.code)}>
+                    O'chirish
                   </button>
                 </div>
               </div>
             ))}
             {promocodes.length === 0 && !promoLoading && (
-              <div className="empty-state">Pramakodlar yo'q</div>
+              <div className="empty-state" style={{gridColumn: '1 / -1'}}>Pramakodlar yo'q</div>
             )}
           </div>
         </div>
