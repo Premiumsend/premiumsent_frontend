@@ -2362,12 +2362,22 @@ export default function AdminPanel() {
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>Aniq miqdor (ixtiyoriy)</label>
+                  <label>
+                    {promoForm.target_type === 'premium' ? "Qaysi oylar uchun? (ixtiyoriy)" :
+                     promoForm.target_type === 'gift' ? "Qaysi gift uchun? (ixtiyoriy)" :
+                     promoForm.target_type === 'stars' ? "Stars miqdori (ixtiyoriy)" : 
+                     "Aniq miqdor (ixtiyoriy)"}
+                  </label>
                   <input
                     type="text"
                     value={promoForm.target_amount}
                     onChange={e => setPromoForm({...promoForm, target_amount: e.target.value})}
-                    placeholder="Masalan: 50 (Faqat 50 Stars uchun)"
+                    placeholder={
+                      promoForm.target_type === 'premium' ? "Masalan: 3, 6 yoki 12" :
+                      promoForm.target_type === 'gift' ? "Masalan: 15, 25, 50, 100" :
+                      promoForm.target_type === 'stars' ? "Masalan: 50 (Faqat 50 Stars uchun)" :
+                      "Masalan: 50"
+                    }
                   />
                 </div>
               </div>
