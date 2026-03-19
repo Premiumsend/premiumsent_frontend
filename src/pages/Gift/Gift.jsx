@@ -597,7 +597,7 @@ export default function Gift() {
             {/* Send Button - at bottom */}
             <div className="gift-bs-bottom-area">
               <button
-                className={\`gift-bs-send-btn \${!profile ? 'no-recipient' : ''}\`}
+                className={`gift-bs-send-btn ${!profile ? 'no-recipient' : ''}`}
                 onClick={handleSend}
                 disabled={sending || !profile}
               >
