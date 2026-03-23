@@ -624,12 +624,12 @@ export default function Gift() {
             <div className="gift-warning-body" style={{ textAlign: "left" }}>
               <div style={{ marginBottom: "15px" }}>
                 <strong>1️⃣ To'lov miqdori:</strong><br />
-                Kartaga pastda ko'rsatilgan summani <b>aynan o'sha miqdorda</b> yuboring. 1 so'mlik farq ham to'lovni aniqlashga xalaqit beradi.
+                Faqat ko‘rsatilgan summani aniq yuboring. Ozgina farq ham to‘lovni topishga xalaqit beradi.
               </div>
               
               <div style={{ marginBottom: "15px" }}>
                 <strong>2️⃣ Profil maxfiyligi:</strong><br />
-                Qabul qiluvchining profiliga yozish, shuningdek stars to'lovi evaziga xabar yozish <b>cheklanmaganiga</b> ishonch hosil qiling! Agar profilda maxfiylik cheklovlari bo'lsa, gift yuborishda xatolik yuz beradi.
+                Qabul qiluvchiga yozish va stars orqali xabar yuborish o‘chiq bo‘lsin. Yopiq bo‘lsa, gift yuborilmaydi.
               </div>
               
               <div className="gift-warning-amount-highlight" style={{ marginTop: "20px" }}>
