@@ -295,9 +295,9 @@ export default function AdminPanel() {
       const filteredStars = filterByDate(starsData).filter(tx => 
         tx.status === "stars_sent" || tx.status === "completed"
       );
-      // Premium: premium_sent yoki completed
+      // Premium: premium_sent, completed yoki delivered
       const filteredPremium = filterByDate(premiumData).filter(tx => 
-        tx.status === "premium_sent" || tx.status === "completed"
+        tx.status === "premium_sent" || tx.status === "completed" || tx.status === "delivered"
       );
       // Gift: gift_sent yoki completed
       const filteredGift = filterByDate(giftData).filter(tx => 
@@ -334,7 +334,7 @@ export default function AdminPanel() {
 
       // Calculate daily breakdown from all completed transactions (last 7 days)
       const completedStars = starsData.filter(tx => tx.status === "stars_sent" || tx.status === "completed");
-      const completedPremium = premiumData.filter(tx => tx.status === "premium_sent" || tx.status === "completed");
+      const completedPremium = premiumData.filter(tx => tx.status === "premium_sent" || tx.status === "completed" || tx.status === "delivered");
       const completedGift = giftData.filter(tx => tx.status === "gift_sent" || tx.status === "completed");
       
       const dailyMap = {};
