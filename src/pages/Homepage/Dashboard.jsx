@@ -239,7 +239,7 @@ export default function Dashboard() {
     const hideTimer = setTimeout(() => {
       setSplashVisible(false);
       sessionStorage.setItem("splashShown", "1");
-    }, 1500);
+    }, 2050);
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(hideTimer);
@@ -323,12 +323,23 @@ export default function Dashboard() {
             <img src={starsGif} className="action-card-wide__img" alt="stars" />
             <div className="action-card-wide__content">
               <span className="action-card-wide__title">{t("dashboard.buyStars") || "Stars olish"}</span>
-              <span className="action-card-wide__subtitle">{t("dashboard.starsDesc") || "Telegram stars xarid qiling"}</span>
+            </div>
+          </div>
+
+          {/* Gift & Premium - Side by Side */}
+          <div className="action-cards-row">
+            <div className="action-card-half" onClick={() => navigate("/gift")}>
+              <TGSSticker stickerPath={actionCardSticker} className="action-card-half__img" autoplay={true} loop={true} />
+              <span className="action-card-half__title">{t("dashboard.buyGift") || "Gift olish"}</span>
+            </div>
+            <div className="action-card-half" onClick={() => navigate("/premium")}>
+              <img src={premiumGif} className="action-card-half__img" alt="premium" />
+              <span className="action-card-half__title">{t("dashboard.buyPremium") || "Premium olish"}</span>
             </div>
           </div>
 
           {/* Referral Invite Banner */}
-          <div 
+          <div
             className="referral-invite-banner"
             onClick={() => navigate("/referral")}
           >
@@ -342,37 +353,8 @@ export default function Dashboard() {
             </div>
             <div className="referral-banner-content">
               <div className="referral-banner-text">
-                {t("dashboard.referralBanner") || "Do'stlaringizni taklif qiling va bonus oling"}
+                {t("dashboard.referralBanner") || "Taklif qiling, bonus oling"}
               </div>
-              <div className="referral-banner-rewards">
-                <div className="referral-reward-badge">
-                  ⭐ +2
-                </div>
-                <div className="referral-reward-badge">
-                  ⭐ +15
-                </div>
-              </div>
-            </div>
-            <button 
-              className="referral-banner-button"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate("/referral");
-              }}
-            >
-              {t("dashboard.getLink") || "Havola olish"}
-            </button>
-          </div>
-
-          {/* Gift & Premium - Side by Side */}
-          <div className="action-cards-row">
-            <div className="action-card-half" onClick={() => navigate("/gift")}>
-              <TGSSticker stickerPath={actionCardSticker} className="action-card-half__img" />
-              <span className="action-card-half__title">{t("dashboard.buyGift") || "Gift olish"}</span>
-            </div>
-            <div className="action-card-half" onClick={() => navigate("/premium")}>
-              <img src={premiumGif} className="action-card-half__img" alt="premium" />
-              <span className="action-card-half__title">{t("dashboard.buyPremium") || "Premium olish"}</span>
             </div>
           </div>
         </div>

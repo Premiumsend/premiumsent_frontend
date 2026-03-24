@@ -2,7 +2,7 @@
 .settings-page {
   min-height: 100vh;
   min-height: 100dvh;
-  background-color: var(--bg-secondary);
+  background-color: #1a1a2e;
   padding: 20px;
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -70,12 +70,14 @@
 
 /* Settings Group */
 .settings-group {
-  background-color: var(--bg-primary);
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-radius: 16px;
   overflow: hidden;
   margin-bottom: 20px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-primary);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
 /* Settings Item */

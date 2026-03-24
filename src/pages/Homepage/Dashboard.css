@@ -2518,33 +2518,46 @@
 
 /* Stars Card - Full Width */
 .action-card-wide {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, rgba(251,191,36,0.04), rgba(255,255,255,0.02), rgba(251,191,36,0.03));
+  background-size: 300% 300%;
+  animation: gradientStars 6s ease-in-out infinite;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-radius: 20px;
   padding: 20px;
   display: flex;
   align-items: center;
   gap: 16px;
   cursor: pointer;
-  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+  border: 1px solid rgba(251,191,36,0.1);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative;
   overflow: hidden;
 }
 
+@keyframes gradientStars {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+
 .action-card-wide::before {
   content: '';
   position: absolute;
   top: -50%;
-  right: -50%;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  right: -30%;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(251,191,36,0.08) 0%, transparent 70%);
   pointer-events: none;
 }
 
 .action-card-wide:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  background: rgba(255,255,255,0.05);
 }
 
 .action-card-wide:active {
@@ -2582,8 +2595,12 @@
 
 /* Referral Banner - Professional Dark Style */
 .referral-invite-banner {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-primary);
+  background: linear-gradient(135deg, rgba(139,92,246,0.05), rgba(255,255,255,0.02), rgba(139,92,246,0.04));
+  background-size: 300% 300%;
+  animation: gradientRef 8s ease-in-out infinite;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(139,92,246,0.12);
   border-radius: 18px;
   padding: 18px 16px;
   display: flex;
@@ -2592,14 +2609,21 @@
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-  box-shadow: var(--shadow-lg);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
 }
+
+@keyframes gradientRef {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 
 .referral-invite-banner:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-xl);
-  background: var(--bg-secondary);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  background: rgba(139,92,246,0.08);
 }
 
 .referral-invite-banner:active {
@@ -2705,7 +2729,9 @@
 }
 
 .action-card-half {
-  background: var(--bg-primary);
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-radius: 18px;
   padding: 20px 14px;
   display: flex;
@@ -2714,8 +2740,8 @@
   justify-content: center;
   gap: 12px;
   cursor: pointer;
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border-primary);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+  border: 1px solid rgba(255,255,255,0.06);
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   text-align: center;
   position: relative;
@@ -2724,8 +2750,8 @@
 
 .action-card-half:hover {
   transform: translateY(-3px);
-  box-shadow: var(--shadow-xl);
-  background: var(--bg-secondary);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  background: rgba(255,255,255,0.05);
 }
 
 .action-card-half:active {
@@ -2747,24 +2773,51 @@
   line-height: 1.3;
 }
 
-/* First card (Gift) - subtle orange gradient accent */
+/* Gift card — gradient shift */
 .action-card-half:first-child {
-  background: linear-gradient(145deg, var(--bg-primary) 0%, rgba(245, 158, 11, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(236,72,153,0.04), rgba(255,255,255,0.02), rgba(236,72,153,0.03));
+  background-size: 300% 300%;
+  animation: gradientGift 7s ease-in-out infinite;
+  border-color: rgba(236,72,153,0.1);
+}
+@keyframes gradientGift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.action-card-half:first-child::before {
+  content: '';
+  position: absolute;
+  bottom: -30px;
+  right: -30px;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(236,72,153,0.08) 0%, transparent 70%);
+  pointer-events: none;
 }
 
-.action-card-half:first-child:hover {
-  background: linear-gradient(145deg, var(--bg-secondary) 0%, rgba(245, 158, 11, 0.1) 100%);
-  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.15);
-}
-
-/* Second card (Premium) - subtle purple gradient accent */
+/* Premium card — gradient shift */
 .action-card-half:last-child {
-  background: linear-gradient(145deg, var(--bg-primary) 0%, rgba(168, 85, 247, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(99,102,241,0.04), rgba(255,255,255,0.02), rgba(99,102,241,0.03));
+  background-size: 300% 300%;
+  animation: gradientPrem 7s ease-in-out infinite;
+  animation-delay: 1.5s;
+  border-color: rgba(99,102,241,0.1);
 }
-
-.action-card-half:last-child:hover {
-  background: linear-gradient(145deg, var(--bg-secondary) 0%, rgba(168, 85, 247, 0.1) 100%);
-  box-shadow: 0 8px 24px rgba(168, 85, 247, 0.15);
+@keyframes gradientPrem {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.action-card-half:last-child::before {
+  content: '';
+  position: absolute;
+  bottom: -30px;
+  right: -30px;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 

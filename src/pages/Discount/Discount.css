@@ -82,11 +82,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--bg-secondary);
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   padding: 8px 12px;
   border-radius: 10px;
   margin-top: 8px;
-  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
 
 .profile-img-small {

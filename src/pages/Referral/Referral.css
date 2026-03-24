@@ -4,7 +4,7 @@
 .referral-page {
   font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   min-height: 100vh;
-  background: var(--bg-secondary);
+  background: #1a1a2e;
   color: var(--text-primary);
   padding: 14px;
   padding-bottom: 20px;
@@ -131,9 +131,12 @@
   gap: 10px;
   margin-bottom: 14px;
   padding: 12px;
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.15);
+  background: rgba(16, 185, 129, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(16, 185, 129, 0.1);
   border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
 
 .ref-stats-item {
@@ -194,10 +197,13 @@
 
 /* Earn Steps List */
 .earn-steps-list {
-  background: var(--bg-primary);
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-radius: 14px;
-  border: 1px solid var(--border-primary);
+  border: 1px solid rgba(255,255,255,0.06);
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
 
 .earn-step {
