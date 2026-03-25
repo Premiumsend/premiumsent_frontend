@@ -145,6 +145,9 @@ export default function Dashboard() {
         if (uid) params.append("user_id", uid);
 
         const res = await apiFetch(`/api/dashboard/init?${params.toString()}`);
+        if (!res.ok) {
+          throw new Error('API request failed');
+        }
         const json = await res.json();
 
         // Leaderboard

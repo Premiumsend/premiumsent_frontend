@@ -2622,7 +2622,7 @@ export default function AdminPanel() {
                           fontWeight: '600',
                           border: `1px solid ${req.subscribe_referrer ? 'rgba(52,199,89,0.3)' : 'rgba(255,69,58,0.3)'}`
                         }}>
-                          {req.subscribe_referrer ? '✅ Sub' : '❌ No sub'}
+                          {req.subscribe_referrer ? '✅ Obuna bo\'lgan' : '❌ Kanalga obuna bo\'lmagan'}
                         </span>
                         
                         <span style={{

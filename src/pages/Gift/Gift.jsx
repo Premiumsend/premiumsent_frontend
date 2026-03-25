@@ -67,6 +67,7 @@ export default function Gift() {
   // Step 4: Payment
   const [order, setOrder] = useState(null);
   const [status, setStatus] = useState("idle"); // idle | payment_info | pending | completed | gift_sent | expired | failed | error
+  const [errorMessage, setErrorMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [countdown, setCountdown] = useState(300);
@@ -114,6 +115,9 @@ export default function Gift() {
       setProfile(null);
       return;
     }
+    
+    const controller = new AbortController();
+    
     const timeout = setTimeout(async () => {
       try {
         setLoadingProfile(true);
@@ -122,17 +126,23 @@ export default function Gift() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username: clean }),
+          signal: controller.signal,
         });
         const data = await res.json();
         if (res.ok) setProfile(data);
         else setProfile(null);
-      } catch {
+      } catch (err) {
+        if (err.name === 'AbortError') return;
         setProfile(null);
       } finally {
         setLoadingProfile(false);
       }
     }, 800);
-    return () => clearTimeout(timeout);
+    
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
   }, [username]);
 
   // Gift tanlanganda modal ochish
@@ -209,6 +219,9 @@ export default function Gift() {
           stopPolling();
           stopCountdown();
           localStorage.removeItem("pendingGiftOrder");
+          if (["failed", "error"].includes(data.status)) {
+            setErrorMessage(data.error_message || data.reason || data.error || "Kutilmagan xatolik yuz berdi.");
+          }
         }
       } catch {}
     }, 3000);
@@ -655,7 +668,7 @@ export default function Gift() {
               <div className="gift-modal-pending">
                 <div className="gift-modal-header">
                   <span className="gift-modal-title">💳 {t("gift.paymentTitle")}</span>
-                  <button type="button" className="gift-modal-close" onClick={() => setShowModal(false)}>✕</button>
+                  <button type="button" className="gift-modal-close" onClick={() => { setShowModal(false); stopPolling(); stopCountdown(); }}>✕</button>
                 </div>
 
                 {/* Gift preview */}
@@ -729,7 +742,7 @@ export default function Gift() {
               <div className="gift-modal-pending">
                 <div className="gift-modal-header">
                   <span className="gift-modal-title">⏳ {t("gift.paymentSearching")}</span>
-                  <button type="button" className="gift-modal-close" onClick={() => setShowModal(false)}>✕</button>
+                  <button type="button" className="gift-modal-close" onClick={() => { setShowModal(false); stopPolling(); stopCountdown(); }}>✕</button>
                 </div>
 
                 {/* Gift preview */}
@@ -784,7 +797,7 @@ export default function Gift() {
                   </div>
                 </div>
 
-                <button type="button" className="gift-modal-close-btn" onClick={() => setShowModal(false)}>
+                <button type="button" className="gift-modal-close-btn" onClick={() => { setShowModal(false); stopPolling(); stopCountdown(); }}>
                   {t("common.close")}
                 </button>
                 <p className="gift-modal-hint">{t("gift.modalHint")}</p>
@@ -832,13 +845,13 @@ export default function Gift() {
                 <h3>
                   {status === "expired" ? t("stars.expired") : t("gift.error")}
                 </h3>
-                {status === "error" && (
+                {["failed", "error"].includes(status) && (
                   <div style={{ marginTop: '10px', marginBottom: '20px' }}>
                     <p style={{ color: '#fff', marginBottom: '10px', fontSize: '14px' }}>
-                      Gift yuborishda xatolik yuz berdi. Bu ehtimol qabul qiluvchining profil maxfiyligi yopiqligi tufaylidir.
+                      {errorMessage || "Gift yuborishda xatolik yuz berdi. Bu ehtimol qabul qiluvchining profil maxfiyligi yopiqligi tufaylidir."}
                     </p>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="gift-modal-action-btn"
                       style={{ backgroundColor: '#2b2d31', color: '#fff', border: '1px solid #444' }}
                       onClick={() => window.open("https://t.me/StarsjoySupport", "_blank")}

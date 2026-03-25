@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Premium.css";
 import diamondGif from "../../assets/diamond.gif";
@@ -35,6 +35,7 @@ export default function Premium() {
   const [showWarningModal, setShowWarningModal] = useState(false);
 
   const [paymentStatus, setPaymentStatus] = useState("idle");
+  const [errorMessage, setErrorMessage] = useState("");
   const [cardLast4, setCardLast4] = useState("");
 
   const countdownRef = useRef(null);
@@ -95,13 +96,14 @@ export default function Premium() {
       return;
     }
 
+    const controller = new AbortController();
+
     const delay = setTimeout(async () => {
       try {
         setLoadingProfile(true);
 
         const clean = username.replace("@", "");
 
-        //const res = await fetch("http://localhost:5000/api/premium/search", {
         const res = await apiFetch("/api/premium/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -109,6 +111,7 @@ export default function Premium() {
             username: clean,                // ✔ TO‘G‘RI
             months: selectedPlan.months     // ✔ OPTIONAL
           }),
+          signal: controller.signal,
         });
 
         const data = await res.json();
@@ -127,7 +130,8 @@ export default function Premium() {
         });
 
         setSearchError(null);
-      } catch {
+      } catch (err) {
+        if (err.name === 'AbortError') return;
         setSearchError("Tarmoq xatosi");
         setProfile(null);
       } finally {
@@ -135,7 +139,10 @@ export default function Premium() {
       }
     }, 500);
 
-    return () => clearTimeout(delay);
+    return () => {
+      clearTimeout(delay);
+      controller.abort();
+    };
   }, [username, selectedPlan]);
 
   // 🔹 Telegramdan username olish
@@ -275,6 +282,7 @@ export default function Premium() {
         if (["failed", "error"].includes(data.status)) {
           stopPolling();
           stopCountdown();
+          setErrorMessage(data.error_message || data.reason || data.error || "Kutilmagan xatolik yuz berdi. Iltimos, admin bilan bog'laning.");
         }
 
       } catch {}
@@ -297,7 +305,6 @@ export default function Premium() {
         if (n <= 1) {
           stopCountdown();
           setShowModal(false);
-          alert("⏰ To‘lov muddati tugadi");
           setPaymentStatus("expired");
           return 0;
         }
@@ -679,7 +686,7 @@ export default function Premium() {
                   </div>
                 </div>
 
-                <button type="button" className="modal-close-btn success-close" onClick={() => setShowModal(false)}>
+                <button type="button" className="modal-close-btn success-close" onClick={() => { setShowModal(false); stopPolling(); stopCountdown(); }}>
                   Yopish
                 </button>
               </div>
@@ -688,18 +695,28 @@ export default function Premium() {
             {/* FAILED / ERROR */}
             {["failed", "error"].includes(paymentStatus) && (
               <div className="modal-error-section">
-                <div className="error-icon-wrap">
+                <div className="error-icon-wrap" style={{background: 'rgba(255, 59, 48, 0.15)', color: '#ff3b30', fontSize: '40px'}}>
                   <span className="error-icon">❌</span>
                 </div>
                 <h3 className="error-title">Xatolik yuz berdi</h3>
-                <p className="error-desc">Premium yuborishda muammo chiqdi. Iltimos, qaytadan urinib ko'ring.</p>
+                <p className="error-desc">{errorMessage || "Premium yuborishda muammo chiqdi. Iltimos, qaytadan urinib ko'ring."}</p>
                 
-                <button type="button" className="modal-close-btn" onClick={() => {
-                  setShowModal(false);
-                  setPaymentStatus("idle");
-                }}>
-                  Yopish
-                </button>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '8px', padding: '0 20px', paddingBottom: '20px'}}>
+                  <button type="button" className="modal-close-btn" onClick={() => {
+                    setShowModal(false);
+                    setPaymentStatus("idle");
+                  }}>
+                    Yopish
+                  </button>
+                  <button 
+                    type="button" 
+                    className="modal-close-btn" 
+                    style={{ background: '#2b2d31', color: '#fff', border: '1px solid #444', marginTop: 0 }} 
+                    onClick={() => window.open("https://t.me/StarsjoySupport", "_blank")}
+                  >
+                    👨🏻‍💻 Admin bilan bog'lanish
+                  </button>
+                </div>
               </div>
             )}
 

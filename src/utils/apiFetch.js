@@ -15,6 +15,9 @@ export default function apiFetch(url, options = {}) {
   // Full URL yoki relative URL'ni VITE_API_URL bilan birlashtir
   const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
 
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
   const headers = {
     ...options.headers,
   };
@@ -24,8 +27,18 @@ export default function apiFetch(url, options = {}) {
     headers['X-Telegram-Init-Data'] = initData;
   }
 
-  return fetch(fullUrl, {
+  const fetchOptions = {
     ...options,
     headers,
-  });
+    signal: controller.signal,
+  };
+
+  try {
+    const response = await fetch(fullUrl, fetchOptions);
+    clearTimeout(id);
+    return response;
+  } catch (error) {
+    clearTimeout(id);
+    throw error;
+  }
 }

@@ -46,6 +46,7 @@ export default function Referral() {
     som_balance: 0,
   });
   const [earnings, setEarnings] = useState([]);
+  const [withdrawals, setWithdrawals] = useState([]);
   const [claiming, setClaiming] = useState(false);
 
   // Withdrawal modal state
@@ -136,8 +137,8 @@ export default function Referral() {
     try {
       setLoading(true);
 
-      // Parallel API calls
-      const [linkRes, statsRes, earningsRes, friendsCountRes, myFriendsRes] = await Promise.all([
+      // Promise.allSettled API calls
+      const [linkRes, statsRes, earningsRes, friendsCountRes, myFriendsRes] = await Promise.allSettled([
         apiFetch(`/api/referral/link/${user}`),
         apiFetch(`/api/referral/stats/${user}`),
         apiFetch(`/api/referral/earnings/${user}`),
@@ -146,31 +147,31 @@ export default function Referral() {
       ]);
 
       // Process responses
-      if (linkRes.ok) {
-        const linkData = await linkRes.json();
+      if (linkRes.status === "fulfilled" && linkRes.value.ok) {
+        const linkData = await linkRes.value.json();
         setReferralCode(linkData.referral_code);
         setReferralLink(linkData.referral_link);
       }
 
-      if (statsRes.ok) {
-        const statsData = await statsRes.json();
+      if (statsRes.status === "fulfilled" && statsRes.value.ok) {
+        const statsData = await statsRes.value.json();
         setStats(statsData);
       }
 
-      if (earningsRes.ok) {
-        const earningsData = await earningsRes.json();
+      if (earningsRes.status === "fulfilled" && earningsRes.value.ok) {
+        const earningsData = await earningsRes.value.json();
         setEarnings(earningsData.earnings || []);
       }
 
       // Friends count (referrer_username orqali)
-      if (friendsCountRes.ok) {
-        const fcData = await friendsCountRes.json();
+      if (friendsCountRes.status === "fulfilled" && friendsCountRes.value.ok) {
+        const fcData = await friendsCountRes.value.json();
         setFriendsCount(fcData.friends_count || 0);
       }
 
       // My friends list
-      if (myFriendsRes.ok) {
-        const mfData = await myFriendsRes.json();
+      if (myFriendsRes.status === "fulfilled" && myFriendsRes.value.ok) {
+        const mfData = await myFriendsRes.value.json();
         setMyFriends(mfData.friends || []);
         setPendingCount(mfData.pending_count || 0);
       }

@@ -20,6 +20,8 @@ import { ThemeProvider } from "./context/ThemeContext";
 import TelegramGate from "./components/TelegramGate";
 import apiFetch from "./utils/apiFetch";
 
+import ErrorBoundary from "./components/ErrorBoundary";
+
 function App() {
   const [maintenance, setMaintenance] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -54,30 +56,32 @@ function App() {
   }
 
   return (
-    <TelegramGate>
-      <ThemeProvider>
-        <LanguageProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Dashboard/>} />
-              <Route path="/stars" element={<Home />} />
-              <Route path="/premium" element={<Premium />} />
-              <Route path="/referral" element={<Referral />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/history" element={<History />} />
-              <Route path="/challenges" element={<Challenges />} />
-              <Route path="/gift" element={<Gift />} />
-              <Route path="/statistics" element={<Statistics />} />
-              <Route path="/discount" element={<Discount />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/terms" element={<TermsOfService />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
-              <Route path="/starsadmin" element={<AdminPanel/>} />
-            </Routes>
-          </BrowserRouter>
-        </LanguageProvider>
-      </ThemeProvider>
-    </TelegramGate>
+    <ErrorBoundary>
+      <TelegramGate>
+        <ThemeProvider>
+          <LanguageProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Dashboard/>} />
+                <Route path="/stars" element={<Home />} />
+                <Route path="/premium" element={<Premium />} />
+                <Route path="/referral" element={<Referral />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/history" element={<History />} />
+                <Route path="/challenges" element={<Challenges />} />
+                <Route path="/gift" element={<Gift />} />
+                <Route path="/statistics" element={<Statistics />} />
+                <Route path="/discount" element={<Discount />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/starsadmin" element={<AdminPanel/>} />
+              </Routes>
+            </BrowserRouter>
+          </LanguageProvider>
+        </ThemeProvider>
+      </TelegramGate>
+    </ErrorBoundary>
   );
 }
 

@@ -56,6 +56,7 @@ export default function Home() {
 
   const [order, setOrder] = useState(null);
   const [status, setStatus] = useState("pending");
+  const [errorMessage, setErrorMessage] = useState("");
   const [txId, setTxId] = useState(null);
   const [copiedCard, setCopiedCard] = useState(false);
   const [copiedAmount, setCopiedAmount] = useState(false);
@@ -388,6 +389,9 @@ export default function Home() {
           stopPolling();
           stopCountdown();
           localStorage.removeItem("pendingStarsOrder");
+          if (data.status === "failed" || data.status === "error") {
+            setErrorMessage(data.error_message || data.reason || data.error || "Kutilmagan xatolik yuz berdi. Iltimos, admin bilan bog'laning.");
+          }
         }
       } catch (err) {
         console.error("⚠️ Status olish xato:", err);
@@ -770,7 +774,7 @@ export default function Home() {
                 {/* Modal Header */}
                 <div className="modal-header-bar">
                   <span className="modal-header-title">To'lov ma'lumotlari</span>
-                  <button type="button" className="modal-close-x" onClick={() => setShowModal(false)}>✕</button>
+                  <button type="button" className="modal-close-x" onClick={() => { setShowModal(false); stopPolling(); stopCountdown(); }}>✕</button>
                 </div>
 
                 {/* Profile Card */}
@@ -850,7 +854,7 @@ export default function Home() {
               <div className="pending-waiting-section">
                 <div className="modal-header-bar">
                   <span className="modal-header-title">⏳ To'lov kutilmoqda</span>
-                  <button type="button" className="modal-close-x" onClick={() => setShowModal(false)}>✕</button>
+                  <button type="button" className="modal-close-x" onClick={() => { setShowModal(false); stopPolling(); stopCountdown(); }}>✕</button>
                 </div>
 
                 <div className="waiting-animation-wrap">
@@ -977,11 +981,22 @@ export default function Home() {
             {/* EXPIRED */}
             {status === "expired" && (
               <div className="modal-result-section">
-                <button type="button" className="modal-close-x expired-x" onClick={() => setShowModal(false)}>✕</button>
+                <button type="button" className="modal-close-x expired-x" onClick={() => { setShowModal(false); stopPolling(); stopCountdown(); }}>✕</button>
                 <div className="modal-result-icon expired-bg">⏰</div>
                 <h3 className="modal-result-title">Vaqt tugadi</h3>
                 <p className="modal-result-desc">To'lov muddati o'tib ketdi. Qaytadan urinib ko'ring.</p>
                 <button type="button" className="btn-go-home" onClick={goToHome}>🏠 Bosh sahifaga qaytish</button>
+              </div>
+            )}
+
+            {/* FAILED / ERROR */}
+            {["failed", "error"].includes(status) && (
+              <div className="modal-result-section">
+                <button type="button" className="modal-close-x expired-x" onClick={() => { setShowModal(false); stopPolling(); stopCountdown(); }}>✕</button>
+                <div className="modal-result-icon expired-bg" style={{background: 'rgba(255, 59, 48, 0.15)', color: '#ff3b30'}}>❌</div>
+                <h3 className="modal-result-title">Xatolik yuz berdi</h3>
+                <p className="modal-result-desc">{errorMessage || "Stars olishda xatolik. Admin bilan bog'laning."}</p>
+                <button type="button" className="btn-go-home" onClick={() => window.open("https://t.me/StarsjoySupport", "_blank")}>👨🏻‍💻 Admin bilan bog'lanish</button>
               </div>
             )}
           </div>
