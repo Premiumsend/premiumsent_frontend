@@ -128,7 +128,7 @@ export default function TelegramGate({ children }) {
         {/* Tugmalar */}
         <div className="tg-gate-buttons">
           <a
-            href="https://t.me/StarsjoyBot/starsjoy"
+            href="https://t.me/PremiumSendBot/premiumsend"
             className="tg-gate-btn tg-gate-btn-primary"
             target="_blank"
             rel="noopener noreferrer"
@@ -136,7 +136,7 @@ export default function TelegramGate({ children }) {
             Telegram'da ochish
           </a>
           <a
-            href="https://t.me/starsjoy"
+            href="https://t.me/PremiumSend_jbot"
             className="tg-gate-btn tg-gate-btn-secondary"
             target="_blank"
             rel="noopener noreferrer"

@@ -5,8 +5,7 @@ import { TGSSticker } from "../../components/TGSSticker";
 import "./History.css";
 import WebApp from "@twa-dev/sdk";
 import buyurtmalarSticker from "../../assets/AnimatedSticker_buyurtmalar.tgs";
-import starsGif from "../../assets/stars.gif";
-import diamondGif from "../../assets/diamond.gif";
+import premiumGif from "../../assets/premium_gif.gif";
 import apiFetch from "../../utils/apiFetch";
 
 export default function History() {
@@ -73,11 +72,10 @@ export default function History() {
     switch (status) {
       case "pending":
         return { label: t("stars.paymentPending") || "Kutilmoqda", class: "pending", filterKey: "pending" };
-      case "stars_sent":
-      case "premium_sent":
-      case "completed":
-      case "sent":
-        return { label: t("stars.paymentSuccess") || "Bajarildi", class: "success", filterKey: "success" };
+      case "delivered":
+        return { label: "Yetkazildi", class: "success", filterKey: "success" };
+      case "processing":
+        return { label: "Jarayonda", class: "pending", filterKey: "pending" };
       case "failed":
       case "error":
         return { label: t("stars.paymentFailed") || "Bekor qilindi", class: "failed", filterKey: "failed" };
@@ -102,7 +100,7 @@ export default function History() {
         <div className="history-sticker-container">
            <TGSSticker stickerPath={buyurtmalarSticker} className="history-sticker" />
         </div>
-        <h1>Buyurtmalar bo'limi</h1>
+        <h1>Premium Buyurtmalar</h1>
       </div>
 
       {/* Filter Tabs */}
@@ -117,7 +115,7 @@ export default function History() {
           className={`filter-tab filter-success ${filter === "success" ? "active" : ""}`}
           onClick={() => setFilter("success")}
         >
-          ✓ Muvaffaqiyatli
+          ✓ Yetkazildi
         </button>
         <button 
           className={`filter-tab filter-failed ${filter === "failed" ? "active" : ""}`}
@@ -166,7 +164,7 @@ export default function History() {
                       <div className="pending-spinner"></div>
                     ) : (
                       <img 
-                        src={item.kind === "stars" ? starsGif : diamondGif} 
+                        src={premiumGif} 
                         alt={item.kind} 
                         className="history-icon-img"
                       />
@@ -176,9 +174,7 @@ export default function History() {
                   <div className="history-content">
                     <div className="history-row">
                       <span className="history-title">
-                        {item.kind === "stars"
-                          ? `${item.stars} Stars`
-                          : `Premium ${item.stars} oy`}
+                        Premium {item.months} oy
                       </span>
                       <span className={`history-amount`}>
                         {formatAmount(item.amount)} so'm

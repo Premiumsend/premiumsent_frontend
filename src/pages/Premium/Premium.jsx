@@ -127,6 +127,7 @@ export default function Premium() {
           fullName: data.fullName,
           imageUrl: data.imageUrl,
           recipient: data.recipient, // ✔ BACKENDDAN KELGAN ID
+          hasPremium: data.hasPremium || false, // 💎 Premium obunasi bormi
         });
 
         setSearchError(null);
@@ -271,7 +272,7 @@ export default function Premium() {
         setCardLast4(data.card_last4 || "");
 
         // Premium yuborildi - muvaffaqiyatli
-        if (data.status === "premium_sent") {
+        if (data.status === "delivered") {
           stopPolling();
           stopCountdown();
           // Auto-yopish timer
@@ -399,6 +400,25 @@ export default function Premium() {
         </div>
       )}
 
+      {/* 💎 Premium obunasi mavjud bo'lsa ogohlantirish */}
+      {profile?.hasPremium && (
+        <div className="premium-warning-badge" style={{
+          background: 'linear-gradient(135deg, rgba(142, 45, 226, 0.15), rgba(74, 0, 224, 0.1))',
+          border: '1px solid rgba(142, 45, 226, 0.4)',
+          borderRadius: '12px',
+          padding: '12px 16px',
+          marginTop: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}>
+          <span style={{ fontSize: '20px' }}>💎</span>
+          <span style={{ color: '#a855f7', fontWeight: '500', fontSize: '14px' }}>
+            Bu profilga premium obunasi bor
+          </span>
+        </div>
+      )}
+
       {/* PLANS */}
       <h3>Muddatni tanlang:</h3>
 
@@ -422,7 +442,7 @@ export default function Premium() {
         ))}
       </div>
 
-      <div className="promo-input-group" style={{ marginBottom: "15px" }}>
+      <div className="promo-input-group" style={{ marginTop: "20px", marginBottom: "15px" }}>
         <input 
           type="text" 
           placeholder="Promokod kiriting (Agar bo'lsa)" 
@@ -648,7 +668,7 @@ export default function Premium() {
             )}
 
             {/* PREMIUM SENT - Muvaffaqiyatli */}
-            {paymentStatus === "premium_sent" && (
+            {paymentStatus === "delivered" && (
               <div className="modal-success-section">
                 <div className="success-confetti">
                   <span></span><span></span><span></span><span></span><span></span><span></span>
@@ -712,7 +732,7 @@ export default function Premium() {
                     type="button" 
                     className="modal-close-btn" 
                     style={{ background: '#2b2d31', color: '#fff', border: '1px solid #444', marginTop: 0 }} 
-                    onClick={() => window.open("https://t.me/StarsjoySupport", "_blank")}
+                    onClick={() => window.open("https://t.me/PremiumSend_jbot", "_blank")}
                   >
                     👨🏻‍💻 Admin bilan bog'lanish
                   </button>

@@ -34,24 +34,13 @@ export default function AdminPanel() {
   }, []);
 
   // All other state hooks - MUST be before any conditional return
-  const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
-  const [stats, setStats] = useState({
-    totalStars: 0,
-    completed: 0,
-    expired: 0,
-    pending: 0,
-    stars_sent: 0,
-    failed: 0,
-    error: 0,
-  });
   const [autoRefresh, setAutoRefresh] = useState(false);
   
   // Users state
   const [users, setUsers] = useState([]);
-  const [activeTab, setActiveTab] = useState("transactions");
+  const [activeTab, setActiveTab] = useState("premium");
   const [userStats, setUserStats] = useState({
     total: 0,
     today: 0,
@@ -61,10 +50,6 @@ export default function AdminPanel() {
   // New: expanded order & show all
   const [expandedId, setExpandedId] = useState(null);
   const [showAll, setShowAll] = useState(false);
-
-  // Referral withdrawals state
-  const [refWithdrawals, setRefWithdrawals] = useState([]);
-  const [refFilter, setRefFilter] = useState("pending");
 
   // Balance adjustment state
   const [balanceModal, setBalanceModal] = useState(null); // { username, currentBalance }
@@ -107,32 +92,16 @@ export default function AdminPanel() {
   const [premiumStats, setPremiumStats] = useState({
     total: 0,
     pending: 0,
-    premium_sent: 0,
+    delivered: 0,
     expired: 0,
     failed: 0
   });
   const [premiumShowAll, setPremiumShowAll] = useState(false);
 
-  // Gift orders state
-  const [giftOrders, setGiftOrders] = useState([]);
-  const [giftExpandedId, setGiftExpandedId] = useState(null);
-  const [giftFilter, setGiftFilter] = useState("all");
-  const [giftStats, setGiftStats] = useState({
-    total: 0,
-    pending: 0,
-    completed: 0,
-    gift_sent: 0,
-    expired: 0,
-    failed: 0
-  });
-  const [giftShowAll, setGiftShowAll] = useState(false);
-
   // Analytics state
   const [analyticsPeriod, setAnalyticsPeriod] = useState("all"); // day, week, month, all
   const [analyticsData, setAnalyticsData] = useState({
-    stars: { count: 0, totalStars: 0, totalAmount: 0 },
-    premium: { count: 0, totalAmount: 0 },
-    gift: { count: 0, totalStars: 0, totalAmount: 0 },
+    premium: { count: 0, totalAmount: 0, by3months: 0, by6months: 0, by12months: 0 },
     total: { count: 0, totalAmount: 0 }
   });
   const [dailyStats, setDailyStats] = useState([]); // [{date, stars, amount, count}]
@@ -143,25 +112,12 @@ export default function AdminPanel() {
   const [starPrices, setStarPrices] = useState({ priceFor50: 0, pricePerStar: 0, currency: "TON", availableStars: 0 });
   const [walletLoading, setWalletLoading] = useState(false);
   const [botStarsBalance, setBotStarsBalance] = useState(0);
-
-  // Discount packages state
-  const [discountPackages, setDiscountPackages] = useState([]);
-  const [newPackage, setNewPackage] = useState({ stars: "", discount_percent: "" });
-  const [packageLoading, setPackageLoading] = useState(false);
+  const [premiumPrices, setPremiumPrices] = useState({ 3: null, 6: null, 12: null });
 
   // Promocodes state
   const [promocodes, setPromocodes] = useState([]);
-  const [promoForm, setPromoForm] = useState({ code: '', target_type: 'stars', target_amount: '', discount_percent: 10, usage_limit: 10 });
+  const [promoForm, setPromoForm] = useState({ code: '', target_type: 'premium', target_amount: '', discount_percent: 10, usage_limit: 10 });
   const [promoLoading, setPromoLoading] = useState(false);
-  const [editingPackage, setEditingPackage] = useState(null);
-  const BASE_PRICE = parseInt(import.meta.env.VITE_NARX) || 240;
-
-  // Referral requests state
-  const [referralRequests, setReferralRequests] = useState([]);
-  const [referralFilter, setReferralFilter] = useState("pending");
-  const [referralLoading, setReferralLoading] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
-  const [rejectingId, setRejectingId] = useState(null);
 
   // ========== MAINTENANCE MODE ==========
   useEffect(() => {
@@ -170,9 +126,6 @@ export default function AdminPanel() {
       .then(r => r.json())
       .then(d => setMaintenanceMode(d.maintenance))
       .catch(() => {});
-    
-    // Load referrals in background so badge shows immediately
-    fetchReferralRequests("all");
   }, [isAuthenticated]);
 
   const toggleMaintenance = async () => {
@@ -197,10 +150,11 @@ export default function AdminPanel() {
   const fetchWalletAndPrices = async () => {
     setWalletLoading(true);
     try {
-      // Parallel fetch wallet info and bot stars balance
-      const [walletRes, botStarsRes] = await Promise.all([
+      // Parallel fetch wallet info, bot stars balance, and premium prices
+      const [walletRes, botStarsRes, premiumPricesRes] = await Promise.all([
         apiFetch("/api/admin/wallet-info"),
-        apiFetch("/api/admin/bot-stars-balance")
+        apiFetch("/api/admin/bot-stars-balance"),
+        apiFetch("/api/admin/premium-prices")
       ]);
       
       const data = await walletRes.json();
@@ -229,6 +183,12 @@ export default function AdminPanel() {
         console.warn("⚠️ Bot stars fetch muvaffaqiyatsiz:", botStarsData.message || botStarsData.error);
         setBotStarsBalance(0);
       }
+
+      // Premium prices
+      const premiumPricesData = await premiumPricesRes.json();
+      if (premiumPricesData.success) {
+        setPremiumPrices(premiumPricesData.prices);
+      }
     } catch (err) {
       console.error("❌ Wallet/Prices fetch error:", err);
     } finally {
@@ -253,7 +213,7 @@ export default function AdminPanel() {
     }
   }, [activeTab, isAuthenticated]);
 
-  // ========== ANALYTICS FUNCTION ==========
+  // ========== ANALYTICS FUNCTION (PREMIUM ONLY) ==========
   const fetchAnalytics = async () => {
     if (!isAuthenticated) return;
     setAnalyticsLoading(true);
@@ -270,72 +230,47 @@ export default function AdminPanel() {
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
       }
 
-      // Fetch all data
-      const [starsRes, premiumRes, giftRes] = await Promise.all([
-        apiFetch("/api/transactions/all"),
-        apiFetch("/api/admin/premium/list"),
-        apiFetch("/api/admin/gift/list")
-      ]);
-
-      const starsData = await starsRes.json();
+      // Fetch only premium data
+      const premiumRes = await apiFetch("/api/admin/premium/list");
       const premiumJson = await premiumRes.json();
-      const giftJson = await giftRes.json();
-
-      // Extract arrays (stars is direct array, premium/gift have .orders)
       const premiumData = premiumJson.orders || [];
-      const giftData = giftJson.orders || [];
 
-      // Filter by date and completed status (stars_sent, premium_sent, gift_sent, completed)
+      // Filter by date and delivered status
       const filterByDate = (items, dateField = "created_at") => {
         if (!startDate) return items;
         return items.filter(item => new Date(item[dateField]) >= startDate);
       };
 
-      // Stars: stars_sent yoki completed
-      const filteredStars = filterByDate(starsData).filter(tx => 
-        tx.status === "stars_sent" || tx.status === "completed"
-      );
-      // Premium: premium_sent, completed yoki delivered
+      // Premium: delivered status
       const filteredPremium = filterByDate(premiumData).filter(tx => 
-        tx.status === "premium_sent" || tx.status === "completed" || tx.status === "delivered"
-      );
-      // Gift: gift_sent yoki completed
-      const filteredGift = filterByDate(giftData).filter(tx => 
-        tx.status === "gift_sent" || tx.status === "completed"
+        tx.status === "delivered"
       );
 
-      // Calculate analytics
-      const starsStats = {
-        count: filteredStars.length,
-        totalStars: filteredStars.reduce((sum, tx) => sum + (tx.stars || 0), 0),
-        totalAmount: filteredStars.reduce((sum, tx) => sum + (tx.amount || 0), 0)
-      };
+      // Calculate premium stats by months (3, 6, 12)
+      const by3months = filteredPremium.filter(tx => tx.months === 3).length;
+      const by6months = filteredPremium.filter(tx => tx.months === 6).length;
+      const by12months = filteredPremium.filter(tx => tx.months === 12).length;
 
       const premiumStats = {
         count: filteredPremium.length,
-        totalAmount: filteredPremium.reduce((sum, tx) => sum + (tx.amount || 0), 0)
-      };
-
-      const giftStats = {
-        count: filteredGift.length,
-        totalStars: filteredGift.reduce((sum, tx) => sum + (tx.stars || 0), 0),
-        totalAmount: filteredGift.reduce((sum, tx) => sum + (tx.amount || 0), 0)
+        totalAmount: filteredPremium.reduce((sum, tx) => sum + (tx.amount || 0), 0),
+        by3months,
+        by6months,
+        by12months
       };
 
       setAnalyticsData({
-        stars: starsStats,
         premium: premiumStats,
-        gift: giftStats,
         total: {
-          count: starsStats.count + premiumStats.count + giftStats.count,
-          totalAmount: starsStats.totalAmount + premiumStats.totalAmount + giftStats.totalAmount
+          count: premiumStats.count,
+          totalAmount: premiumStats.totalAmount
         }
       });
 
-      // Calculate daily breakdown from all completed transactions (last 7 days)
-      const completedStars = starsData.filter(tx => tx.status === "stars_sent" || tx.status === "completed");
-      const completedPremium = premiumData.filter(tx => tx.status === "premium_sent" || tx.status === "completed" || tx.status === "delivered");
-      const completedGift = giftData.filter(tx => tx.status === "gift_sent" || tx.status === "completed");
+      // Calculate daily breakdown from delivered premium (last 7 days)
+      const completedPremium = premiumData.filter(tx => 
+        tx.status === "delivered"
+      );
       
       const dailyMap = {};
       
@@ -345,24 +280,17 @@ export default function AdminPanel() {
         const d = new Date(today);
         d.setDate(d.getDate() - i);
         const key = d.toISOString().split('T')[0];
-        dailyMap[key] = { date: key, stars: 0, amount: 0, count: 0 };
+        dailyMap[key] = { date: key, amount: 0, count: 0 };
       }
 
-      // Aggregate all transactions by day
-      const aggregateToDaily = (transactions) => {
-        transactions.forEach(tx => {
-          const txDate = new Date(tx.created_at).toISOString().split('T')[0];
-          if (dailyMap[txDate]) {
-            dailyMap[txDate].stars += tx.stars || 0;
-            dailyMap[txDate].amount += tx.amount || 0;
-            dailyMap[txDate].count += 1;
-          }
-        });
-      };
-
-      aggregateToDaily(completedStars);
-      aggregateToDaily(completedPremium);
-      aggregateToDaily(completedGift);
+      // Aggregate premium transactions by day
+      completedPremium.forEach(tx => {
+        const txDate = new Date(tx.created_at).toISOString().split('T')[0];
+        if (dailyMap[txDate]) {
+          dailyMap[txDate].amount += tx.amount || 0;
+          dailyMap[txDate].count += 1;
+        }
+      });
 
       setDailyStats(Object.values(dailyMap));
     } catch (err) {
@@ -380,42 +308,6 @@ export default function AdminPanel() {
   }, [analyticsPeriod, activeTab, isAuthenticated]);
 
   // ========== ALL FUNCTIONS ==========
-  const fetchTransactions = async () => {
-    if (!isAuthenticated) return;
-    setLoading(true);
-    try {
-      let url = "/api/transactions/all";
-      if (filter !== "all") {
-        url = `/api/transactions/status/${filter}`;
-      }
-
-      const res = await apiFetch(url);
-      const data = await res.json();
-      setTransactions(data);
-
-      const stat = {
-        totalStars: 0,
-        completed: 0,
-        expired: 0,
-        pending: 0,
-        stars_sent: 0,
-        failed: 0,
-        error: 0,
-      };
-
-      data.forEach((tx) => {
-        stat.totalStars += tx.stars;
-        if (stat[tx.status] !== undefined) stat[tx.status]++;
-      });
-
-      setStats(stat);
-    } catch (err) {
-      console.error("❌ Transactionlarni olishda xato:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchUsers = async () => {
     if (!isAuthenticated) return;
     setLoading(true);
@@ -457,7 +349,7 @@ export default function AdminPanel() {
           const stats = {
             total: orders.length,
             pending: orders.filter(o => o.status === 'pending').length,
-            premium_sent: orders.filter(o => o.status === 'premium_sent').length,
+            delivered: orders.filter(o => o.status === 'delivered').length,
             expired: orders.filter(o => o.status === 'expired').length,
             failed: orders.filter(o => o.status === 'failed' || o.status === 'error').length
           };
@@ -468,205 +360,6 @@ export default function AdminPanel() {
       console.error("❌ Premium orders fetch error:", err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchRefWithdrawals = async () => {
-    if (!isAuthenticated) return;
-    setLoading(true);
-    try {
-      const res = await apiFetch(`/api/admin/referral-withdrawals?status=${refFilter}`);
-      const data = await res.json();
-      setRefWithdrawals(data);
-    } catch (err) {
-      console.error("❌ Referral withdrawals fetch error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchGiftOrders = async () => {
-    if (!isAuthenticated) return;
-    setLoading(true);
-    try {
-      const res = await apiFetch(`/api/admin/gift/list?status=${giftFilter}`);
-      const data = await res.json();
-
-      if (data.success) {
-        setGiftOrders(data.orders || []);
-
-        // Calculate stats from all orders
-        const allRes = await apiFetch("/api/admin/gift/list?status=all");
-        const allData = await allRes.json();
-
-        if (allData.success) {
-          const orders = allData.orders || [];
-          const stats = {
-            total: orders.length,
-            pending: orders.filter(o => o.status === 'pending').length,
-            completed: orders.filter(o => o.status === 'completed').length,
-            gift_sent: orders.filter(o => o.status === 'gift_sent').length,
-            expired: orders.filter(o => o.status === 'expired').length,
-            failed: orders.filter(o => o.status === 'failed' || o.status === 'error').length
-          };
-          setGiftStats(stats);
-        }
-      }
-    } catch (err) {
-      console.error("❌ Gift orders fetch error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Discount packages fetch
-  const fetchDiscountPackages = async () => {
-    if (!isAuthenticated) return;
-    setLoading(true);
-    try {
-      const res = await apiFetch("/api/admin/discount-packages");
-      const data = await res.json();
-      setDiscountPackages(data);
-    } catch (err) {
-      console.error("❌ Discount packages fetch error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Calculate discounted price
-  const calculateDiscountedPrice = (stars, discountPercent) => {
-    if (!stars || !discountPercent) return 0;
-    const normalPrice = parseInt(stars) * BASE_PRICE;
-    const discount = (normalPrice * parseInt(discountPercent)) / 100;
-    return Math.round(normalPrice - discount);
-  };
-
-  // Add new discount package
-  const addDiscountPackage = async () => {
-    if (!newPackage.stars || !newPackage.discount_percent) {
-      alert("Stars va chegirma foizini kiriting!");
-      return;
-    }
-
-    const discountedPrice = calculateDiscountedPrice(newPackage.stars, newPackage.discount_percent);
-    
-    setPackageLoading(true);
-    try {
-      const res = await apiFetch("/api/admin/discount-packages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          stars: parseInt(newPackage.stars),
-          discount_percent: parseInt(newPackage.discount_percent),
-          discounted_price: discountedPrice
-        })
-      });
-
-      if (res.ok) {
-        setNewPackage({ stars: "", discount_percent: "" });
-        fetchDiscountPackages();
-      } else {
-        alert("Xato yuz berdi!");
-      }
-    } catch (err) {
-      console.error("❌ Add package error:", err);
-      alert("Xato yuz berdi!");
-    } finally {
-      setPackageLoading(false);
-    }
-  };
-
-  // Delete discount package
-  const deleteDiscountPackage = async (id) => {
-    if (!confirm("Rostdan o'chirmoqchimisiz?")) return;
-    
-    try {
-      const res = await apiFetch(`/api/admin/discount-packages/${id}`, {
-        method: "DELETE"
-      });
-
-      if (res.ok) {
-        fetchDiscountPackages();
-      } else {
-        alert("O'chirishda xato!");
-      }
-    } catch (err) {
-      console.error("❌ Delete package error:", err);
-    }
-  };
-
-  // Toggle package active status
-  const togglePackageActive = async (id, currentStatus) => {
-    try {
-      const res = await apiFetch(`/api/admin/discount-packages/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_active: !currentStatus })
-      });
-
-      if (res.ok) {
-        fetchDiscountPackages();
-      }
-    } catch (err) {
-      console.error("❌ Toggle package error:", err);
-    }
-  };
-
-  // Fetch referral requests
-  const fetchReferralRequests = async (filter = "pending") => {
-    setReferralLoading(true);
-    try {
-      const res = await apiFetch(`/api/admin/referral-requests?filter=${filter}`);
-      const data = await res.json();
-      setReferralRequests(data);
-    } catch (err) {
-      console.error("❌ Fetch referral requests error:", err);
-    } finally {
-      setReferralLoading(false);
-    }
-  };
-
-  // Approve referral request
-  const approveReferral = async (id) => {
-    try {
-      const res = await apiFetch(`/api/admin/referral-requests/${id}/approve`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" }
-      });
-
-      if (res.ok) {
-        alert("✅ Referral tasdiqlandi!");
-        fetchReferralRequests(referralFilter);
-      } else {
-        alert("❌ Xato yuz berdi!");
-      }
-    } catch (err) {
-      console.error("❌ Approve error:", err);
-      alert("❌ Xato yuz berdi!");
-    }
-  };
-
-  // Reject referral request
-  const rejectReferral = async (id) => {
-    if (!window.confirm("Bu referralni rad qilasizmi?")) return;
-
-    try {
-      const res = await apiFetch(`/api/admin/referral-requests/${id}/reject`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: "Admin tomonidan rad etildi" })
-      });
-
-      if (res.ok) {
-        alert("✅ Referral rad etildi!");
-        fetchReferralRequests(referralFilter);
-      } else {
-        alert("❌ Xato yuz berdi!");
-      }
-    } catch (err) {
-      console.error("❌ Reject error:", err);
-      alert("❌ Xato yuz berdi!");
     }
   };
 
@@ -807,24 +500,16 @@ export default function AdminPanel() {
   // Fetch data based on active tab
   useEffect(() => {
     if (!isAuthenticated) return;
-    if (activeTab === "transactions") {
-      fetchTransactions();
-    } else if (activeTab === "users") {
+    if (activeTab === "users") {
       fetchUsers();
     } else if (activeTab === "premium") {
       fetchPremiumOrders();
-    } else if (activeTab === "gift") {
-      fetchGiftOrders();
-    } else if (activeTab === "settings") {
-      fetchDiscountPackages();
-    } else if (activeTab === "referrals") {
-      fetchReferralRequests("pending");
     } else if (activeTab === "notifications") {
       fetchNotifications();
     } else if (activeTab === "promocodes") {
       fetchPromocodes();
     }
-  }, [filter, activeTab, isAuthenticated, premiumFilter, giftFilter, referralFilter]);
+  }, [filter, activeTab, isAuthenticated, premiumFilter]);
 
   // Auto refresh - disabled
   useEffect(() => {
@@ -832,10 +517,8 @@ export default function AdminPanel() {
     let interval;
     if (autoRefresh) {
       interval = setInterval(() => {
-        if (activeTab === "transactions") fetchTransactions();
-        else if (activeTab === "users") fetchUsers();
+        if (activeTab === "users") fetchUsers();
         else if (activeTab === "premium") fetchPremiumOrders();
-        else if (activeTab === "gift") fetchGiftOrders();
       }, 30000); // 30 seconds instead of 5
     }
     return () => clearInterval(interval);
@@ -870,24 +553,6 @@ export default function AdminPanel() {
     );
   }
   // ========== END AUTH PROTECTION ==========
-
-  const updateStatus = async (id, newStatus) => {
-    try {
-      const res = await apiFetch(`/api/transactions/update/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        fetchTransactions();
-        setExpandedId(null);
-      }
-    } catch (err) {
-      console.error("❌ Status update xato:", err);
-    }
-  };
 
   // Premium order expire
   const expirePremiumOrder = async (id) => {
@@ -954,97 +619,6 @@ export default function AdminPanel() {
       }
     } catch (err) {
       console.error("❌ Premium status update xato:", err);
-    }
-  };
-
-  const sendStars = async (id) => {
-    try {
-      if (!window.confirm("⭐ Ushbu buyurtmaga stars yuborilsinmi?")) return;
-
-      const res = await apiFetch(`/api/admin/stars/send/${id}`, {
-        method: "POST",
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        alert("🌟 Stars yuborildi!");
-        fetchTransactions();
-        setExpandedId(null);
-      } else {
-        alert("❌ Xato: " + data.error);
-      }
-    } catch (err) {
-      console.error("❌ Stars yuborishda xato:", err);
-      alert("Server xato!");
-    }
-  };
-
-  // Gift order expire
-  const expireGiftOrder = async (id) => {
-    try {
-      if (!window.confirm("❌ Bu gift buyurtmani expired qilasizmi?")) return;
-
-      const res = await apiFetch(`/api/admin/gift/update/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "expired" }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        alert("✅ Gift order expired qilindi!");
-        fetchGiftOrders();
-        setGiftExpandedId(null);
-      } else {
-        alert("❌ Xato: " + data.error);
-      }
-    } catch (err) {
-      console.error("❌ Gift expire error:", err);
-      alert("Server xato!");
-    }
-  };
-
-  // Gift order send
-  const sendGift = async (id) => {
-    try {
-      if (!window.confirm("🎁 Ushbu buyurtmaga gift yuborilsinmi?")) return;
-
-      const res = await apiFetch(`/api/admin/gift/send/${id}`, {
-        method: "POST",
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        alert("🎁 Gift yuborildi!");
-        fetchGiftOrders();
-        setGiftExpandedId(null);
-      } else {
-        alert("❌ Xato: " + data.error);
-      }
-    } catch (err) {
-      console.error("❌ Gift yuborishda xato:", err);
-      alert("Server xato!");
-    }
-  };
-
-  // Gift order update status
-  const updateGiftStatus = async (id, newStatus) => {
-    try {
-      const res = await apiFetch(`/api/admin/gift/update/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        fetchGiftOrders();
-        setGiftExpandedId(null);
-      }
-    } catch (err) {
-      console.error("❌ Gift status update xato:", err);
     }
   };
 
@@ -1259,17 +833,6 @@ export default function AdminPanel() {
     }
   };
 
-  const filteredTransactions = transactions.filter((tx) => {
-    const s = search.toLowerCase();
-    return (
-      tx.username?.toLowerCase().includes(s) ||
-      tx.sender_username?.toLowerCase().includes(s) ||
-      tx.recipient?.toLowerCase().includes(s) ||
-      tx.owner_user_id?.toString().includes(s) ||
-      tx.id.toString().includes(s)
-    );
-  });
-
   const filteredUsers = users.filter((u) => {
     const s = search.toLowerCase();
     return (
@@ -1278,18 +841,13 @@ export default function AdminPanel() {
     );
   });
 
-  // Show last 20 or all
-  const displayedTransactions = showAll 
-    ? filteredTransactions 
-    : filteredTransactions.slice(0, 20);
-
   const getStatusColor = (status) => {
     const colors = {
       pending: "#f39c12",
       completed: "#27ae60",
+      delivered: "#27ae60",
       expired: "#e74c3c",
       stars_sent: "#3498db",
-      premium_sent: "#3498db",
       gift_sent: "#9b59b6",
       failed: "#c0392b",
       error: "#8e44ad"
@@ -1301,9 +859,9 @@ export default function AdminPanel() {
     const icons = {
       pending: "⏳",
       completed: "✅",
+      delivered: "💎",
       expired: "❌",
       stars_sent: "🌟",
-      premium_sent: "💎",
       gift_sent: "🎁",
       failed: "⚠️",
       error: "🔴"
@@ -1330,52 +888,18 @@ export default function AdminPanel() {
             </div>
             {/* Refresh */}
             <button className="hdr-btn refresh" onClick={() => {
-              if (activeTab === "transactions") fetchTransactions();
+              if (activeTab === "premium") fetchPremiumOrders();
               else if (activeTab === "users") fetchUsers();
-              else if (activeTab === "premium") fetchPremiumOrders();
-              else if (activeTab === "gift") fetchGiftOrders();
-              else if (activeTab === "settings") fetchDiscountPackages();
-              else if (activeTab === "referrals") fetchReferralRequests(referralFilter);
               else if (activeTab === "analytics") { fetchAnalytics(); fetchWalletAndPrices(); }
             }}>
               🔄
-            </button>
-            
-            {/* Referral Bell Icon */}
-            <button 
-              className="hdr-btn referral-bell"
-              onClick={() => setActiveTab("referrals")}
-              style={{position: 'relative'}}
-              title="Referral requests"
-            >
-              🔔
-              {referralRequests.filter(r => !r.is_accepted && !r.rejected_at).length > 0 && (
-                <span style={{
-                  position: 'absolute',
-                  top: '-4px',
-                  right: '-4px',
-                  background: '#ff4444',
-                  color: '#fff',
-                  width: '18px',
-                  height: '18px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '10px',
-                  fontWeight: '700',
-                  border: '2px solid #1a1a2e'
-                }}>
-                  {referralRequests.filter(r => !r.is_accepted && !r.rejected_at).length}
-                </span>
-              )}
             </button>
           </div>
         </div>
         <div className="header-btns">
           <button 
             className={`hdr-nav-btn ${activeTab === "analytics" ? "active" : ""}`}
-            onClick={() => setActiveTab(activeTab === "analytics" ? "transactions" : "analytics")}
+            onClick={() => setActiveTab(activeTab === "analytics" ? "premium" : "analytics")}
           >
             📊 Analitika
           </button>
@@ -1384,12 +908,6 @@ export default function AdminPanel() {
             onClick={() => setActiveTab("notifications")}
           >
             🔔 Xabar
-          </button>
-          <button 
-            className={`hdr-nav-btn ${activeTab === "settings" ? "active" : ""}`}
-            onClick={() => setActiveTab("settings")}
-          >
-             % Chegirma
           </button>
           <button 
             className={`hdr-nav-btn ${activeTab === "promocodes" ? "active" : ""}`}
@@ -1404,22 +922,10 @@ export default function AdminPanel() {
       {/* TABS */}
       <div className="tabs">
         <button 
-          className={`tab ${activeTab === "transactions" ? "active" : ""}`}
-          onClick={() => setActiveTab("transactions")}
-        >
-          Stars
-        </button>
-        <button 
           className={`tab ${activeTab === "premium" ? "active" : ""}`}
           onClick={() => setActiveTab("premium")}
         >
           Premium
-        </button>
-        <button 
-          className={`tab ${activeTab === "gift" ? "active" : ""}`}
-          onClick={() => setActiveTab("gift")}
-        >
-          Gift
         </button>
         <button 
           className={`tab ${activeTab === "users" ? "active" : ""}`}
@@ -1628,6 +1134,23 @@ export default function AdminPanel() {
             </div>
           </div>
 
+          {/* Premium Prices List */}
+          <div className="info-list premium-prices-list">
+            <div className="list-title">💎 Premium narxlari (TON)</div>
+            <div className="info-row">
+              <span className="info-label">3 oylik:</span>
+              <span className="info-value cyan">{walletLoading ? '...' : (premiumPrices[3]?.price || 0).toFixed(2)} TON</span>
+            </div>
+            <div className="info-row">
+              <span className="info-label">6 oylik:</span>
+              <span className="info-value cyan">{walletLoading ? '...' : (premiumPrices[6]?.price || 0).toFixed(2)} TON</span>
+            </div>
+            <div className="info-row">
+              <span className="info-label">12 oylik:</span>
+              <span className="info-value cyan">{walletLoading ? '...' : (premiumPrices[12]?.price || 0).toFixed(2)} TON</span>
+            </div>
+          </div>
+
           {/* Sales Stats List */}
           {analyticsLoading ? (
             <div className="analytics-loading-v2">⏳ Yuklanmoqda...</div>
@@ -1640,21 +1163,21 @@ export default function AdminPanel() {
                 </span>
               </div>
               <div className="info-row">
-                <span className="info-label">⭐ Stars:</span>
+                <span className="info-label">💎 Premium (3 oy):</span>
                 <span className="info-value">
-                  {analyticsData.stars.count} ta &nbsp;·&nbsp; {analyticsData.stars.totalStars.toLocaleString()} stars &nbsp;·&nbsp; {analyticsData.stars.totalAmount.toLocaleString()} so'm
+                  {analyticsData.premium.by3months} ta
                 </span>
               </div>
               <div className="info-row">
-                <span className="info-label">💎 Premium:</span>
+                <span className="info-label">💎 Premium (6 oy):</span>
                 <span className="info-value">
-                  {analyticsData.premium.count} ta &nbsp;·&nbsp; {analyticsData.premium.totalAmount.toLocaleString()} so'm
+                  {analyticsData.premium.by6months} ta
                 </span>
               </div>
               <div className="info-row">
-                <span className="info-label">🎁 Gift:</span>
+                <span className="info-label">💎 Premium (12 oy):</span>
                 <span className="info-value">
-                  {analyticsData.gift.count} ta &nbsp;·&nbsp; {analyticsData.gift.totalStars.toLocaleString()} stars &nbsp;·&nbsp; {analyticsData.gift.totalAmount.toLocaleString()} so'm
+                  {analyticsData.premium.by12months} ta
                 </span>
               </div>
             </div>
@@ -1667,293 +1190,11 @@ export default function AdminPanel() {
               <div key={i} className={`info-row ${day.count > 0 ? 'has-data' : 'no-data'}`}>
                 <span className="info-label">{new Date(day.date).toLocaleDateString('uz-UZ', {day: '2-digit', month: 'short'})}</span>
                 <span className="info-value">
-                  {day.count} ta &nbsp;·&nbsp; {day.stars.toLocaleString()} ⭐ &nbsp;·&nbsp; {day.amount.toLocaleString()}
+                  {day.count} ta &nbsp;·&nbsp; {day.amount.toLocaleString()} so'm
                 </span>
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* ==================== TRANSACTIONS TAB ==================== */}
-      {activeTab === "transactions" && (
-        <div className="tab-content">
-          {/* Stats Text */}
-          <div className="stats-text">
-            <span>Total: <b>{stats.totalStars}</b></span>
-            <span>Pending: <b>{stats.pending}</b></span>
-            <span>Sent: <b>{stats.stars_sent}</b></span>
-            <span>Done: <b>{stats.completed}</b></span>
-            <span>Expired: <b>{stats.expired}</b></span>
-            <span>Failed: <b>{stats.failed + stats.error}</b></span>
-          </div>
-
-          {/* Filters */}
-          <div className="filters">
-            <input
-              type="text"
-              placeholder="🔍 Qidiruv..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="search-input"
-            />
-            <select value={filter} onChange={(e) => setFilter(e.target.value)} className="filter-select">
-              <option value="all">Hammasi</option>
-              <option value="pending">⏳ Pending</option>
-              <option value="completed">✅ Completed</option>
-              <option value="expired">❌ Expired</option>
-              <option value="stars_sent">🌟 Sent</option>
-              <option value="failed">⚠️ Failed</option>
-              <option value="error">🔴 Error</option>
-            </select>
-          </div>
-
-          {/* Orders List */}
-          {loading && !autoRefresh ? (
-            <div className="loader">⏳ Yuklanmoqda...</div>
-          ) : (
-            <div className="orders-list">
-              {displayedTransactions.length === 0 ? (
-                <div className="empty-state">📭 Buyurtmalar yo'q</div>
-              ) : (
-                displayedTransactions.map((tx) => (
-                  <div key={tx.id} className="order-card">
-                    {/* Order Header - Horizontal */}
-                    <div 
-                      className="order-header"
-                      onClick={() => setExpandedId(expandedId === tx.id ? null : tx.id)}
-                    >
-                      <div className="order-main">
-                        <span className="order-id">#{tx.id}</span>
-                        <span className="order-user">@{tx.sender_username || '?'} → @{tx.username}</span>
-                        <span className="order-stars">{tx.stars} ⭐</span>
-                      </div>
-                      <div 
-                        className="order-status"
-                        style={{ backgroundColor: getStatusColor(tx.status) }}
-                      >
-                        {getStatusIcon(tx.status)} {tx.status}
-                      </div>
-                    </div>
-
-                    {/* Expanded Details */}
-                    {expandedId === tx.id && (
-                      <div className="order-details">
-                        <div className="detail-grid">
-                          <div className="detail-item">
-                            <span className="detail-label">Yuboruvchi</span>
-                            <span className="detail-value">@{tx.sender_username || '-'} ({tx.owner_user_id || '-'})</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="detail-label">Qabul qiluvchi</span>
-                            <span className="detail-value">@{tx.username} ({tx.recipient || '-'})</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="detail-label">Amount</span>
-                            <span className="detail-value">{tx.amount?.toLocaleString()} so'm</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="detail-label">Transaction ID</span>
-                            <span className="detail-value">{tx.transaction_id || "-"}</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="detail-label">Created</span>
-                            <span className="detail-value">{new Date(tx.created_at).toLocaleString()}</span>
-                          </div>
-                        </div>
-
-                        {/* Actions - for pending and error */}
-                        {(tx.status === "pending" || tx.status === "error") && (
-                          <div className="order-actions">
-                            <button 
-                              className="action-btn send"
-                              onClick={(e) => { e.stopPropagation(); sendStars(tx.id); }}
-                            >
-                              🌟 Stars Send
-                            </button>
-                            <button 
-                              className="action-btn expire"
-                              onClick={(e) => { e.stopPropagation(); updateStatus(tx.id, "expired"); }}
-                            >
-                              ❌ Expire
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-
-              {/* Show All Button */}
-              {filteredTransactions.length > 20 && !showAll && (
-                <button className="show-all-btn" onClick={() => setShowAll(true)}>
-                  📋 Barcha buyurtmalarni ko'rish ({filteredTransactions.length} ta)
-                </button>
-              )}
-
-              {showAll && filteredTransactions.length > 20 && (
-                <button className="show-all-btn" onClick={() => setShowAll(false)}>
-                  🔼 Faqat oxirgi 20 tani ko'rish
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ==================== GIFT ORDERS TAB ==================== */}
-      {activeTab === "gift" && (
-        <div className="tab-content">
-          {/* Gift Stats */}
-          <div className="stats-text">
-            <span>Jami: <b>{giftStats.total}</b></span>
-            <span>Pending: <b>{giftStats.pending}</b></span>
-            <span>Completed: <b>{giftStats.completed}</b></span>
-            <span>Sent: <b>{giftStats.gift_sent}</b></span>
-            <span>Expired: <b>{giftStats.expired}</b></span>
-            <span>Failed: <b>{giftStats.failed}</b></span>
-          </div>
-
-          {/* Gift Filters */}
-          <div className="filters">
-            <input
-              type="text"
-              placeholder="🔍 Qidiruv..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="search-input"
-            />
-            <select value={giftFilter} onChange={(e) => setGiftFilter(e.target.value)} className="filter-select">
-              <option value="all">Hammasi</option>
-              <option value="pending">⏳ Pending</option>
-              <option value="completed">✅ Completed</option>
-              <option value="gift_sent">🎁 Sent</option>
-              <option value="expired">❌ Expired</option>
-              <option value="error">🔴 Error</option>
-            </select>
-          </div>
-
-          {loading && !autoRefresh ? (
-            <div className="loader">⏳ Yuklanmoqda...</div>
-          ) : (
-            <div className="orders-list">
-              {giftOrders.length === 0 ? (
-                <div className="empty-state">🎁 Gift buyurtmalar yo'q</div>
-              ) : (
-                giftOrders
-                  .filter((tx) => {
-                    const s = search.toLowerCase();
-                    return (
-                      tx.username?.toLowerCase().includes(s) ||
-                      tx.sender_username?.toLowerCase().includes(s) ||
-                      tx.recipient_username?.toLowerCase().includes(s) ||
-                      tx.owner_user_id?.toString().includes(s) ||
-                      tx.id.toString().includes(s)
-                    );
-                  })
-                  .slice(0, giftShowAll ? giftOrders.length : 20)
-                  .map((tx) => (
-                  <div key={tx.id} className="order-card">
-                    <div 
-                      className="order-header"
-                      onClick={() => setGiftExpandedId(giftExpandedId === tx.id ? null : tx.id)}
-                    >
-                      <div className="order-main">
-                        <span className="order-id">#{tx.id}</span>
-                        <span className="order-user">@{tx.sender_username || '?'} → @{tx.username}</span>
-                        <span className="order-stars">{tx.stars} ⭐ 🎁</span>
-                      </div>
-                      <div 
-                        className="order-status"
-                        style={{ backgroundColor: getStatusColor(tx.status) }}
-                      >
-                        {getStatusIcon(tx.status)} {tx.status}
-                      </div>
-                    </div>
-
-                    {giftExpandedId === tx.id && (
-                      <div className="order-details">
-                        <div className="detail-grid">
-                          <div className="detail-item">
-                            <span className="detail-label">Kimdan</span>
-                            <span className="detail-value">@{tx.sender_username || tx.owner_user_id}</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="detail-label">Kimga</span>
-                            <span className="detail-value">@{tx.recipient_username}</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="detail-label">Gift ID</span>
-                            <span className="detail-value" style={{fontSize: '11px'}}>{tx.gift_id}</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="detail-label">Stars</span>
-                            <span className="detail-value">{tx.stars} ⭐</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="detail-label">Amount</span>
-                            <span className="detail-value">{tx.amount?.toLocaleString()} so'm</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="detail-label">Payment</span>
-                            <span className="detail-value">{tx.payment_method || "card"}</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="detail-label">Anonim</span>
-                            <span className="detail-value">{tx.gift_anonymous ? "Ha ✅" : "Yo'q"}</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="detail-label">Izoh</span>
-                            <span className="detail-value">{tx.gift_comment || "-"}</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="detail-label">Created</span>
-                            <span className="detail-value">{new Date(tx.created_at).toLocaleString()}</span>
-                          </div>
-                        </div>
-
-                        {/* Actions */}
-                        {(tx.status === "pending" || tx.status === "completed" || tx.status === "error") && (
-                          <div className="order-actions">
-                            {(tx.status === "pending" || tx.status === "completed" || tx.status === "error") && (
-                              <button 
-                                className="action-btn send"
-                                onClick={(e) => { e.stopPropagation(); sendGift(tx.id); }}
-                              >
-                                🎁 Gift Yuborish
-                              </button>
-                            )}
-                            {(tx.status === "pending" || tx.status === "error") && (
-                              <button 
-                                className="action-btn expire"
-                                onClick={(e) => { e.stopPropagation(); expireGiftOrder(tx.id); }}
-                              >
-                                ❌ Expired qilish
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-
-              {/* Show All Button */}
-              {giftOrders.length > 20 && !giftShowAll && (
-                <button className="show-all-btn" onClick={() => setGiftShowAll(true)}>
-                  🎁 Barcha buyurtmalarni ko'rish ({giftOrders.length} ta)
-                </button>
-              )}
-
-              {giftShowAll && giftOrders.length > 20 && (
-                <button className="show-all-btn" onClick={() => setGiftShowAll(false)}>
-                  🔼 Faqat oxirgi 20 tani ko'rish
-                </button>
-              )}
-            </div>
-          )}
         </div>
       )}
 
@@ -2166,7 +1407,7 @@ export default function AdminPanel() {
           <div className="stats-text">
             <span>Jami: <b>{premiumStats.total}</b></span>
             <span>Pending: <b>{premiumStats.pending}</b></span>
-            <span>Sent: <b>{premiumStats.premium_sent}</b></span>
+            <span>Delivered: <b>{premiumStats.delivered}</b></span>
             <span>Expired: <b>{premiumStats.expired}</b></span>
             <span>Failed: <b>{premiumStats.failed}</b></span>
           </div>
@@ -2183,7 +1424,7 @@ export default function AdminPanel() {
             <select value={premiumFilter} onChange={(e) => setPremiumFilter(e.target.value)} className="filter-select">
               <option value="all">Hammasi</option>
               <option value="pending">⏳ Pending</option>
-              <option value="premium_sent">💎 Sent</option>
+              <option value="delivered">💎 Delivered</option>
               <option value="expired">❌ Expired</option>
               <option value="failed">⚠️ Failed</option>
               <option value="error">🔴 Error</option>
@@ -2222,9 +1463,9 @@ export default function AdminPanel() {
                       </div>
                       <div 
                         className="order-status"
-                        style={{ backgroundColor: getStatusColor(tx.status === 'premium_sent' ? 'stars_sent' : tx.status) }}
+                        style={{ backgroundColor: getStatusColor(tx.status) }}
                       >
-                        {tx.status === 'premium_sent' ? '💎' : getStatusIcon(tx.status)} {tx.status}
+                        {getStatusIcon(tx.status)} {tx.status}
                       </div>
                     </div>
 
@@ -2354,30 +1595,17 @@ export default function AdminPanel() {
                       value={promoForm.target_type}
                       onChange={e => setPromoForm({...promoForm, target_type: e.target.value, target_amount: ''})}
                     >
-                      <option value="stars">Stars</option>
-                      <option value="gift">Gifts</option>
                       <option value="premium">Premium</option>
-                      <option value="all">Barchasi uchun</option>
                     </select>
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>
-                    {promoForm.target_type === 'premium' ? "Qaysi oylar uchun? (ixtiyoriy)" :
-                     promoForm.target_type === 'gift' ? "Qaysi gift uchun? (ixtiyoriy)" :
-                     promoForm.target_type === 'stars' ? "Stars miqdori (ixtiyoriy)" : 
-                     "Aniq miqdor (ixtiyoriy)"}
-                  </label>
+                  <label>Qaysi oylar uchun? (ixtiyoriy)</label>
                   <input
                     type="text"
                     value={promoForm.target_amount}
                     onChange={e => setPromoForm({...promoForm, target_amount: e.target.value})}
-                    placeholder={
-                      promoForm.target_type === 'premium' ? "Masalan: 3, 6 yoki 12" :
-                      promoForm.target_type === 'gift' ? "Masalan: 15, 25, 50, 100" :
-                      promoForm.target_type === 'stars' ? "Masalan: 50 (Faqat 50 Stars uchun)" :
-                      "Masalan: 50"
-                    }
+                    placeholder="Masalan: 3, 6 yoki 12"
                   />
                 </div>
               </div>
@@ -2429,260 +1657,6 @@ export default function AdminPanel() {
             ))}
             {promocodes.length === 0 && !promoLoading && (
               <div className="empty-state" style={{gridColumn: '1 / -1'}}>Pramakodlar yo'q</div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ==================== SETTINGS TAB ==================== */}
-      {activeTab === "settings" && (
-        <div className="tab-content settings-tab">
-          <h3 className="settings-section-title">🏷️ Chegirma Paketlari</h3>
-          <p className="settings-section-desc">Maxsus chegirmali Stars paketlarini boshqaring</p>
-
-          {/* Add New Package */}
-          <div className="settings-add-package">
-            <div className="package-form">
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Stars miqdori</label>
-                  <input
-                    type="number"
-                    placeholder="500"
-                    value={newPackage.stars}
-                    onChange={(e) => setNewPackage({ ...newPackage, stars: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Chegirma (%)</label>
-                  <input
-                    type="number"
-                    placeholder="10"
-                    max="50"
-                    min="1"
-                    value={newPackage.discount_percent}
-                    onChange={(e) => setNewPackage({ ...newPackage, discount_percent: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Narxi (avto)</label>
-                  <input
-                    type="text"
-                    readOnly
-                    value={calculateDiscountedPrice(newPackage.stars, newPackage.discount_percent).toLocaleString() + " so'm"}
-                  />
-                </div>
-              </div>
-              <div className="form-info">
-                <small>
-                  Asl narx: {(parseInt(newPackage.stars || 0) * BASE_PRICE).toLocaleString()} so'm 
-                  | Chegirma: {((parseInt(newPackage.stars || 0) * BASE_PRICE) - calculateDiscountedPrice(newPackage.stars, newPackage.discount_percent)).toLocaleString()} so'm
-                </small>
-              </div>
-              <button 
-                className="add-package-btn"
-                onClick={addDiscountPackage}
-                disabled={packageLoading || !newPackage.stars || !newPackage.discount_percent}
-              >
-                {packageLoading ? "⏳ Yuklanmoqda..." : "➕ Paket qo'shish"}
-              </button>
-            </div>
-          </div>
-
-          {/* Existing Packages */}
-          <div className="packages-list">
-            <h4>Mavjud paketlar ({discountPackages.length} ta)</h4>
-            {loading ? (
-              <div className="loading-text">⏳ Yuklanmoqda...</div>
-            ) : discountPackages.length === 0 ? (
-              <div className="empty-text">Hech qanday paket yo'q</div>
-            ) : (
-              <div className="packages-grid">
-                {discountPackages.map((pkg) => (
-                  <div key={pkg.id} className={`package-item ${!pkg.is_active ? "inactive" : ""}`}>
-                    <div className="package-header">
-                      <span className="package-stars">⭐ {pkg.stars.toLocaleString()}</span>
-                      <span className={`package-status ${pkg.is_active ? "active" : "inactive"}`}>
-                        {pkg.is_active ? "✅ Faol" : "⏸️ O'chirilgan"}
-                      </span>
-                    </div>
-                    <div className="package-details">
-                      <div className="detail-row">
-                        <span className="label">Chegirma:</span>
-                        <span className="value discount">-{pkg.discount_percent}%</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="label">Narx:</span>
-                        <span className="value price">{pkg.discounted_price.toLocaleString()} so'm</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="label">Asl narx:</span>
-                        <span className="value original">{(pkg.stars * BASE_PRICE).toLocaleString()} so'm</span>
-                      </div>
-                    </div>
-                    <div className="package-actions">
-                      <button
-                        className={`toggle-btn ${pkg.is_active ? "deactivate" : "activate"}`}
-                        onClick={() => togglePackageActive(pkg.id, pkg.is_active)}
-                      >
-                        {pkg.is_active ? "⏸️ O'chirish" : "▶️ Yoqish"}
-                      </button>
-                      <button
-                        className="delete-btn"
-                        onClick={() => deleteDiscountPackage(pkg.id)}
-                      >
-                        🗑️ O'chirish
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ==================== REFERRALS TAB ==================== */}
-      {activeTab === "referrals" && (
-        <div className="tab-content referrals-tab">
-          
-          <p className="settings-section-desc">Foydalanuvchilarning referral so'rovlarini tasdiqlang yoki rad qiling</p>
-
-          {/* Filter Buttons */}
-          <div className="referrals-filter" style={{display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap'}}>
-            {['pending', 'accepted', 'rejected', 'all'].map(f => (
-              <button
-                key={f}
-                onClick={() => {
-                  setReferralFilter(f);
-                  fetchReferralRequests(f);
-                }}
-                style={{
-                  padding: '10px 14px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: referralFilter === f ? '#667eea' : 'rgba(255,255,255,0.1)',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  fontWeight: referralFilter === f ? '600' : '500',
-                  transition: 'all 0.2s ease',
-                  fontSize: '13px',
-                  fontFamily: 'monospace'
-                }}
-              >
-                {f === 'pending' ? `pending: ${referralRequests.filter(r => !r.is_accepted && !r.rejected_at).length}` : 
-                 f === 'accepted' ? `accept: ${referralRequests.filter(r => r.is_accepted).length}` :
-                 f === 'rejected' ? `refuse: ${referralRequests.filter(r => r.rejected_at).length}` :
-                 `all: ${referralRequests.length}`}
-              </button>
-            ))}
-          </div>
-
-          {/* Requests List */}
-          <div className="referrals-list" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '12px'}}>
-            {referralLoading ? (
-              <div style={{textAlign: 'center', padding: '20px', color: '#999', gridColumn: '1 / -1'}}>⏳ Yuklanmoqda...</div>
-            ) : referralRequests.length === 0 ? (
-              <div style={{textAlign: 'center', padding: '20px', color: '#999', gridColumn: '1 / -1'}}>Hech qanday so'rov topilmadi</div>
-            ) : (
-              referralRequests.map(req => (
-                <div
-                  key={req.id}
-                  style={{
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '10px',
-                    padding: '14px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    gap: '12px',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
-                  }}
-                >
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px'}}>
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '4px'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '15px', flexWrap: 'wrap' }}>
-                        <span style={{color: '#f9a825', fontWeight: 'bold'}}>@{req.referrer_username || 'user'}</span>
-                        <span style={{color: 'rgba(255,255,255,0.4)'}}>{'->'}</span>
-                        <span style={{color: '#4ee0ff', fontWeight: 'bold'}}>@{req.owner_username || 'new_user'}</span>
-                      </div>
-                      
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                        <span style={{
-                          fontSize: '11px',
-                          padding: '3px 6px',
-                          borderRadius: '4px',
-                          backgroundColor: req.subscribe_referrer ? 'rgba(52,199,89,0.15)' : 'rgba(255,69,58,0.15)',
-                          color: req.subscribe_referrer ? '#34c759' : '#ff453a',
-                          fontWeight: '600',
-                          border: `1px solid ${req.subscribe_referrer ? 'rgba(52,199,89,0.3)' : 'rgba(255,69,58,0.3)'}`
-                        }}>
-                          {req.subscribe_referrer ? '✅ Obuna bo\'lgan' : '❌ Kanalga obuna bo\'lmagan'}
-                        </span>
-                        
-                        <span style={{
-                          fontSize: '11px',
-                          padding: '3px 6px',
-                          borderRadius: '4px',
-                          backgroundColor: req.is_accepted ? 'rgba(52,199,89,0.15)' : req.rejected_at ? 'rgba(255,69,58,0.15)' : 'rgba(255,204,0,0.15)',
-                          color: req.is_accepted ? '#34c759' : req.rejected_at ? '#ff453a' : '#ffcc00',
-                          fontWeight: '600',
-                          border: `1px solid ${req.is_accepted ? 'rgba(52,199,89,0.3)' : req.rejected_at ? 'rgba(255,69,58,0.3)' : 'rgba(255,204,0,0.3)'}`
-                        }}>
-                          {req.is_accepted ? 'Tasdiqlangan' : req.rejected_at ? 'Rad etilgan' : 'Kutilmoqda'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{fontSize: '12px', color: 'rgba(255,255,255,0.5)'}}>
-                    📅 {new Date(req.created_at).toLocaleDateString('uz-UZ')} {new Date(req.created_at).toLocaleTimeString('uz-UZ', {hour: '2-digit', minute: '2-digit'})}
-                  </div>
-
-                  {/* Action Buttons */}
-                  {!req.is_accepted && !req.rejected_at && (
-                    <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.05)'}}>
-                      <button
-                        onClick={() => approveReferral(req.id)}
-                        style={{
-                          flex: 1,
-                          padding: '8px 12px',
-                          borderRadius: '8px',
-                          border: 'none',
-                          background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-                          color: '#fff',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        ✅ Tasdiqlash
-                      </button>
-                      <button
-                        onClick={() => rejectReferral(req.id)}
-                        style={{
-                          flex: 1,
-                          padding: '8px 12px',
-                          borderRadius: '8px',
-                          border: 'none',
-                          background: 'linear-gradient(135deg, #ff4444, #cc0000)',
-                          color: '#fff',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        ❌ Rad qilish
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))
             )}
           </div>
         </div>

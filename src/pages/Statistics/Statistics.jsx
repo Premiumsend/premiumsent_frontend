@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "../../context/LanguageContext";
 import WebApp from "@twa-dev/sdk";
 import apiFetch from "../../utils/apiFetch";
-import starsGif from "../../assets/stars.gif";
 import premiumGif from "../../assets/premium_gif.gif";
 import "./Statistics.css";
 
@@ -16,13 +15,9 @@ export default function Statistics() {
 
   const [username, setUsername] = useState(null);
   const [isTelegram, setIsTelegram] = useState(false);
-  const [statsTab, setStatsTab] = useState("sales");
   const [period, setPeriod] = useState("daily");
-  const [refPeriod, setRefPeriod] = useState("daily");
   const [leaderboard, setLeaderboard] = useState([]);
   const [myRank, setMyRank] = useState(null);
-  const [referralBoard, setReferralBoard] = useState([]);
-  const [myRefRank, setMyRefRank] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -82,24 +77,6 @@ export default function Statistics() {
     loadLeaderboard();
   }, [username, period]);
 
-  // Load referral leaderboard
-  useEffect(() => {
-    const loadReferralBoard = async () => {
-      try {
-        const params = new URLSearchParams();
-        if (username) params.append("username", username);
-        params.append("period", refPeriod);
-        const res = await apiFetch(`/api/referral/leaderboard?${params.toString()}`);
-        const json = await res.json();
-        setReferralBoard(json.top10 || []);
-        setMyRefRank(json.me || null);
-      } catch (e) {
-        console.error("Ref stats error:", e);
-      }
-    };
-    loadReferralBoard();
-  }, [username, refPeriod]);
-
   const getMedal = (i) => {
     if (i === 0) return "🥇";
     if (i === 1) return "🥈";
@@ -112,47 +89,30 @@ export default function Statistics() {
       {/* Header */}
       <header className="statistics-header">
         <h1 className="statistics-title">
-          🏆 {t("statistics.title") || "Statistika"}
+          🏆 {t("statistics.title") || "Premium Statistika"}
         </h1>
+        <p className="statistics-subtitle" style={{ color: '#888', fontSize: '14px', marginTop: '4px' }}>
+          Premium sotib olgan foydalanuvchilar reytingi
+        </p>
       </header>
-
-      {/* Tab Switcher */}
-      <div className="statistics-tabs">
-        <button
-          className={`statistics-tab ${statsTab === "sales" ? "active" : ""}`}
-          onClick={() => setStatsTab("sales")}
-        >
-          <img src={starsGif} className="statistics-tab-icon" alt="" />
-          {t("statistics.sales") || "Savdo"}
-        </button>
-        <button
-          className={`statistics-tab ${statsTab === "referral" ? "active" : ""}`}
-          onClick={() => setStatsTab("referral")}
-        >
-          <img src={premiumGif} className="statistics-tab-icon" alt="" />
-          {t("statistics.referral") || "Referal"}
-        </button>
-      </div>
 
       {/* Content */}
       <div className="statistics-content">
 
-        {/* Period Filter - only for sales tab */}
-        {statsTab === "sales" && (
-          <div className="statistics-period-filters">
-            {["daily", "weekly", "monthly"].map((p) => (
-              <button
-                key={p}
-                className={`statistics-period-btn ${period === p ? "active" : ""}`}
-                onClick={() => setPeriod(p)}
-              >
-                {t(`statistics.period_${p}`) || 
-                  (p === "daily" ? "Bugun" : p === "weekly" ? "Hafta" : "Oy")
-                }
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Period Filter */}
+        <div className="statistics-period-filters">
+          {["daily", "weekly", "monthly"].map((p) => (
+            <button
+              key={p}
+              className={`statistics-period-btn ${period === p ? "active" : ""}`}
+              onClick={() => setPeriod(p)}
+            >
+              {t(`statistics.period_${p}`) || 
+                (p === "daily" ? "Bugun" : p === "weekly" ? "Hafta" : "Oy")
+              }
+            </button>
+          ))}
+        </div>
 
         {/* Loading */}
         {loading && (
@@ -166,8 +126,8 @@ export default function Statistics() {
         {/* Error */}
         {error && <p className="statistics-error">{error}</p>}
 
-        {/* SALES TAB */}
-        {statsTab === "sales" && !loading && !error && (
+        {/* Sales Leaderboard */}
+        {!loading && !error && (
           <>
             {leaderboard.length === 0 ? (
               <div className="statistics-empty">
@@ -191,7 +151,7 @@ export default function Statistics() {
             )}
 
             {/* My rank */}
-            {isTelegram && !loading && (
+            {isTelegram && (
               <div className="statistics-my-section">
                 <div className="statistics-my-label">
                   {t("statistics.myPosition") || "Sizning o'rningiz"}
@@ -209,71 +169,6 @@ export default function Statistics() {
                 ) : (
                   <div className="statistics-empty small">
                     {t("statistics.noPurchases") || "Siz hali xarid qilmagansiz"}
-                  </div>
-                )}
-              </div>
-            )}
-          </>
-        )}
-
-        {/* REFERRAL TAB */}
-        {statsTab === "referral" && !loading && (
-          <>
-            {/* Period Filter for Referral */}
-            <div className="statistics-period-filters">
-              {["daily", "weekly", "monthly"].map((p) => (
-                <button
-                  key={p}
-                  className={`statistics-period-btn ${refPeriod === p ? "active" : ""}`}
-                  onClick={() => setRefPeriod(p)}
-                >
-                  {t(`statistics.period_${p}`) || 
-                    (p === "daily" ? "Bugun" : p === "weekly" ? "Hafta" : "Oy")
-                  }
-                </button>
-              ))}
-            </div>
-            
-            {referralBoard.length === 0 ? (
-              <div className="statistics-empty">
-                {t("statistics.noReferrals") || "Hozircha referallar yo'q"}
-              </div>
-            ) : (
-              <div className="statistics-list">
-                {referralBoard.slice(0, 10).map((u, i) => (
-                  <div
-                    key={u.user_id || i}
-                    className={`statistics-row ${i < 3 ? `top-${i + 1}` : ""}`}
-                  >
-                    <span className="statistics-rank">{getMedal(i)}</span>
-                    <span className="statistics-user">{u.nickname}</span>
-                    <span className="statistics-value">
-                      {u.referrals} {t("statistics.friends") || "do'st"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* My referral rank */}
-            {isTelegram && (
-              <div className="statistics-my-section">
-                <div className="statistics-my-label">
-                  {t("statistics.myPosition") || "Sizning o'rningiz"}
-                </div>
-                {myRefRank ? (
-                  <div className="statistics-row me">
-                    <span className="statistics-rank">#{myRefRank.rank}</span>
-                    <span className="statistics-user">
-                      {myRefRank.nickname}
-                    </span>
-                    <span className="statistics-value">
-                      {myRefRank.referrals} {t("statistics.friends") || "do'st"}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="statistics-empty small">
-                    {t("statistics.noFriendsYet") || "Siz hali do'st taklif qilmagansiz"}
                   </div>
                 )}
               </div>

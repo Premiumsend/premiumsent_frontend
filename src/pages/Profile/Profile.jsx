@@ -4,8 +4,6 @@ import { useNavigate } from "react-router-dom";
 import "./Profile.css";
 import { useTranslation } from "../../context/LanguageContext";
 import apiFetch from "../../utils/apiFetch";
-import { TGSSticker } from "../../components/TGSSticker";
-import tilSticker from "../../assets/AnimatedSticker_til.tgs";
 
 export default function Profile() {
   const { t, language, setLanguage } = useTranslation();
@@ -152,7 +150,7 @@ export default function Profile() {
       <div className="settings-group">
         {/* 5. Yordam */}
         <div className="settings-item" onClick={() => {
-          try { WebApp.openTelegramLink("https://t.me/starsjoy_bot"); } catch { window.open("https://t.me/starsjoy_bot", "_blank"); }
+          try { WebApp.openTelegramLink("https://t.me/PremiumSend_jbot"); } catch { window.open("https://t.me/PremiumSend_jbot", "_blank"); }
         }}>
           <div className="settings-item-left">
             <div className="settings-icon icon-support">🛟</div>
@@ -162,14 +160,14 @@ export default function Profile() {
             </div>
           </div>
           <div className="settings-item-right">
-            <span className="settings-item-value">@starsjoy_bot</span>
+            <span className="settings-item-value">@PremiumSend_jbot</span>
             <span className="settings-arrow">›</span>
           </div>
         </div>
 
         {/* 6. Yangiliklar kanali */}
         <div className="settings-item" onClick={() => {
-          try { WebApp.openTelegramLink("https://t.me/starsjoy"); } catch { window.open("https://t.me/starsjoy", "_blank"); }
+          try { WebApp.openTelegramLink("https://t.me/premiumsenduz"); } catch { window.open("https://t.me/premiumsenduz", "_blank"); }
         }}>
           <div className="settings-item-left">
             <div className="settings-icon icon-channel">📢</div>
@@ -179,7 +177,7 @@ export default function Profile() {
             </div>
           </div>
           <div className="settings-item-right">
-            <span className="settings-item-value">@starsjoy</span>
+            <span className="settings-item-value">@premiumsenduz</span>
             <span className="settings-arrow">›</span>
           </div>
         </div>
@@ -187,7 +185,7 @@ export default function Profile() {
 
       {/* Footer */}
       <div className="settings-footer">
-        <p className="footer-copyright">© 2026 Starsjoy</p>
+        <p className="footer-copyright">© 2026 Premium Send</p>
         <p className="footer-rights">Barcha huquqlar himoyalangan</p>
         <div className="footer-divider"></div>
         <p className="footer-version">v3.1.1</p>
@@ -198,7 +196,7 @@ export default function Profile() {
         <div className="language-modal-overlay" onClick={() => setShowLanguageModal(false)}>
           <div className="language-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-sticker-wrap">
-              <TGSSticker stickerPath={tilSticker} className="modal-top-sticker" />
+              <img src={langIcon} alt='lang' className='modal-top-sticker' width={64} height={64} />
             </div>
             <p className="modal-subtitle">{t("common.selectLanguage") || "Tilni tanlang"}</p>
             <div className="language-options">
@@ -224,3 +222,4 @@ export default function Profile() {
     </div>
   );
 }
+

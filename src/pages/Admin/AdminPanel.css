@@ -1351,6 +1351,11 @@ html, body {
   color: #10b981;
 }
 
+.info-value.cyan {
+  color: #06b6d4;
+  font-weight: 600;
+}
+
 .info-value b {
   color: #fff;
   font-weight: 700;
@@ -1359,6 +1364,11 @@ html, body {
 /* Wallet List */
 .wallet-list {
   border-left: 3px solid #0088cc;
+}
+
+/* Premium Prices List */
+.premium-prices-list {
+  border-left: 3px solid #06b6d4;
 }
 
 /* Sales List */

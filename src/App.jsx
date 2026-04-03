@@ -1,16 +1,11 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
-import Home from "./pages/Stars/Stars";
 import AdminPanel from "./pages/Admin/AdminPanel";
 import Premium from "./pages/Premium/Premium";
 import Dashboard from "./pages/Homepage/Dashboard";
-import Referral from "./pages/Referral/Referral";
 import Profile from "./pages/Profile/Profile";
 import History from "./pages/History/History";
-import Challenges from "./pages/Challenges/Challenges";
-import Gift from "./pages/Gift/Gift";
 import Statistics from "./pages/Statistics/Statistics";
-import Discount from "./pages/Discount/Discount";
 import Notifications from "./pages/Notifications/Notifications";
 import TermsOfService from "./pages/Legal/TermsOfService";
 import PrivacyPolicy from "./pages/Legal/PrivacyPolicy";
@@ -63,15 +58,10 @@ function App() {
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Dashboard/>} />
-                <Route path="/stars" element={<Home />} />
                 <Route path="/premium" element={<Premium />} />
-                <Route path="/referral" element={<Referral />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/history" element={<History />} />
-                <Route path="/challenges" element={<Challenges />} />
-                <Route path="/gift" element={<Gift />} />
                 <Route path="/statistics" element={<Statistics />} />
-                <Route path="/discount" element={<Discount />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -86,3 +76,4 @@ function App() {
 }
 
 export default App;
+

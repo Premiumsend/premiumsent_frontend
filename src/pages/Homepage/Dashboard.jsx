@@ -3,22 +3,15 @@ import { useNavigate } from "react-router-dom";
 import WebApp from "@twa-dev/sdk";
 import { useTranslation } from "../../context/LanguageContext";
 import apiFetch from "../../utils/apiFetch";
-import { TGSSticker } from "../../components/TGSSticker";
 import "./Dashboard.css";
 
-import starsGif from "../../assets/stars.gif";
 import premiumGif from "../../assets/premium_gif.gif";
-import ayiqImg from "../../assets/ayiqyurakchali.jpg";
-import actionCardSticker from "../../assets/5800655655995968830.tgs";
-import tilSticker from "../../assets/AnimatedSticker_til.tgs";
-import referalSticker from "../../assets/AnimatedSticker_ref.tgs";
-import ordersIcon from "../../assets/orders_icon.png";
 import profileIcon from "../../assets/profile_icon.png";
 import menuIcon from "../../assets/main_icon.png";
 import bellsIcon from "../../assets/bells_icon.png";
-import starsjoyAvatar from "../../assets/starsjoy.jpg";
 import statsIcon from "../../assets/stats_icon.png";
-import discountIcon from "../../assets/discount_icon.png";
+import langIcon from "../../assets/lang.png";
+import ordersIcon from "../../assets/orders_icon.png";
 
 
 // ================== UTILS ==================
@@ -38,56 +31,29 @@ export default function Dashboard() {
   /* ================= DATA ================= */
   const [leaderboard, setLeaderboard] = useState([]);
   const [myRank, setMyRank] = useState(null);
-  const [referralBoard, setReferralBoard] = useState([]);
-  const [myRefRank, setMyRefRank] = useState(null);
   const [history, setHistory] = useState([]);
 
   /* ================= UI ================= */
-  const [tab, setTab] = useState("home"); // home | referral | profile | history
-  const [statsTab, setStatsTab] = useState("sales");
+  const [tab, setTab] = useState("home"); // home | profile | history
   const [loading, setLoading] = useState(false);
   const [navLoading, setNavLoading] = useState(false);
   const [splashVisible, setSplashVisible] = useState(() => !sessionStorage.getItem("splashShown"));
   const [splashFading, setSplashFading] = useState(false);
-  const [showChannelBanner, setShowChannelBanner] = useState(false);
   const [error, setError] = useState(null);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(language);
-  const [showComingSoonToast, setShowComingSoonToast] = useState(false);
 
   /* ================= NOTIFICATIONS ================= */
   const [unreadCount, setUnreadCount] = useState(0);
 
   /* ================= CHALLENGE ================= */
   const [myTotal, setMyTotal] = useState(0);
-  const [referralBalance, setReferralBalance] = useState(0);
-  const [referralCount, setReferralCount] = useState(0);
   const GOAL = 999999;
 
   const percent = Math.min(
     100,
     Math.round((myTotal / GOAL) * 100)
   );
-
-  // Register user (silent)
-  const registerUser = async (user) => {
-    try {
-      // Check URL parameters for referral code (startapp param in Telegram)
-      const params = new URLSearchParams(window.location.search);
-      const startParam = WebApp?.initDataUnsafe?.start_param || params.get("startapp") || params.get("ref");
-
-      await apiFetch("/api/referral/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: user,
-          referral_code: startParam || null,
-        }),
-      });
-    } catch (err) {
-      console.error("Auto-register error:", err);
-    }
-  };
 
   /* ================= TELEGRAM USER ================= */
   useEffect(() => {
@@ -123,9 +89,6 @@ export default function Dashboard() {
         setIsTelegram(true);
         if (tgPhoto) setUserPhoto(tgPhoto);
         if (tgUserId) localStorage.setItem("userId", String(tgUserId));
-
-        // Auto register
-        registerUser(clean);
       }
     } catch {
       setIsTelegram(false);
@@ -154,23 +117,15 @@ export default function Dashboard() {
         setLeaderboard(json.leaderboard?.top10 || []);
         setMyRank(json.leaderboard?.me || null);
 
-        // Referral leaderboard
-        setReferralBoard(json.referralLeaderboard?.top10 || []);
-        setMyRefRank(json.referralLeaderboard?.me || null);
-
         // History
         const orders = json.history || [];
         setHistory(orders);
 
         // Challenge total
         const total = orders
-          .filter(o => ["stars_sent", "premium_sent"].includes(o.status))
+          .filter(o => ["delivered"].includes(o.status))
           .reduce((s, o) => s + Number(o.amount || 0), 0);
         setMyTotal(total);
-
-        // Referral stats
-        setReferralBalance(json.referralStats?.referral_balance || 0);
-        setReferralCount(json.referralStats?.total_referrals || 0);
 
         // Unread notifications
         setUnreadCount(json.unreadCount || 0);
@@ -281,7 +236,7 @@ export default function Dashboard() {
 
   /* ================= UI ================= */
 
-  // Splash screen - StarsJoy Loader
+  // Splash screen - Premium Send Loader
   if (splashVisible) {
     return (
       <div className={`splash-screen ${splashFading ? 'fade-out' : ''}`}>
@@ -310,7 +265,7 @@ export default function Dashboard() {
           </div>
 
           {/* Brand name */}
-          <div className="splash-brand">Stars<em>Joy</em></div>
+          <div className="splash-brand">Premium<em>Send</em></div>
 
           {/* Loading dots */}
           <div className="splash-dots">
@@ -331,10 +286,29 @@ export default function Dashboard() {
       {/* HEADER */}
       <header className="dash-header_dashboard">
         <div className="header-inner_dashboard">
-          <h1 className="brand-title_dashboard">
-            <img src={starsjoyAvatar} alt="Starsjoy" className="brand-logo_dashboard" />
-            Starsjoy
-          </h1>
+          <div className="brand-title-wrapper_dashboard">
+            <div className="brand-profile-container_dashboard">
+              {userPhoto ? (
+                <img 
+                  src={userPhoto} 
+                  alt="Profile" 
+                  className="brand-profile-pic_dashboard" 
+                  title={username}
+                />
+              ) : (
+                <div className="brand-profile-default_dashboard">
+                  <img 
+                    src={profileIcon} 
+                    alt="Default Profile" 
+                    className="brand-profile-default-icon_dashboard"
+                  />
+                </div>
+              )}
+            </div>
+            <h1 className="brand-title_dashboard">
+              Premium Send
+            </h1>
+          </div>
           <button
             className="notification-btn-dashboard"
             onClick={() => navigate("/notifications")}
@@ -349,52 +323,90 @@ export default function Dashboard() {
       </header>
 
       <main className="dash-main_dashboard" style={{display: tab === 'home' ? 'flex' : 'none'}}>
-        {/* ACTION CARDS - Stars wide, Gift & Premium side by side */}
+        {/* PREMIUM OFFERS */}
         <div className="dashboard-actions-container">
-          {/* Stars - Full Width */}
-          <div className="action-card-wide" onClick={() => navigate("/stars")}>
-            <img src={starsGif} className="action-card-wide__img" alt="stars" />
-            <div className="action-card-wide__content">
-              <span className="action-card-wide__title">{t("dashboard.buyStars") || "Stars olish"}</span>
-            </div>
-          </div>
-
-          {/* Gift & Premium - Side by Side */}
-          <div className="action-cards-row">
-            <div className="action-card-half" onClick={() => navigate("/gift")}>
-              <TGSSticker stickerPath={actionCardSticker} className="action-card-half__img" autoplay={true} loop={true} />
-              <span className="action-card-half__title">{t("dashboard.buyGift") || "Gift olish"}</span>
-            </div>
-            <div className="action-card-half" onClick={() => navigate("/premium")}>
-              <img src={premiumGif} className="action-card-half__img" alt="premium" />
-              <span className="action-card-half__title">{t("dashboard.buyPremium") || "Premium olish"}</span>
-            </div>
-          </div>
-
-          {/* Referral Invite Banner */}
-          <div
-            className="referral-invite-banner"
-            onClick={() => navigate("/referral")}
-          >
-            <div className="referral-banner-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-            </div>
-            <div className="referral-banner-content">
-              <div className="referral-banner-text">
-                {t("dashboard.referralBanner") || "Taklif qiling, bonus oling"}
+          <div className="premium-offers-grid">
+            
+            {/* 3 Months */}
+            <div className="action-card-offer card-offer-3" onClick={() => navigate("/premium")}>
+              <img src={premiumGif} className="offer-img" alt="premium" />
+              <div className="offer-details">
+                <div className="offer-header-row">
+                  <span className="offer-months">3 Oylik</span>
+                </div>
+                <span className="offer-desc">Standart paket</span>
+              </div>
+              <div className="offer-price-tag">
+                {formatAmount(import.meta.env.VITE_PREMIUM_3)} UZS
               </div>
             </div>
+
+            {/* 6 & 12 Months Wrapper */}
+            <div className="offers-row-wrapper-custom">
+            
+            {/* 6 Months */}
+            <div className="action-card-offer card-offer-6" onClick={() => navigate("/premium")}>
+              <div className="offer-details">
+                <div className="offer-header-row">
+                  <span className="offer-months">6 Oylik</span>
+                  <span className="offer-discount-badge badge-green">-47%</span>
+                </div>
+                <span className="offer-desc text-gradient-green">Tavsiya etiladi</span>
+              </div>
+              <div className="offer-price-tag">
+                {formatAmount(import.meta.env.VITE_PREMIUM_6)} UZS
+              </div>
+            </div>
+
+            {/* 12 Months */}
+            <div className="action-card-offer card-offer-12" onClick={() => navigate("/premium")}>
+              <div className="offer-details">
+                <div className="offer-header-row">
+                  <span className="offer-months">1 Yillik</span>
+                  <span className="offer-discount-badge badge-premium">-52%</span>
+                </div>
+                <span className="offer-desc">Eng hamyonbop</span>
+              </div>
+              <div className="offer-price-tag">
+                {formatAmount(import.meta.env.VITE_PREMIUM_12)} UZS
+              </div>
+            </div>
+
+            </div>
+
           </div>
+
+          {/* HELP / ADMIN BUTTON */}
+          <div style={{ marginTop: '10px', display: 'flex', width: '100%' }}>   
+            <a
+              href={import.meta.env.VITE_HELP_BOT || "https://t.me/PremiumSend_jbot"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="admin-contact-btn_dashboard secondary-outline"
+              title="Adminga murojaat"
+            >
+              <svg className="footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+              </svg>
+              Adminga murojaat
+            </a>
+          </div>
+
         </div>
       </main>
 
       {/* BOTTOM NAVIGATION */}
       <div className="bottom-nav_dashboard">
+        <button
+          className={`nav-btn_dashboard ${tab === "statistics" ? "active" : ""}`}
+          onClick={() => navigate("/statistics")}
+          title={t("dashboard.statistics") || "Statistika"}
+        >
+          <div className="nav-icon">
+            <img src={statsIcon} alt="Stats" />
+          </div>
+        </button>
+
         <button
           className={`nav-btn_dashboard ${tab === "home" ? "active" : ""}`}
           onClick={() => handleNavClick("home")}
@@ -406,42 +418,15 @@ export default function Dashboard() {
         </button>
 
         <button
-          className={`nav-btn_dashboard ${tab === "history" ? "active" : ""}`}
-          onClick={() => navigate("/statistics")}
-          title={t("dashboard.statistics") || "Statistika"}
+          className={`nav-btn_dashboard ${tab === "orders" ? "active" : ""}`}
+          onClick={() => navigate("/history")}
+          title={t("dashboard.orders") || "Buyurtmalar"}
         >
           <div className="nav-icon">
-            <img src={statsIcon} alt="Stats" />
-          </div>
-        </button>
-
-        <button
-          className={`nav-btn_dashboard ${tab === "referral" ? "active" : ""}`}
-          onClick={() => navigate("/discount")}
-          title="Chegirma"
-        >
-          <div className="nav-icon">
-            <img src={discountIcon} alt="Discount" />
-          </div>
-        </button>
-
-        <button
-          className={`nav-btn_dashboard ${tab === "profile" ? "active" : ""}`}
-          onClick={() => handleNavClick("profile")}
-          title={t("dashboard.profile")}
-        >
-          <div className="nav-icon">
-            <img src={profileIcon} alt="Profile" />
+            <img src={ordersIcon} alt="Orders" />
           </div>
         </button>
       </div>
-
-      {/* COMING SOON TOAST */}
-      {showComingSoonToast && (
-        <div className="coming-soon-toast">
-          🎁 {t("dashboard.comingSoon") || "Tez orada qo'shiladi"}
-        </div>
-      )}
 
       {/* NAV LOADING OVERLAY */}
       {navLoading && (
@@ -479,7 +464,7 @@ export default function Dashboard() {
         <div className="language-modal-overlay" onClick={() => setShowLanguageModal(false)}>
           <div className="language-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-sticker-wrap">
-              <TGSSticker stickerPath={tilSticker} className="modal-top-sticker" />
+              <img src={langIcon} alt='lang' className='modal-top-sticker' width={64} height={64} />
             </div>
 
             <p className="modal-subtitle">{t("common.selectLanguage") || "Tilni tanlang"}</p>
@@ -509,3 +494,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

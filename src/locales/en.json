@@ -17,7 +17,7 @@
     "toggleTheme": "Toggle Theme"
   },
   "dashboard": {
-    "title": "Starsjoy",
+    "title": "Premium Send",
     "comingSoon": "Coming soon",
     "home": "Home",
     "referral": "Referral",
@@ -111,7 +111,7 @@
     "step3Desc": "Your referral buys a Premium subscription ",
     "personalLink": "Personal Referral Link",
     "shareWithFriends": "Share with Friends",
-    "shareMessage": "Buy Telegram Stars and Premium via StarsJoy!",
+    "shareMessage": "Buy Telegram Premium via Premium Send!",
     "shareBonus": "Sign up and get a bonus!",
     "statistics": "Statistics",
     "balance": "Referral Balance",
