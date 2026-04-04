@@ -45,6 +45,7 @@ export default function Premium() {
   const [loadingBuy, setLoadingBuy] = useState(false);
   const [copiedCard, setCopiedCard] = useState(false);
   const [copiedAmount, setCopiedAmount] = useState(false);
+  const [paymentBtnEnabled, setPaymentBtnEnabled] = useState(false); // Touch pass-through himoyasi
 
   // Promocode states
   const [pramacod, setPramacod] = useState("");
@@ -340,13 +341,17 @@ export default function Premium() {
 
   // "To'lov qildim" tugmasi - payment_info dan pending ga o'tish
   const handlePaymentDone = () => {
+    if (!paymentBtnEnabled) return; // Himoya
     setPaymentStatus("pending");
   };
 
   // "Tushundim" tugmasi - warning modaldan payment modalga o'tish
   const handleWarningUnderstood = () => {
     setShowWarningModal(false);
+    setPaymentBtnEnabled(false); // Avval disable
     setShowModal(true);
+    // Touch pass-through oldini olish uchun 500ms kutish
+    setTimeout(() => setPaymentBtnEnabled(true), 500);
   };
 
   const formatTime = (s) =>
@@ -402,20 +407,9 @@ export default function Premium() {
 
       {/* 💎 Premium obunasi mavjud bo'lsa ogohlantirish */}
       {profile?.hasPremium && (
-        <div className="premium-warning-badge" style={{
-          background: 'linear-gradient(135deg, rgba(142, 45, 226, 0.15), rgba(74, 0, 224, 0.1))',
-          border: '1px solid rgba(142, 45, 226, 0.4)',
-          borderRadius: '12px',
-          padding: '12px 16px',
-          marginTop: '10px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
-          <span style={{ fontSize: '20px' }}>💎</span>
-          <span style={{ color: '#a855f7', fontWeight: '500', fontSize: '14px' }}>
-            Bu profilga premium obunasi bor
-          </span>
+        <div className="premium-has-badge">
+          <span className="premium-has-icon">💎</span>
+          <span className="premium-has-text">Bu profilga premium obunasi mavjud</span>
         </div>
       )}
 
@@ -572,12 +566,18 @@ export default function Premium() {
                 </div>
 
                 {/* To'lov qildim button */}
-                <button type="button" className="btn-payment-done" onClick={handlePaymentDone}>
+                <button 
+                  type="button" 
+                  className="btn-payment-done" 
+                  onClick={handlePaymentDone}
+                  disabled={!paymentBtnEnabled}
+                  style={{ opacity: paymentBtnEnabled ? 1 : 0.5 }}
+                >
                   ✅ To'lov qildim
                 </button>
                 <p className="modal-close-hint">To'lovni amalga oshiring va tugmani bosing</p>
               </div>
-            )}
+            )}}
 
             {/* PENDING - To'lov kutilmoqda */}
             {paymentStatus === "pending" && (

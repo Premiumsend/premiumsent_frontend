@@ -59,7 +59,7 @@
 
 
 /* ================================ */
-/* SEARCH INPUT */
+/* SEARCH INPUT - IMPROVED */
 /* ================================ */
 
 .search-row {
@@ -68,44 +68,139 @@
   gap: 10px;
 }
 
-.search-row input {
+.username-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.username-row input {
   flex: 1;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid var(--border-primary);
-  background: var(--bg-secondary);
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(255,255,255,0.1);
+  background: rgba(30,30,36,0.6);
+  backdrop-filter: blur(10px);
   color: var(--text-primary);
-  font-size: 14px;
-  transition: 0.2s;
+  font-size: 15px;
+  transition: all 0.3s ease;
 }
 
-.search-row input:focus {
-  border-color: var(--color-primary);
-  background: var(--bg-primary);
+.username-row input::placeholder {
+  color: rgba(255,255,255,0.4);
+}
+
+.username-row input:focus {
+  border-color: rgba(139,92,246,0.5);
+  background: rgba(30,30,36,0.8);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(0,136,204,0.15);
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.15);
 }
 
-
-/* LOADING MINI SPINNER */
-.loader-inline {
-  font-size: 16px;
+.btn-my {
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
 }
 
+.btn-my:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(139,92,246,0.4);
+}
+
+.btn-my:active {
+  transform: translateY(0);
+}
+
+/* LOADING ANIMATION - IMPROVED */
+.loader-arc {
+  animation: spin 1s linear infinite;
+  font-size: 20px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Search Loading Dots */
+.search-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px;
+  color: rgba(255,255,255,0.6);
+  font-size: 14px;
+}
+
+.search-loading-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.search-loading-dots span {
+  width: 6px;
+  height: 6px;
+  background: #8B5CF6;
+  border-radius: 50%;
+  animation: dotPulse 1.4s infinite ease-in-out both;
+}
+
+.search-loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+.search-loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+.search-loading-dots span:nth-child(3) { animation-delay: 0; }
+
+@keyframes dotPulse {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+  40% { transform: scale(1); opacity: 1; }
+}
 
 /* SEARCH ERROR */
-.error {
-  margin-top: 8px;
-  color: var(--color-danger);
-  background: var(--color-danger-light);
-  padding: 6px 10px;
-  border-radius: 10px;
+.error, .search-error {
+  margin-top: 12px;
+  color: #ff6b6b;
+  background: rgba(255,107,107,0.1);
+  border: 1px solid rgba(255,107,107,0.2);
+  padding: 10px 14px;
+  border-radius: 12px;
   font-size: 13px;
+  text-align: center;
+}
+
+/* PREMIUM HAS BADGE - Profilda premium mavjud bo'lsa */
+.premium-has-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(142, 45, 226, 0.15), rgba(74, 0, 224, 0.1));
+  border: 1px solid rgba(142, 45, 226, 0.4);
+  border-radius: 12px;
+}
+
+.premium-has-icon {
+  font-size: 20px;
+}
+
+.premium-has-text {
+  color: #a855f7;
+  font-weight: 500;
+  font-size: 14px;
 }
 
 
 /* ================================ */
-/* PROFILE PREVIEW */
+/* PROFILE PREVIEW - IMPROVED */
 /* ================================ */
 
 @keyframes profilePopIn {

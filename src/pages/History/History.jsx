@@ -24,6 +24,24 @@ export default function History() {
   const formatAmount = (num) =>
     Number(num || 0).toLocaleString("ru-RU");
 
+  // Telegram BackButton
+  useEffect(() => {
+    try {
+      if (WebApp && WebApp.BackButton) {
+        WebApp.BackButton.show();
+        const handleBack = () => navigate("/");
+        WebApp.BackButton.onClick(handleBack);
+        
+        return () => {
+          WebApp.BackButton.offClick(handleBack);
+          WebApp.BackButton.hide();
+        };
+      }
+    } catch (err) {
+      console.error("BackButton xato:", err);
+    }
+  }, [navigate]);
+
   // Get Telegram user info
   useEffect(() => {
     try {
