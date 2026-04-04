@@ -509,7 +509,7 @@ export default function AdminPanel() {
     } else if (activeTab === "promocodes") {
       fetchPromocodes();
     }
-  }, [filter, activeTab, isAuthenticated, premiumFilter]);
+  }, [activeTab, isAuthenticated, premiumFilter]);
 
   // Auto refresh - disabled
   useEffect(() => {
@@ -522,7 +522,7 @@ export default function AdminPanel() {
       }, 30000); // 30 seconds instead of 5
     }
     return () => clearInterval(interval);
-  }, [autoRefresh, filter, activeTab, isAuthenticated]);
+  }, [autoRefresh, activeTab, isAuthenticated]);
 
   // ========== AUTH CHECK SCREEN ==========
   if (authChecking) {
