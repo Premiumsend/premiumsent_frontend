@@ -6,7 +6,7 @@
  */
 
 // Production: relative paths (/api/...) — Nginx proxy ishlaydi
-// Development: http://localhost:5001 — local backend
+// Development: http://localhost:6001 — local backend
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 export default async function apiFetch(url, options = {}) {
