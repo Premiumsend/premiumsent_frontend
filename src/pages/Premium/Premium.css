@@ -1407,60 +1407,79 @@
 }
 
 .waiting-title {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
   margin: 12px 0 4px 0;
+  text-align: center;
 }
 
 .waiting-subtitle {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin: 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 16px 0;
+  text-align: center;
 }
 
 /* Waiting Payment Info */
 .waiting-payment-info {
-  background: var(--bg-secondary);
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin: 12px 0;
+  background: rgba(30, 30, 36, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  padding: 16px;
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .waiting-info-row {
   display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 6px 0;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
-.waiting-info-row:not(:last-child) {
-  border-bottom: 1px solid var(--border-color);
+.waiting-info-row:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
 .waiting-info-row.highlight {
-  background: rgba(124, 77, 255, 0.1);
-  margin: 6px -12px -10px -12px;
-  padding: 10px 12px;
-  border-radius: 0 0 10px 10px;
+  background: rgba(124, 77, 255, 0.15);
+  margin: 0 -16px -16px -16px;
+  padding: 16px;
+  border-radius: 0 0 14px 14px;
   border: none;
+  border-top: 1px solid rgba(139, 92, 246, 0.2);
 }
 
 .waiting-label {
-  font-size: 11px;
-  color: var(--text-secondary);
-  min-width: 50px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .waiting-value {
-  font-size: 12px;
+  font-size: 18px;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 600;
   color: var(--text-primary);
-  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .waiting-value.bold {
+  font-size: 22px;
   font-weight: 700;
   color: #b388ff;
+  font-family: inherit;
 }
 
 .modal-copy-btn-sm {

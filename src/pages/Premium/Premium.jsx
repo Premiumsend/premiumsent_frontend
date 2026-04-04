@@ -269,7 +269,13 @@ export default function Premium() {
 
         if (!res.ok) return;
 
-        setPaymentStatus(data.status);
+        setPaymentStatus((prev) => {
+          // Agar biz "payment_info" bosqichida bo'lsak, backenddan kelgan "pending" ni e'tiborsiz qoldiramiz
+          // Aks holda u avto "To'lov kutilmoqda" (pending) sahifasiga o'tkazib yuboradi
+          if (prev === "payment_info" && data.status === "pending") return prev;
+          return data.status;
+        });
+        
         setCardLast4(data.card_last4 || "");
 
         // Premium yuborildi - muvaffaqiyatli
@@ -577,7 +583,7 @@ export default function Premium() {
                 </button>
                 <p className="modal-close-hint">To'lovni amalga oshiring va tugmani bosing</p>
               </div>
-            )}}
+            )}
 
             {/* PENDING - To'lov kutilmoqda */}
             {paymentStatus === "pending" && (
@@ -611,14 +617,16 @@ export default function Premium() {
                 <div className="waiting-payment-info">
                   <div className="waiting-info-row">
                     <span className="waiting-label">Karta:</span>
-                    <span className="waiting-value">{CARD_NUMBER}</span>
-                    <button type="button" className="modal-copy-btn-sm" onClick={handleCopyCard}>
-                      {copiedCard ? "✓" : "📋"}
-                    </button>
+                    <div className="waiting-value">
+                      <span>{CARD_NUMBER}</span>
+                      <button type="button" className="modal-copy-btn-sm" onClick={handleCopyCard}>
+                        {copiedCard ? "✓" : "📋"}
+                      </button>
+                    </div>
                   </div>
                   <div className="waiting-info-row highlight">
                     <span className="waiting-label">Summa:</span>
-                    <span className="waiting-value bold">{formatAmount(order.amount)} so'm</span>
+                    <div className="waiting-value bold">{formatAmount(order.amount)} so'm</div>
                   </div>
                 </div>
 
