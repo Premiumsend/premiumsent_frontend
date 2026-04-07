@@ -377,23 +377,67 @@ export default function Dashboard() {
           </div>
 
           {/* HELP / ADMIN BUTTON */}
-          <div style={{ marginTop: '10px', display: 'flex', width: '100%' }}>   
+          <div style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>   
+            {/* 1 Month Premium */}
             <a
-              href={import.meta.env.VITE_HELP_BOT || "https://t.me/PremiumSend_jbot"}
+              href={"https://t.me/premiumsend_admin"}
               target="_blank"
               rel="noopener noreferrer"
               className="admin-contact-btn_dashboard secondary-outline"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '12px 15px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, rgba(34,193,195,0.1) 0%, rgba(253,187,45,0.1) 100%)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: 'var(--text-color)',
+                textDecoration: 'none',
+                fontWeight: '600',
+                transition: 'all 0.3s ease'
+              }}
               title="Adminga murojaat"
             >
-              <svg className="footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
               </svg>
-              Adminga murojaat
+               1 oy <span style={{ color: '#FFC107', fontWeight: 'bold' }}>(akkauntga kirib)</span> - 59,000 UZS
+            </a>
+
+            {/* 1 Year Premium */}
+            <a
+              href={"https://t.me/premiumsend_admin"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="admin-contact-btn_dashboard secondary-outline"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '12px 15px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, rgba(131,58,180,0.1) 0%, rgba(253,29,29,0.1) 50%, rgba(252,176,69,0.1) 100%)',
+                border: '1px solid rgba(255,193,7,0.3)',
+                color: 'var(--text-color)',
+                textDecoration: 'none',
+                fontWeight: '600',
+                transition: 'all 0.3s ease'
+              }}
+              title="Adminga murojaat"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFC107" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+              </svg>
+               1 yil <span style={{ color: '#FFC107', fontWeight: 'bold' }}>(akkauntga kirib)</span> - 320,000 UZS
             </a>
           </div>
 
         </div>
       </main>
+      
 
       {/* BOTTOM NAVIGATION */}
       <div className="bottom-nav_dashboard">
