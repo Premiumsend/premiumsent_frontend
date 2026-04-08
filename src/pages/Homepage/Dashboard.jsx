@@ -380,7 +380,7 @@ export default function Dashboard() {
           <div style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>   
             {/* 1 Month Premium */}
             <a
-              href={"https://t.me/premiumsend_admin"}
+              href={"https://t.me/premiumsend_admin?text=Assalomu%20aleykum%2C%201%20oylik%20premium%20olmoqchi%20edim."}
               target="_blank"
               rel="noopener noreferrer"
               className="admin-contact-btn_dashboard secondary-outline"
@@ -408,7 +408,7 @@ export default function Dashboard() {
 
             {/* 1 Year Premium */}
             <a
-              href={"https://t.me/premiumsend_admin"}
+              href={"https://t.me/premiumsend_admin?text=Assalomu%20aleykum%2C%201%20yillik%20premium%20olmoqchi%20edim."}
               target="_blank"
               rel="noopener noreferrer"
               className="admin-contact-btn_dashboard secondary-outline"
