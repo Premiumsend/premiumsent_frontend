@@ -507,7 +507,7 @@ export default function AdminPanel() {
           const stats = {
             total: orders.length,
             pending: orders.filter(o => o.status === 'pending').length,
-            premium_sent: orders.filter(o => o.status === 'premium_sent').length,
+            delivered: orders.filter(o => o.status === 'delivered' || o.status === 'premium_sent').length,
             expired: orders.filter(o => o.status === 'expired').length,
             failed: orders.filter(o => o.status === 'failed' || o.status === 'error').length
           };
@@ -2364,7 +2364,7 @@ export default function AdminPanel() {
           <div className="stats-text">
             <span>Jami: <b>{premiumStats.total}</b></span>
             <span>Pending: <b>{premiumStats.pending}</b></span>
-            <span>Sent: <b>{premiumStats.premium_sent}</b></span>
+            <span>Sent: <b>{premiumStats.delivered}</b></span>
             <span>Expired: <b>{premiumStats.expired}</b></span>
             <span>Failed: <b>{premiumStats.failed}</b></span>
           </div>
@@ -2381,7 +2381,7 @@ export default function AdminPanel() {
             <select value={premiumFilter} onChange={(e) => setPremiumFilter(e.target.value)} className="filter-select">
               <option value="all">Hammasi</option>
               <option value="pending">⏳ Pending</option>
-              <option value="premium_sent">💎 Sent</option>
+              <option value="delivered">💎 Sent</option>
               <option value="expired">❌ Expired</option>
               <option value="failed">⚠️ Failed</option>
               <option value="error">🔴 Error</option>
@@ -2420,9 +2420,9 @@ export default function AdminPanel() {
                       </div>
                       <div 
                         className="order-status"
-                        style={{ backgroundColor: getStatusColor(tx.status === 'premium_sent' ? 'stars_sent' : tx.status) }}
+                        style={{ backgroundColor: getStatusColor(tx.status === 'delivered' || tx.status === 'premium_sent' ? 'stars_sent' : tx.status) }}
                       >
-                        {tx.status === 'premium_sent' ? '💎' : getStatusIcon(tx.status)} {tx.status}
+                        {tx.status === 'delivered' || tx.status === 'premium_sent' ? '💎' : getStatusIcon(tx.status)} {tx.status === 'premium_sent' ? 'delivered' : tx.status}
                       </div>
                     </div>
 
