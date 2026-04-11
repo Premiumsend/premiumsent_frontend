@@ -122,6 +122,11 @@ export default function AdminPanel() {
   });
   const [premiumShowAll, setPremiumShowAll] = useState(false);
 
+  // Manual Premium Order state
+  const [manualPremiumModal, setManualPremiumModal] = useState(null); // "1_oy" | "1_yil" | null
+  const [manualPremiumUsername, setManualPremiumUsername] = useState("");
+  const [manualPremiumLoading, setManualPremiumLoading] = useState(false);
+
   // Gift orders state
   const [giftOrders, setGiftOrders] = useState([]);
   const [giftExpandedId, setGiftExpandedId] = useState(null);
@@ -980,6 +985,43 @@ export default function AdminPanel() {
     } catch (err) {
       console.error("❌ Premium yuborishda xato:", err);
       alert("Server xato!");
+    }
+  };
+
+  // Manual Premium Order yaratish (admin qo'lda akkauntga kirib yuborgan uchun)
+  const createManualPremiumOrder = async () => {
+    if (!manualPremiumUsername.trim()) {
+      alert("❌ Username kiriting!");
+      return;
+    }
+    
+    setManualPremiumLoading(true);
+    try {
+      const res = await apiFetch("/api/admin/premium/manual", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipient_username: manualPremiumUsername.trim(),
+          plan: manualPremiumModal // "1_oy" yoki "1_yil"
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        const planText = manualPremiumModal === "1_oy" ? "1 oylik" : "1 yillik";
+        alert(`✅ ${planText} Premium order yaratildi! Order #${data.order.id}`);
+        setManualPremiumModal(null);
+        setManualPremiumUsername("");
+        fetchPremiumOrders();
+      } else {
+        alert("❌ Xato: " + data.error);
+      }
+    } catch (err) {
+      console.error("❌ Manual premium order xato:", err);
+      alert("Server xato!");
+    } finally {
+      setManualPremiumLoading(false);
     }
   };
 
@@ -2273,6 +2315,51 @@ export default function AdminPanel() {
       {/* ==================== PREMIUM ORDERS TAB ==================== */}
       {activeTab === "premium" && (
         <div className="tab-content">
+          {/* Manual Premium Order Buttons */}
+          <div style={{ 
+            display: 'flex', 
+            gap: '10px', 
+            marginBottom: '15px',
+            flexWrap: 'wrap'
+          }}>
+            <button
+              onClick={() => setManualPremiumModal("1_oy")}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: '#fff',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              ➕ 1 Oylik Premium
+            </button>
+            <button
+              onClick={() => setManualPremiumModal("1_yil")}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                color: '#fff',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              ➕ 1 Yillik Premium
+            </button>
+          </div>
+
           {/* Premium Stats */}
           <div className="stats-text">
             <span>Jami: <b>{premiumStats.total}</b></span>
@@ -3065,6 +3152,74 @@ export default function AdminPanel() {
                   {somBalanceLoading ? "⏳" : "➖"} Ayirish
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manual Premium Order Modal */}
+      {manualPremiumModal && (
+        <div className="balance-modal-overlay" onClick={() => { setManualPremiumModal(null); setManualPremiumUsername(""); }}>
+          <div className="balance-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              👑 {manualPremiumModal === "1_oy" ? "1 Oylik" : "1 Yillik"} Premium Order
+            </h3>
+            <p style={{ fontSize: '14px', color: '#888', marginBottom: '10px' }}>
+              Summa: <b>{manualPremiumModal === "1_oy" ? "57,000" : "320,000"} so'm</b>
+            </p>
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px' }}>
+                Qabul qiluvchi username:
+              </label>
+              <input
+                type="text"
+                value={manualPremiumUsername}
+                onChange={(e) => setManualPremiumUsername(e.target.value)}
+                placeholder="@username"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid #333',
+                  background: '#1a1a1a',
+                  color: '#fff',
+                  fontSize: '14px'
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => { setManualPremiumModal(null); setManualPremiumUsername(""); }}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  borderRadius: '8px',
+                  border: '1px solid #444',
+                  background: 'transparent',
+                  color: '#fff',
+                  cursor: 'pointer'
+                }}
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={createManualPremiumOrder}
+                disabled={manualPremiumLoading || !manualPremiumUsername.trim()}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: manualPremiumLoading || !manualPremiumUsername.trim() 
+                    ? '#444' 
+                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: '#fff',
+                  cursor: manualPremiumLoading || !manualPremiumUsername.trim() ? 'not-allowed' : 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                {manualPremiumLoading ? "⏳ Yaratilmoqda..." : "✅ Order yaratish"}
+              </button>
             </div>
           </div>
         </div>
