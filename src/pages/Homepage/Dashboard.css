@@ -2916,37 +2916,9 @@
   width: 100%;
 }
 
-.admin-contact-btn_dashboard {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 16px;
-  border-radius: 16px;
-  font-size: 1rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(8px);
-  width: 100%;
-}
-
-
 .footer-icon {
   width: 20px;
   height: 20px;
-}
-
-/* Secondary Outline (Yordam) */
-.secondary-outline {
-  background: rgba(24, 160, 251, 0.1);
-  color: #72c3ff;
-  border: 1px solid rgba(24, 160, 251, 0.4);
-}
-.secondary-outline:active {
-  background: rgba(24, 160, 251, 0.2);
-  transform: scale(0.97);
 }
 
 /* --- PREMIUM OFFERS REDESIGN --- */

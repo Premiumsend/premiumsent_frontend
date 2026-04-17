@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import "./Premium.css";
 import diamondGif from "../../assets/diamond.gif";
 import WebApp from "@twa-dev/sdk";
@@ -9,6 +9,7 @@ import { TGSSticker } from "../../components/TGSSticker";
 import apiFetch from "../../utils/apiFetch";
 export default function Premium() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const PREMIUM_3 = parseInt(import.meta.env.VITE_PREMIUM_3);
   const PREMIUM_6 = parseInt(import.meta.env.VITE_PREMIUM_6);
   const PREMIUM_12 = parseInt(import.meta.env.VITE_PREMIUM_12);
@@ -29,7 +30,17 @@ export default function Premium() {
     { id: 3, label: "1 yil", price: PREMIUM_12, months: 12 },
   ];
 
-  const [selectedPlan, setSelectedPlan] = useState(plans[0]);
+  const [selectedPlan, setSelectedPlan] = useState(() => {
+    try {
+      const raw = new URLSearchParams(window.location.search).get("months");
+      const m = parseInt(raw || "", 10);
+      if ([3, 6, 12].includes(m)) {
+        const match = plans.find((p) => p.months === m);
+        if (match) return match;
+      }
+    } catch (_) {}
+    return plans[0];
+  });
   const [order, setOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
@@ -52,6 +63,16 @@ export default function Premium() {
   const [promoMessage, setPromoMessage] = useState("");
   const [promoError, setPromoError] = useState(false);
   const [appliedPromo, setAppliedPromo] = useState(null);
+
+  // Dashboard banner → ?months=3|6|12 (SPA ichida query o‘zgaganda)
+  useEffect(() => {
+    const raw = searchParams.get("months");
+    if (raw == null || raw === "") return;
+    const months = parseInt(raw, 10);
+    if (![3, 6, 12].includes(months)) return;
+    const next = plans.find((p) => p.months === months);
+    if (next) setSelectedPlan(next);
+  }, [searchParams]);
 
   // Format
   const formatAmount = (num) =>

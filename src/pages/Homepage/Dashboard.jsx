@@ -328,7 +328,7 @@ export default function Dashboard() {
           <div className="premium-offers-grid">
             
             {/* 3 Months */}
-            <div className="action-card-offer card-offer-3" onClick={() => navigate("/premium")}>
+            <div className="action-card-offer card-offer-3" onClick={() => navigate({ pathname: "/premium", search: "?months=3" })}>
               <img src={premiumGif} className="offer-img" alt="premium" />
               <div className="offer-details">
                 <div className="offer-header-row">
@@ -345,7 +345,7 @@ export default function Dashboard() {
             <div className="offers-row-wrapper-custom">
             
             {/* 6 Months */}
-            <div className="action-card-offer card-offer-6" onClick={() => navigate("/premium")}>
+            <div className="action-card-offer card-offer-6" onClick={() => navigate({ pathname: "/premium", search: "?months=6" })}>
               <div className="offer-details">
                 <div className="offer-header-row">
                   <span className="offer-months">6 Oylik</span>
@@ -359,7 +359,7 @@ export default function Dashboard() {
             </div>
 
             {/* 12 Months */}
-            <div className="action-card-offer card-offer-12" onClick={() => navigate("/premium")}>
+            <div className="action-card-offer card-offer-12" onClick={() => navigate({ pathname: "/premium", search: "?months=12" })}>
               <div className="offer-details">
                 <div className="offer-header-row">
                   <span className="offer-months">1 Yillik</span>
@@ -374,65 +374,6 @@ export default function Dashboard() {
 
             </div>
 
-          </div>
-
-          {/* HELP / ADMIN BUTTON */}
-          <div style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>   
-            {/* 1 Month Premium */}
-            <a
-              href={"https://t.me/premiumsend_admin?text=Assalomu%20aleykum%2C%201%20oylik%20premium%20olmoqchi%20edim."}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="admin-contact-btn_dashboard secondary-outline"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '12px 15px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, rgba(34,193,195,0.1) 0%, rgba(253,187,45,0.1) 100%)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                color: 'var(--text-color)',
-                textDecoration: 'none',
-                fontWeight: '600',
-                transition: 'all 0.3s ease'
-              }}
-              title="Adminga murojaat"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-              </svg>
-               1 oy <span style={{ color: '#FFC107', fontWeight: 'bold' }}>(akkauntga kirib)</span> - 59,000 UZS
-            </a>
-
-            {/* 1 Year Premium */}
-            <a
-              href={"https://t.me/premiumsend_admin?text=Assalomu%20aleykum%2C%201%20yillik%20premium%20olmoqchi%20edim."}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="admin-contact-btn_dashboard secondary-outline"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '12px 15px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, rgba(131,58,180,0.1) 0%, rgba(253,29,29,0.1) 50%, rgba(252,176,69,0.1) 100%)',
-                border: '1px solid rgba(255,193,7,0.3)',
-                color: 'var(--text-color)',
-                textDecoration: 'none',
-                fontWeight: '600',
-                transition: 'all 0.3s ease'
-              }}
-              title="Adminga murojaat"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFC107" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-              </svg>
-               1 yil <span style={{ color: '#FFC107', fontWeight: 'bold' }}>(akkauntga kirib)</span> - 320,000 UZS
-            </a>
           </div>
 
         </div>
