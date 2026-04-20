@@ -646,8 +646,8 @@ export default function Gift() {
               </div>
               
               <div className="gift-warning-amount-highlight" style={{ marginTop: "20px" }}>
-                <span className="gift-warning-label">💡 Yuboriladigan to'liq summa</span>
-                <span className="gift-warning-amount">{formatAmount(order?.amount)} so'm</span>
+                <span className="gift-warning-label">To&apos;lov summasi</span>
+                <span className="gift-warning-amount">{formatAmount(order?.amount)} so&apos;m</span>
               </div>
             </div>
             

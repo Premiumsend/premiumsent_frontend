@@ -40,6 +40,8 @@ export default function Premium() {
 
   const countdownRef = useRef(null);
   const pollingRef = useRef(null);
+  /** Server yangi buyurtmani ham `pending` deb qaytaradi; UI esa "To'lov qildim" bosilguncha payment_info ko'rinishida qolishi kerak */
+  const paymentDoneClickedRef = useRef(false);
   const [countdown, setCountdown] = useState(0);
 
   const [loadingBuy, setLoadingBuy] = useState(false);
@@ -241,6 +243,7 @@ export default function Premium() {
       }
 
       setOrder(data.order);
+      paymentDoneClickedRef.current = false;
       setShowWarningModal(true);
       setPaymentStatus("payment_info");
       setCardLast4("");
@@ -267,22 +270,61 @@ export default function Premium() {
 
         if (!res.ok) return;
 
-        setPaymentStatus(data.status);
+        let serverStatus = data.status;
+        if (serverStatus === "completed") serverStatus = "premium_sent";
+
         setCardLast4(data.card_last4 || "");
 
-        // Premium yuborildi - muvaffaqiyatli
-        if (data.status === "premium_sent") {
-          stopPolling();
+        const holdPaymentInfoScreen =
+          serverStatus === "pending" && !paymentDoneClickedRef.current;
+
+        if (!holdPaymentInfoScreen) {
+          setPaymentStatus(serverStatus);
+        }
+
+        // Natija ekranlari (muvaffaqiyat / jarayon / xato) — modal yopiq yoki warning ustida bo'lsa ham ko'rinsin
+        const visibleResultStatuses = [
+          "premium_sent",
+          "payment_received",
+          "processing",
+          "failed",
+          "error",
+          "expired",
+        ];
+        if (visibleResultStatuses.includes(serverStatus)) {
+          setShowWarningModal(false);
+          setShowModal(true);
+        }
+
+        // To'lov / natija bosqichiga o'tilganda taymerni to'xtatish — aks holda vaqt tugaganda modal yopilib "expired" bo'ladi
+        if (
+          [
+            "processing",
+            "payment_received",
+            "premium_sent",
+            "failed",
+            "error",
+            "expired",
+          ].includes(serverStatus)
+        ) {
           stopCountdown();
+        }
+
+        // Premium yuborildi - muvaffaqiyatli
+        if (serverStatus === "premium_sent") {
+          stopPolling();
           // Auto-yopish timer
           setTimeout(() => setShowModal(false), 15000);
         }
 
         // Xatolik
-        if (["failed", "error"].includes(data.status)) {
+        if (["failed", "error"].includes(serverStatus)) {
           stopPolling();
-          stopCountdown();
           setErrorMessage(data.error_message || data.reason || data.error || "Kutilmagan xatolik yuz berdi. Iltimos, admin bilan bog'laning.");
+        }
+
+        if (serverStatus === "expired") {
+          stopPolling();
         }
 
       } catch {}
@@ -339,6 +381,7 @@ export default function Premium() {
 
   // "To'lov qildim" tugmasi - payment_info dan pending ga o'tish
   const handlePaymentDone = () => {
+    paymentDoneClickedRef.current = true;
     setPaymentStatus("pending");
   };
 
@@ -447,31 +490,29 @@ export default function Premium() {
 
 
 
-      {/* WARNING MODAL */}
+      {/* WARNING MODAL (Gift-style) */}
       {showWarningModal && order && (
-        <div className="modal-overlay">
-          <div className="modal-content warning-modal">
-            <div className="warning-modal-header">
-              <h3 className="warning-modal-title">Diqqat</h3>
+        <div className="premium-warn-overlay">
+          <div className="premium-warn-panel">
+            <div className="premium-warn-header">
+              <h3 className="premium-warn-title">⚠️ MUHIM DIQQAT ⚠️</h3>
             </div>
-            
-            <div className="warning-modal-body">
-              <p className="warning-message">
-                Kartaga bot ko'rsatgan summani aynan o'sha miqdorda yuboring.
-              </p>
-              
-              <p className="warning-message-sub">
-                Summadagi 1 so'mlik farq ham to'lovni aniqlashga xalaqit beradi.
-              </p>
-              
-              <div className="warning-amount-highlight">
-                <span className="warning-label">To'lov summasi</span>
-                <span className="warning-amount">{formatAmount(order?.amount)} so'm</span>
+
+            <div className="premium-warn-body">
+              <div className="premium-warn-block">
+                <strong>1️⃣ To&apos;lov miqdori:</strong>
+                <br />
+                Faqat ko&apos;rsatilgan summani aniq yuboring. Ozgina farq ham to&apos;lovni topishga xalaqit beradi.
+              </div>
+
+              <div className="premium-warn-amount-highlight">
+                <span className="premium-warn-label">To&apos;lov summasi</span>
+                <span className="premium-warn-amount">{formatAmount(order?.amount)} so&apos;m</span>
               </div>
             </div>
-            
-            <button type="button" className="warning-understand-btn" onClick={handleWarningUnderstood}>
-              ✅ Tushundim
+
+            <button type="button" className="premium-warn-btn" onClick={handleWarningUnderstood}>
+              ✅ Shartlarni tushundim
             </button>
           </div>
         </div>
@@ -621,16 +662,22 @@ export default function Premium() {
               </div>
             )}
 
-            {/* PAYMENT RECEIVED - To'lov qabul qilindi */}
-            {paymentStatus === "payment_received" && (
+            {/* PAYMENT RECEIVED / PROCESSING — to'lov topildi, premium yuborilmoqda (backend: processing) */}
+            {["payment_received", "processing"].includes(paymentStatus) && (
               <div className="modal-sending-section">
                 <div className="sending-anim-wrap">
                   <div className="sending-pulse-ring"></div>
                   <div className="sending-pulse-ring delay"></div>
                   <div className="sending-center-icon">💎</div>
                 </div>
-                <h3 className="sending-title">To'lov qabul qilindi!</h3>
-                <p className="sending-subtitle">Premium yuborilmoqda...</p>
+                <h3 className="sending-title">
+                  {paymentStatus === "payment_received" ? "To'lov qabul qilindi!" : "Premium yuborilmoqda"}
+                </h3>
+                <p className="sending-subtitle">
+                  {paymentStatus === "payment_received"
+                    ? "Premium yuborilmoqda..."
+                    : "Iltimos, biroz kuting — jarayon yakunlanmoqda"}
+                </p>
 
                 {profile && (
                   <div className="sending-recipient">

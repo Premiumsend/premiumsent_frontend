@@ -1367,3 +1367,114 @@
   font-family: monospace;
   color: #b388ff;
 }
+
+/* ===============================
+   WARNING MODAL — Gift-style (Premium: binafsha ranglar)
+================================ */
+.premium-warn-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.premium-warn-panel {
+  width: 100%;
+  max-width: 340px;
+  background: #1c1c2e;
+  border-radius: 20px;
+  padding: 18px;
+  animation: premiumWarnPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+@keyframes premiumWarnPop {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.premium-warn-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.premium-warn-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.premium-warn-body {
+  padding: 0 4px;
+}
+
+.premium-warn-block {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.55;
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.premium-warn-block strong {
+  color: #d4b8ff;
+  font-weight: 700;
+}
+
+.premium-warn-amount-highlight {
+  background: linear-gradient(135deg, rgba(124, 77, 255, 0.18), rgba(179, 136, 255, 0.1));
+  border: 1px solid rgba(179, 136, 255, 0.35);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.premium-warn-label {
+  font-size: 11px;
+  color: rgba(212, 184, 255, 0.95);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.premium-warn-amount {
+  font-size: 24px;
+  font-weight: 800;
+  color: #ea80fc;
+}
+
+.premium-warn-btn {
+  width: 100%;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #7c4dff, #b388ff);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.premium-warn-btn:active {
+  transform: scale(0.98);
+}

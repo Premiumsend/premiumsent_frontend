@@ -733,31 +733,29 @@ export default function Home() {
         </button>
       </div>
 
-      {/* ---------------- WARNING MODAL ---------------- */}
+      {/* ---------------- WARNING MODAL (Gift-style) ---------------- */}
       {showWarningModal && (
-        <div className="modal-overlay">
-          <div className="modal-content warning-modal">
-            <div className="warning-modal-header">
-              <h3 className="warning-modal-title">Diqqat</h3>
+        <div className="stars-warn-overlay">
+          <div className="stars-warn-panel">
+            <div className="stars-warn-header">
+              <h3 className="stars-warn-title">⚠️ MUHIM DIQQAT ⚠️</h3>
             </div>
-            
-            <div className="warning-modal-body">
-              <p className="warning-message">
-                Kartaga bot ko'rsatgan summani aynan o'sha miqdorda yuboring.
-              </p>
-              
-              <p className="warning-message-sub">
-                Summadagi 1 so'mlik farq ham to'lovni aniqlashga xalaqit beradi.
-              </p>
-              
-              <div className="warning-amount-highlight">
-                <span className="warning-label">To'lov summasi</span>
-                <span className="warning-amount">{formatAmount(order?.amount)}</span>
+
+            <div className="stars-warn-body">
+              <div className="stars-warn-block">
+                <strong>1️⃣ To&apos;lov miqdori:</strong>
+                <br />
+                Faqat ko&apos;rsatilgan summani aniq yuboring. Ozgina farq ham to&apos;lovni topishga xalaqit beradi.
+              </div>
+
+              <div className="stars-warn-amount-highlight">
+                <span className="stars-warn-label">To&apos;lov summasi</span>
+                <span className="stars-warn-amount">{formatAmount(order?.amount)} so&apos;m</span>
               </div>
             </div>
-            
-            <button type="button" className="warning-understand-btn" onClick={handleWarningUnderstood}>
-              ✅ Tushundim
+
+            <button type="button" className="stars-warn-btn" onClick={handleWarningUnderstood}>
+              ✅ Shartlarni tushundim
             </button>
           </div>
         </div>
