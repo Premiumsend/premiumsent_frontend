@@ -466,7 +466,13 @@ export default function Premium() {
         ))}
       </div>
 
-      <div className="promo-input-group" style={{ marginTop: "25px", marginBottom: "15px" }}>
+      <div className="actions" style={{ marginTop: "25px", marginBottom: "15px" }}>
+        <button disabled={loadingBuy} onClick={handleCreateOrder}>
+          {loadingBuy ? "Yuklanmoqda..." : "Premium olish"}
+        </button>
+      </div>
+
+      <div className="promo-input-group" style={{ marginBottom: "15px" }}>
         <input 
           type="text" 
           placeholder="Promokod kiriting (Agar bo'lsa)" 
@@ -481,12 +487,6 @@ export default function Premium() {
           {promoMessage}
         </div>
       )}
-
-      <div className="actions">
-        <button disabled={loadingBuy} onClick={handleCreateOrder}>
-          {loadingBuy ? "Yuklanmoqda..." : "Premium olish"}
-        </button>
-      </div>
 
 
 

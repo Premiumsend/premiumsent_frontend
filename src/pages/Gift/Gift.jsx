@@ -585,44 +585,46 @@ export default function Gift() {
               </label>
             </div>
 
-            <div className="pramacod" style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: '15px 0' }}>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <input 
-                  value={pramacod}
-                  onChange={(e) => setPramacod(e.target.value)}
-                  style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '14px' }}
-                  placeholder="Promokod (Agar bo'lsa)" 
-                />
-                <button 
-                  type="button" 
-                  onClick={handleCheckPromo}
-                  style={{ padding: '0 16px', borderRadius: '10px', background: '#e58f0d', color: '#fff', border: 'none', fontWeight: 'bold' }}
+            <div className="gift-bs-footer">
+              {/* Send Button — promokoddan oldin (Stars/Premium bilan bir xil tartib) */}
+              <div className="gift-bs-bottom-area">
+                <button
+                  className={`gift-bs-send-btn ${!profile ? 'no-recipient' : ''}`}
+                  onClick={handleSend}
+                  disabled={sending || !profile}
                 >
-                  Tekshirish
+                  {sending ? (
+                    "Yuborilmoqda..."
+                  ) : !profile ? (
+                    "Kimga yuboramiz?"
+                  ) : (
+                    <>{formatAmount(appliedPromo ? appliedPromo.newPrice : PRICE_MAP[selectedGift.stars])} so'm · Hadya yuborish</>
+                  )}
                 </button>
               </div>
-              {promoMessage && (
-                <div style={{ fontSize: '13px', color: promoError ? '#ff4d4d' : '#00e676', textAlign: 'left', paddingLeft: '5px' }}>
-                  {promoMessage}
-                </div>
-              )}
-            </div>
 
-            {/* Send Button - at bottom */}
-            <div className="gift-bs-bottom-area">
-              <button
-                className={`gift-bs-send-btn ${!profile ? 'no-recipient' : ''}`}
-                onClick={handleSend}
-                disabled={sending || !profile}
-              >
-                {sending ? (
-                  "Yuborilmoqda..."
-                ) : !profile ? (
-                  "Kimga yuboramiz?"
-                ) : (
-                  <>{formatAmount(appliedPromo ? appliedPromo.newPrice : PRICE_MAP[selectedGift.stars])} so'm · Hadya yuborish</>
+              <div className="pramacod" style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: 0 }}>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <input 
+                    value={pramacod}
+                    onChange={(e) => setPramacod(e.target.value)}
+                    style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '14px' }}
+                    placeholder="Promokod (Agar bo'lsa)" 
+                  />
+                  <button 
+                    type="button" 
+                    onClick={handleCheckPromo}
+                    style={{ padding: '0 16px', borderRadius: '10px', background: '#e58f0d', color: '#fff', border: 'none', fontWeight: 'bold' }}
+                  >
+                    Tekshirish
+                  </button>
+                </div>
+                {promoMessage && (
+                  <div style={{ fontSize: '13px', color: promoError ? '#ff4d4d' : '#00e676', textAlign: 'left', paddingLeft: '5px' }}>
+                    {promoMessage}
+                  </div>
                 )}
-              </button>
+              </div>
             </div>
           </div>
         </div>

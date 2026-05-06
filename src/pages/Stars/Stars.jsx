@@ -704,6 +704,12 @@ export default function Home() {
         )}
       </div>
 
+      <div className="actions" style={{ marginBottom: '20px' }}>
+        <button type="button" className="tg-button" onClick={handlePayment}>
+          Stars olish {price > 0 && `- ${formatAmount(appliedPromo ? appliedPromo.newPrice : price)} so'm`}
+        </button>
+      </div>
+
       <div className="pramacod" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
         <div style={{ display: 'flex', gap: '10px' }}>
           <input 
@@ -725,12 +731,6 @@ export default function Home() {
             {promoMessage}
           </div>
         )}
-      </div>
-
-      <div className="actions">
-        <button type="button" className="tg-button" onClick={handlePayment}>
-          Stars olish {price > 0 && `- ${formatAmount(appliedPromo ? appliedPromo.newPrice : price)} so'm`}
-        </button>
       </div>
 
       {/* ---------------- WARNING MODAL (Gift-style) ---------------- */}
