@@ -31,12 +31,16 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  gap: 8px;
+  margin-bottom: 8px;
+  min-width: 0;
 }
 
-.admin-header-v2 h1 {
-  font-size: 1.3rem;
+.admin-header-v2 h1,
+.admin-header-v2 .header-title {
+  font-size: 1.15rem;
   margin: 0;
+  flex-shrink: 0;
   background: linear-gradient(90deg, #f39c12, #e74c3c);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -46,18 +50,40 @@ html, body {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-end;
+}
+
+/* Barcha header tugmalari — bitta qator (mobil: gorizontal scroll) */
+.header-toolbar-scroll {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  max-width: 100%;
+}
+
+.header-toolbar-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.header-toolbar-scroll > * {
+  flex-shrink: 0;
 }
 
 /* Compact Site Switch */
 .site-mini {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 8px;
+  gap: 4px;
+  padding: 4px 6px;
   border-radius: 8px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .site-mini.on {
@@ -102,6 +128,63 @@ html, body {
   opacity: 0.4;
 }
 
+/* RobynHood / Fragment — admin switch */
+.purchase-mode-switch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+}
+
+.purchase-mode-switch--large {
+  max-width: 360px;
+  margin-bottom: 12px;
+}
+
+.purchase-mode-btn {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.purchase-mode-switch--large .purchase-mode-btn {
+  flex: 1;
+  font-size: 13px;
+  padding: 10px 14px;
+}
+
+.purchase-mode-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.purchase-mode-btn.active.robyn {
+  background: rgba(52, 152, 219, 0.25);
+  color: #5dade2;
+}
+
+.purchase-mode-btn.active.frag {
+  background: rgba(108, 92, 231, 0.35);
+  color: #a29bfe;
+}
+
+.purchase-mode-settings .settings-hint {
+  font-size: 12px;
+  color: var(--tg-theme-hint-color, #999);
+  margin: 0 0 20px;
+}
+
 .toggle-track {
   display: flex;
   align-items: center;
@@ -131,17 +214,19 @@ html, body {
 
 /* Header Buttons */
 .hdr-btn {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.06);
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .hdr-btn:hover {
@@ -155,20 +240,23 @@ html, body {
 
 .header-btns {
   display: flex;
-  gap: 8px;
+  flex-wrap: nowrap;
+  gap: 6px;
+  align-items: center;
 }
 
 .hdr-nav-btn {
-  flex: 1;
-  padding: 10px 14px;
+  flex: 0 0 auto;
+  padding: 8px 12px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.7);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .hdr-nav-btn:hover {
@@ -608,12 +696,79 @@ html, body {
   font-size: 1.1rem;
 }
 
+/* ==================== MOBIL HEADER ==================== */
+@media (max-width: 767px) {
+  .admin-panel-new {
+    padding: 10px 10px 15px;
+  }
+
+  .admin-header-v2 .header-title {
+    font-size: 1rem;
+  }
+
+  .site-mini .site-txt {
+    display: none;
+  }
+
+  .site-mini .site-dot {
+    width: 5px;
+    height: 5px;
+  }
+
+  .header-top {
+    margin-bottom: 6px;
+  }
+
+  .header-btns {
+    margin: 0 -2px;
+    padding: 2px 0 4px;
+  }
+}
+
 /* ==================== DESKTOP IMPROVEMENTS ==================== */
 @media (min-width: 768px) {
   .admin-panel-new {
     padding: 30px;
     max-width: 900px;
     margin: 0 auto;
+  }
+
+  .admin-header-v2 .header-title {
+    font-size: 1.3rem;
+  }
+
+  .header-toolbar-scroll {
+    overflow-x: visible;
+  }
+
+  .header-btns {
+    flex-wrap: wrap;
+  }
+
+  .hdr-nav-btn {
+    flex: 1;
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+
+  .purchase-mode-btn {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+
+  .site-mini {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+
+  .site-mini .site-txt {
+    display: inline;
+  }
+
+  .hdr-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
   }
 
   .admin-header h1 {

@@ -7,7 +7,13 @@ import premiumGif from "../../assets/premium_gif.gif";
 import premiumSticker from "../../assets/AnimatedSticker_premium.tgs";
 import { TGSSticker } from "../../components/TGSSticker";
 import apiFetch from "../../utils/apiFetch";
-export default function Premium() {
+function normalizePremiumPollStatus(status) {
+  if (status === "completed" || status === "delivered") return "premium_sent";
+  return status;
+}
+
+export function PremiumPurchasePage({ variant = "robynhood" }) {
+  const isFragment = variant === "fragment";
   const navigate = useNavigate();
   const PREMIUM_3 = parseInt(import.meta.env.VITE_PREMIUM_3);
   const PREMIUM_6 = parseInt(import.meta.env.VITE_PREMIUM_6);
@@ -106,12 +112,23 @@ export default function Premium() {
 
         const clean = username.replace("@", "");
 
+        if (isFragment) {
+          if (/^[a-zA-Z0-9_]{4,32}$/.test(clean)) {
+            setProfile({ username: clean, recipient: clean, fullName: clean });
+            setSearchError(null);
+          } else {
+            setProfile(null);
+            setSearchError("Username noto'g'ri");
+          }
+          return;
+        }
+
         const res = await apiFetch("/api/premium/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            username: clean,                // ✔ TO‘G‘RI
-            months: selectedPlan.months     // ✔ OPTIONAL
+            username: clean,
+            months: selectedPlan.months,
           }),
           signal: controller.signal,
         });
@@ -128,7 +145,7 @@ export default function Premium() {
           username: data.username,
           fullName: data.fullName,
           imageUrl: data.imageUrl,
-          recipient: data.recipient, // ✔ BACKENDDAN KELGAN ID
+          recipient: data.recipient,
         });
 
         setSearchError(null);
@@ -139,13 +156,13 @@ export default function Premium() {
       } finally {
         setLoadingProfile(false);
       }
-    }, 500);
+    }, isFragment ? 300 : 500);
 
     return () => {
       clearTimeout(delay);
       controller.abort();
     };
-  }, [username, selectedPlan]);
+  }, [username, selectedPlan, isFragment]);
 
   // 🔹 Telegramdan username olish
   const fillMyUsername = () => {
@@ -210,7 +227,13 @@ export default function Premium() {
 
   const handleCreateOrder = async () => {
 
-    if (!profile?.username || !profile?.recipient) {
+    const cleanUsername = (profile?.username || username || "").replace(/^@/, "").trim();
+    if (!cleanUsername) {
+      alert("Iltimos, username kiriting!");
+      return;
+    }
+
+    if (!isFragment && (!profile?.username || !profile?.recipient)) {
       alert("Foydalanuvchi topilmadi!");
       return;
     }
@@ -218,16 +241,23 @@ export default function Premium() {
     setLoadingBuy(true);
 
     try {
-      //const res = await fetch("http://localhost:5000/api/premium", {
-      const res = await apiFetch("/api/premium", {
+      const orderBody = isFragment
+        ? {
+            username: cleanUsername,
+            months: selectedPlan.months,
+            applied_promocode: appliedPromo?.code || null,
+          }
+        : {
+            username: profile.username,
+            recipient: profile.recipient,
+            months: selectedPlan.months,
+            applied_promocode: appliedPromo?.code || null,
+          };
+
+      const res = await apiFetch(isFragment ? "/api/usdt-premium/order" : "/api/premium", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: profile.username,
-          recipient: profile.recipient, // ✔ ID
-          months: selectedPlan.months,
-          applied_promocode: appliedPromo?.code || null,
-        }),
+        body: JSON.stringify(orderBody),
       });
 
       const data = await res.json();
@@ -242,14 +272,15 @@ export default function Premium() {
         return;
       }
 
-      setOrder(data.order);
+      const orderData = data.order || data;
+      setOrder(orderData);
       paymentDoneClickedRef.current = false;
       setShowWarningModal(true);
       setPaymentStatus("payment_info");
       setCardLast4("");
 
       startCountdown(480); // 8 daqiqa
-      startPolling(data.order.id);
+      startPolling(orderData.id);
 
     } catch {
       alert("Server xatosi");
@@ -265,13 +296,15 @@ export default function Premium() {
     stopPolling();
     pollingRef.current = setInterval(async () => {
       try {
-        const res = await apiFetch(`/api/premium/transactions/${id}`);
+        const pollUrl = isFragment
+          ? `/api/usdt-premium/transactions/${id}`
+          : `/api/premium/transactions/${id}`;
+        const res = await apiFetch(pollUrl);
         const data = await res.json();
 
         if (!res.ok) return;
 
-        let serverStatus = data.status;
-        if (serverStatus === "completed") serverStatus = "premium_sent";
+        let serverStatus = normalizePremiumPollStatus(data.status);
 
         setCardLast4(data.card_last4 || "");
 
@@ -800,4 +833,8 @@ export default function Premium() {
 
     </div>
   );
+}
+
+export default function Premium() {
+  return <PremiumPurchasePage variant="robynhood" />;
 }

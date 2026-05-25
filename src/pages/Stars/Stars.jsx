@@ -3,6 +3,7 @@ import starsSticker from "../../assets/AnimatedSticker_stars.tgs";
 import { TGSSticker } from "../../components/TGSSticker";
 import { useNavigate } from "react-router-dom";
 import apiFetch from "../../utils/apiFetch";
+import { getPremiumPurchasePath } from "../../utils/starsPurchaseRoute";
 import "./Stars.css";
 
 import WebApp from "@twa-dev/sdk";
@@ -37,7 +38,8 @@ const StarIcon = () => (
 // 8 daqiqa = 480 sekund
 const POLLING_DURATION = 8 * 60 * 1000; // 8 daqiqa millisekondda
 
-export default function Home() {
+export function StarsPurchasePage({ variant = "robynhood" }) {
+  const isFragment = variant === "fragment";
   const CARD_NUMBER = import.meta.env.VITE_CARD_NUMBER;
   const CARD_NAME = import.meta.env.VITE_CARD_NAME;
   const NARX = parseInt(import.meta.env.VITE_NARX);
@@ -80,9 +82,15 @@ export default function Home() {
 
   const navigate = useNavigate();
 
-  const goToPremium = () => {
+  const goToPremium = async () => {
     setShowModal(false);
-    navigate("/premium");
+    try {
+      const res = await apiFetch("/api/app-config");
+      const cfg = await res.json();
+      navigate(getPremiumPurchasePath(cfg));
+    } catch {
+      navigate(isFragment ? "/usdtpremium" : "/premium");
+    }
   };
 
   const goToHome = () => {
@@ -185,7 +193,7 @@ export default function Home() {
     setPriceLoading(true);
     
     // Slot-based narx - backend dan olish
-    apiFetch(`/api/stars/price/${starNum}`)
+    apiFetch(isFragment ? `/api/usdt-stars/price/${starNum}` : `/api/stars/price/${starNum}`)
       .then(res => res.json())
       .then(data => {
         if (data.available && data.price) {
@@ -200,7 +208,7 @@ export default function Home() {
         setPrice(starNum * NARX);
       })
       .finally(() => setPriceLoading(false));
-  }, [stars]);
+  }, [stars, isFragment]);
 
   // Timer for stars_sent
   useEffect(() => {
@@ -219,7 +227,7 @@ export default function Home() {
     }
   }, [status]);
 
-  // Real-time search (RobynHood API)
+  // Profil: RobynHood API yoki Fragment (faqat username)
   useEffect(() => {
     if (!username) {
       setProfile(null);
@@ -232,6 +240,15 @@ export default function Home() {
         const cleanUsername = username.startsWith("@")
           ? username.slice(1)
           : username;
+
+        if (isFragment) {
+          if (/^[a-zA-Z0-9_]{4,32}$/.test(cleanUsername)) {
+            setProfile({ username: cleanUsername, recipient: cleanUsername });
+          } else {
+            setProfile(null);
+          }
+          return;
+        }
 
         const profileRes = await apiFetch("/api/search", {
           method: "POST",
@@ -248,10 +265,10 @@ export default function Home() {
       } finally {
         setLoadingProfile(false);
       }
-    }, 1000);
+    }, isFragment ? 300 : 1000);
 
     return () => clearTimeout(timeout);
-  }, [username]);
+  }, [username, isFragment]);
 
   // Copy card
   const handleCopy = () => {
@@ -468,24 +485,35 @@ export default function Home() {
       return;
     }
 
-    if (!profile || !profile.recipient) {
+    const cleanUsername = (profile?.username || username || "")
+      .replace(/^@/, "")
+      .trim();
+
+    if (!cleanUsername) {
+      alert("Iltimos, username kiriting!");
+      return;
+    }
+
+    if (!isFragment && (!profile || !profile.recipient)) {
       alert("Foydalanuvchi topilmadi!");
       return;
     }
 
     try {
-      const payload = {
-        username: profile.username,
-        recipient: profile.recipient,
-        stars: parseInt(stars),
-        amount: price, // actually unused on backend, slots take over, but for safety
-      };
-      
+      const payload = isFragment
+        ? { username: cleanUsername, stars: parseInt(stars, 10) }
+        : {
+            username: profile.username,
+            recipient: profile.recipient,
+            stars: parseInt(stars, 10),
+            amount: price,
+          };
+
       if (appliedPromo) {
         payload.applied_promocode = appliedPromo.code;
       }
 
-      const res = await apiFetch("/api/order", {
+      const res = await apiFetch(isFragment ? "/api/usdt-stars/order" : "/api/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -1002,4 +1030,8 @@ export default function Home() {
       )}
     </div>
   );
+}
+
+export default function Stars() {
+  return <StarsPurchasePage variant="robynhood" />;
 }

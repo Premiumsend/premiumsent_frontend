@@ -3,6 +3,10 @@ import { useNavigate } from "react-router-dom";
 import WebApp from "@twa-dev/sdk";
 import { useTranslation } from "../../context/LanguageContext";
 import apiFetch from "../../utils/apiFetch";
+import {
+  getStarsPurchasePath,
+  getPremiumPurchasePath,
+} from "../../utils/starsPurchaseRoute";
 import { TGSSticker } from "../../components/TGSSticker";
 import "./Dashboard.css";
 
@@ -54,6 +58,8 @@ export default function Dashboard() {
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(language);
   const [showComingSoonToast, setShowComingSoonToast] = useState(false);
+  const [starsPurchasePath, setStarsPurchasePath] = useState("/stars");
+  const [premiumPurchasePath, setPremiumPurchasePath] = useState("/premium");
 
   /* ================= NOTIFICATIONS ================= */
   const [unreadCount, setUnreadCount] = useState(0);
@@ -88,6 +94,32 @@ export default function Dashboard() {
       console.error("Auto-register error:", err);
     }
   };
+
+  const loadPurchasePaths = () => {
+    apiFetch("/api/app-config")
+      .then((r) => r.json())
+      .then((cfg) => {
+        setStarsPurchasePath(getStarsPurchasePath(cfg));
+        setPremiumPurchasePath(getPremiumPurchasePath(cfg));
+      })
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    loadPurchasePaths();
+  }, []);
+
+  useEffect(() => {
+    if (tab === "home") loadPurchasePaths();
+  }, [tab]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") loadPurchasePaths();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
 
   /* ================= TELEGRAM USER ================= */
   useEffect(() => {
@@ -352,7 +384,7 @@ export default function Dashboard() {
         {/* ACTION CARDS - Stars wide, Gift & Premium side by side */}
         <div className="dashboard-actions-container">
           {/* Stars - Full Width */}
-          <div className="action-card-wide" onClick={() => navigate("/stars")}>
+          <div className="action-card-wide" onClick={() => navigate(starsPurchasePath)}>
             <img src={starsGif} className="action-card-wide__img" alt="stars" />
             <div className="action-card-wide__content">
               <span className="action-card-wide__title">{t("dashboard.buyStars") || "Stars olish"}</span>
@@ -365,7 +397,7 @@ export default function Dashboard() {
               <TGSSticker stickerPath={actionCardSticker} className="action-card-half__img" autoplay={true} loop={true} />
               <span className="action-card-half__title">{t("dashboard.buyGift") || "Gift olish"}</span>
             </div>
-            <div className="action-card-half" onClick={() => navigate("/premium")}>
+            <div className="action-card-half" onClick={() => navigate(premiumPurchasePath)}>
               <img src={premiumGif} className="action-card-half__img" alt="premium" />
               <span className="action-card-half__title">{t("dashboard.buyPremium") || "Premium olish"}</span>
             </div>

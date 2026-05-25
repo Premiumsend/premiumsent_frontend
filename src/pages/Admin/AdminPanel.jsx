@@ -100,6 +100,18 @@ export default function AdminPanel() {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [maintenanceLoading, setMaintenanceLoading] = useState(false);
 
+  const [starsPurchaseMode, setStarsPurchaseMode] = useState("robynhood");
+  const [purchaseModeLoading, setPurchaseModeLoading] = useState(false);
+  const [fragmentTokens, setFragmentTokens] = useState({
+    fragment_dt: "-300",
+    fragment_ssid: "",
+    fragment_token: "",
+    fragment_ton_token: "",
+  });
+  const [fragmentTokensLoading, setFragmentTokensLoading] = useState(false);
+  const [fragmentVerifyLoading, setFragmentVerifyLoading] = useState(false);
+  const [fragmentVerifyMsg, setFragmentVerifyMsg] = useState("");
+
   // 🔔 Notifications state
   const [notifTitle, setNotifTitle] = useState("");
   const [notifMessage, setNotifMessage] = useState("");
@@ -428,6 +440,91 @@ export default function AdminPanel() {
       fetchAnalytics();
     }
   }, [analyticsPeriod, activeTab, isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    apiFetch("/api/app-config")
+      .then((r) => r.json())
+      .then((d) => setStarsPurchaseMode(d.stars_purchase_mode || "robynhood"))
+      .catch(() => {});
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated && activeTab === "settings") {
+      fetchFragmentTokens();
+    }
+  }, [isAuthenticated, activeTab]);
+
+  const fetchFragmentTokens = async () => {
+    setFragmentTokensLoading(true);
+    try {
+      const res = await apiFetch("/api/admin/tokens/fragment?masked=0");
+      const data = await res.json();
+      if (data.tokens) setFragmentTokens(data.tokens);
+    } catch (err) {
+      console.error("Fragment tokens:", err);
+    } finally {
+      setFragmentTokensLoading(false);
+    }
+  };
+
+  const saveFragmentTokens = async () => {
+    setFragmentTokensLoading(true);
+    try {
+      const res = await apiFetch("/api/admin/tokens/fragment", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fragmentTokens),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("✅ Fragment cookie saqlandi");
+        if (data.tokens) setFragmentTokens(data.tokens);
+      } else {
+        alert("❌ " + (data.error || "Xato"));
+      }
+    } catch {
+      alert("Server xatosi");
+    } finally {
+      setFragmentTokensLoading(false);
+    }
+  };
+
+  const verifyFragmentCookies = async () => {
+    setFragmentVerifyLoading(true);
+    setFragmentVerifyMsg("");
+    try {
+      const res = await apiFetch("/api/admin/fragment/verify");
+      const data = await res.json();
+      setFragmentVerifyMsg(data.ok ? "✅ Cookie ishlayapti" : `❌ ${data.error || "Xato"}`);
+    } catch {
+      setFragmentVerifyMsg("❌ Tekshiruv xatosi");
+    } finally {
+      setFragmentVerifyLoading(false);
+    }
+  };
+
+  const setPurchaseMode = async (mode) => {
+    if (mode === starsPurchaseMode || purchaseModeLoading) return;
+    setPurchaseModeLoading(true);
+    try {
+      const res = await apiFetch("/api/admin/stars-purchase-mode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStarsPurchaseMode(data.stars_purchase_mode || mode);
+      } else {
+        alert(data.error || "Xato");
+      }
+    } catch {
+      alert("Server xatosi");
+    } finally {
+      setPurchaseModeLoading(false);
+    }
+  };
 
   // ========== ALL FUNCTIONS ==========
   const fetchTransactions = async () => {
@@ -1403,8 +1500,8 @@ export default function AdminPanel() {
       {/* Header with controls */}
       <header className="admin-header-v2">
         <div className="header-top">
-          <h1>⚡ Admin</h1>
-          <div className="header-right">
+          <h1 className="header-title">⚡ Admin</h1>
+          <div className="header-right header-toolbar-scroll">
             {/* Compact site switch */}
             <div className={`site-mini ${maintenanceMode ? 'off' : 'on'}`}>
               <span className="site-dot"></span>
@@ -1413,6 +1510,24 @@ export default function AdminPanel() {
                 <span className={`toggle-track ${maintenanceMode ? 'active' : ''}`}>
                   <span className="toggle-thumb"></span>
                 </span>
+              </button>
+            </div>
+            <div className="purchase-mode-switch" title="Dashboard: Stars → /stars yoki /usdtstars">
+              <button
+                type="button"
+                className={`purchase-mode-btn ${starsPurchaseMode === "robynhood" ? "active robyn" : ""}`}
+                onClick={() => setPurchaseMode("robynhood")}
+                disabled={purchaseModeLoading}
+              >
+                Robyn
+              </button>
+              <button
+                type="button"
+                className={`purchase-mode-btn ${starsPurchaseMode === "fragment" ? "active frag" : ""}`}
+                onClick={() => setPurchaseMode("fragment")}
+                disabled={purchaseModeLoading}
+              >
+                Fragment
               </button>
             </div>
             {/* Refresh */}
@@ -1459,7 +1574,7 @@ export default function AdminPanel() {
             </button>
           </div>
         </div>
-        <div className="header-btns">
+        <div className="header-btns header-toolbar-scroll">
           <button 
             className={`hdr-nav-btn ${activeTab === "analytics" ? "active" : ""}`}
             onClick={() => setActiveTab(activeTab === "analytics" ? "transactions" : "analytics")}
@@ -1880,6 +1995,9 @@ export default function AdminPanel() {
                       <div className="order-main" style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                           <span className="order-user" style={{ fontWeight: "bold" }}>@{tx.sender_username || tx.owner_user_id || '?'} → @{tx.username || tx.recipient || '?'}</span>
+                          {(tx.order_type === "stars_usdt" || tx.delivery_type === "fragment") && (
+                            <span style={{ fontSize: "10px", background: "#6c5ce7", color: "#fff", padding: "2px 6px", borderRadius: "4px" }}>Fragment</span>
+                          )}
                         </div>
                         <div style={{ fontSize: "12px", color: "var(--tg-theme-hint-color, #999)" }}>
                           {new Date(tx.created_at).toLocaleString()} • {tx.amount?.toLocaleString()} so'm
@@ -1922,8 +2040,8 @@ export default function AdminPanel() {
                           </div>
                         </div>
 
-                        {/* Actions - for pending and error */}
-                        {(tx.status === "pending" || tx.status === "error") && (
+                        {/* Actions - for pending, processing va error */}
+                        {(tx.status === "pending" || tx.status === "error" || tx.status === "processing") && (
                           <div className="order-actions">
                             <button 
                               className="action-btn send"
@@ -2431,6 +2549,9 @@ export default function AdminPanel() {
                       <div className="order-main" style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                           <span className="order-user" style={{ fontWeight: "bold" }}>@{tx.sender_username || tx.owner_user_id || '?'} → @{tx.username || tx.recipient || '?'}</span>
+                          {(tx.order_type === "premium_usdt" || tx.delivery_type === "fragment") && (
+                            <span style={{ fontSize: "10px", background: "#6c5ce7", color: "#fff", padding: "2px 6px", borderRadius: "4px" }}>Fragment</span>
+                          )}
                         </div>
                         <div style={{ fontSize: "12px", color: "var(--tg-theme-hint-color, #999)" }}>
                           {new Date(tx.created_at).toLocaleString()} • {tx.amount?.toLocaleString()} so'm
@@ -2480,10 +2601,10 @@ export default function AdminPanel() {
                           </div>
                         </div>
 
-                        {/* Actions - for pending and error */}
-                        {(tx.status === "pending" || tx.status === "error") && (
+                        {/* Actions - for pending, processing va error */}
+                        {(tx.status === "pending" || tx.status === "error" || tx.status === "processing") && (
                           <div className="order-actions">
-                            {tx.status === "error" && (
+                            {(tx.status === "error" || tx.status === "processing") && (
                               <button 
                                 className="action-btn send"
                                 onClick={(e) => { e.stopPropagation(); sendPremium(tx.id); }}
@@ -2656,6 +2777,86 @@ export default function AdminPanel() {
       {/* ==================== SETTINGS TAB ==================== */}
       {activeTab === "settings" && (
         <div className="tab-content settings-tab">
+          <h3 className="settings-section-title">⚡ Stars / Premium yetkazish</h3>
+          <p className="settings-section-desc">
+            Dashboard dagi &quot;Stars olish&quot; va &quot;Premium olish&quot; tugmalari qaysi sahifaga ochilishini tanlang.
+          </p>
+          <div className="purchase-mode-settings">
+            <div className="purchase-mode-switch purchase-mode-switch--large">
+              <button
+                type="button"
+                className={`purchase-mode-btn ${starsPurchaseMode === "robynhood" ? "active robyn" : ""}`}
+                onClick={() => setPurchaseMode("robynhood")}
+                disabled={purchaseModeLoading}
+              >
+                RobynHood
+              </button>
+              <button
+                type="button"
+                className={`purchase-mode-btn ${starsPurchaseMode === "fragment" ? "active frag" : ""}`}
+                onClick={() => setPurchaseMode("fragment")}
+                disabled={purchaseModeLoading}
+              >
+                Fragment (USDT)
+              </button>
+            </div>
+            <p className="settings-hint">
+              {starsPurchaseMode === "fragment"
+                ? "Hozir: /usdtstars va /usdtpremium (karta to‘lov + Fragment yetkazish)"
+                : "Hozir: /stars va /premium (RobynHood API)"}
+            </p>
+          </div>
+
+          <h3 className="settings-section-title">🔗 Fragment cookie</h3>
+          <p className="settings-section-desc">
+            SEED va API_KEY faqat server <code>.env</code> da. Cookie lar PostgreSQL <code>tokens</code> jadvalida.
+          </p>
+          <div className="settings-add-package" style={{ marginBottom: "24px" }}>
+            <div className="package-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>fragment_dt (stel_dt)</label>
+                  <input
+                    value={fragmentTokens.fragment_dt}
+                    onChange={(e) => setFragmentTokens({ ...fragmentTokens, fragment_dt: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>fragment_ssid</label>
+                  <input
+                    value={fragmentTokens.fragment_ssid}
+                    onChange={(e) => setFragmentTokens({ ...fragmentTokens, fragment_ssid: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>fragment_token</label>
+                  <input
+                    value={fragmentTokens.fragment_token}
+                    onChange={(e) => setFragmentTokens({ ...fragmentTokens, fragment_token: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>fragment_ton_token (ixtiyoriy)</label>
+                  <input
+                    value={fragmentTokens.fragment_ton_token}
+                    onChange={(e) => setFragmentTokens({ ...fragmentTokens, fragment_ton_token: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px" }}>
+                <button type="button" className="add-package-btn" onClick={saveFragmentTokens} disabled={fragmentTokensLoading}>
+                  {fragmentTokensLoading ? "⏳..." : "💾 Cookie saqlash"}
+                </button>
+                <button type="button" className="add-package-btn" onClick={verifyFragmentCookies} disabled={fragmentVerifyLoading}>
+                  {fragmentVerifyLoading ? "⏳..." : "🔍 Cookie tekshirish"}
+                </button>
+              </div>
+              {fragmentVerifyMsg && <p style={{ marginTop: "8px", fontSize: "13px" }}>{fragmentVerifyMsg}</p>}
+            </div>
+          </div>
+
           <h3 className="settings-section-title">🏷️ Chegirma Paketlari</h3>
           <p className="settings-section-desc">Maxsus chegirmali Stars paketlarini boshqaring</p>
 
