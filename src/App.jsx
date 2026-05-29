@@ -30,9 +30,12 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    apiFetch("/api/maintenance")
-      .then(r => r.json())
-      .then(d => { setMaintenance(d.maintenance); setLoaded(true); })
+    apiFetch("/api/app-config")
+      .then((r) => r.json())
+      .then((d) => {
+        setMaintenance(Boolean(d.maintenance));
+        setLoaded(true);
+      })
       .catch(() => setLoaded(true));
     
     // Admin tekshiruvi - Telegram user ID

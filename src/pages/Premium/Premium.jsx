@@ -7,6 +7,7 @@ import premiumGif from "../../assets/premium_gif.gif";
 import premiumSticker from "../../assets/AnimatedSticker_premium.tgs";
 import { TGSSticker } from "../../components/TGSSticker";
 import apiFetch from "../../utils/apiFetch";
+import { getFragmentPaymentLabel } from "../../utils/starsPurchaseRoute";
 function normalizePremiumPollStatus(status) {
   if (status === "completed" || status === "delivered") return "premium_sent";
   return status;
@@ -59,6 +60,10 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
   const [promoMessage, setPromoMessage] = useState("");
   const [promoError, setPromoError] = useState(false);
   const [appliedPromo, setAppliedPromo] = useState(null);
+  const [fragmentPayLabel, setFragmentPayLabel] = useState("");
+  const [fragmentPlanPrice, setFragmentPlanPrice] = useState(null);
+  const [fragmentPriceLoading, setFragmentPriceLoading] = useState(false);
+  const [fragmentSlotsFull, setFragmentSlotsFull] = useState(false);
 
   // Format
   const formatAmount = (num) =>
@@ -93,6 +98,44 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
       } catch (e) {}
     };
   }, [showModal, showWarningModal, navigate]);
+
+  useEffect(() => {
+    if (!isFragment) {
+      setFragmentPayLabel("");
+      return;
+    }
+    apiFetch("/api/app-config")
+      .then((r) => r.json())
+      .then((cfg) => setFragmentPayLabel(getFragmentPaymentLabel(cfg)))
+      .catch(() => setFragmentPayLabel("TON"));
+  }, [isFragment]);
+
+  // Fragment: slot narxi backenddan (to'lov summasi mos bo'lishi uchun)
+  useEffect(() => {
+    if (!isFragment) {
+      setFragmentPlanPrice(null);
+      setFragmentSlotsFull(false);
+      return;
+    }
+
+    setFragmentPriceLoading(true);
+    apiFetch(`/api/usdt-premium/price/${selectedPlan.months}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.available && data.price) {
+          setFragmentPlanPrice(data.price);
+          setFragmentSlotsFull(false);
+        } else {
+          setFragmentPlanPrice(null);
+          setFragmentSlotsFull(true);
+        }
+      })
+      .catch(() => {
+        setFragmentPlanPrice(null);
+        setFragmentSlotsFull(false);
+      })
+      .finally(() => setFragmentPriceLoading(false));
+  }, [isFragment, selectedPlan.months]);
 
   // ================================
   // 🔍 PREMIUM SEARCH
@@ -235,6 +278,11 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
 
     if (!isFragment && (!profile?.username || !profile?.recipient)) {
       alert("Foydalanuvchi topilmadi!");
+      return;
+    }
+
+    if (isFragment && fragmentSlotsFull) {
+      alert("⏳ Hozirda juda ko'p buyurtmalar mavjud.\n\nIltimos, 1-2 daqiqadan keyin qayta urinib ko'ring.");
       return;
     }
 
@@ -438,7 +486,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
 
       <div className="premium-page-title">
         <h1>Telegram Premium</h1>
-        <p>xarid qilish</p>
+        <p>xarid qilish{isFragment && fragmentPayLabel ? ` · Fragment (${fragmentPayLabel})` : ""}</p>
       </div>
 
       {/* SEARCH */}
@@ -492,7 +540,17 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
 
             <div className="narx">
               <span>{p.label}</span>
-              <span>{formatAmount(p.price)} so'm</span>
+              <span>
+                {isFragment && selectedPlan.id === p.id
+                  ? fragmentPriceLoading
+                    ? "..."
+                    : fragmentPlanPrice != null
+                      ? `${formatAmount(fragmentPlanPrice)} so'm`
+                      : fragmentSlotsFull
+                        ? "Band"
+                        : "—"
+                  : `${formatAmount(p.price)} so'm`}
+              </span>
             </div>
             <span style={{ marginLeft: "auto", fontSize: "13px", color: "#0088cc", fontWeight: "600" }}>(Avto)</span>
           </label>

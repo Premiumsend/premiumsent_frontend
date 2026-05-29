@@ -14,3 +14,8 @@ export function isFragmentStarsMode(config) {
 export function isFragmentPremiumMode(config) {
   return config?.stars_purchase_mode === "fragment";
 }
+
+export function getFragmentPaymentLabel(config) {
+  if (config?.fragment_payment_label) return config.fragment_payment_label;
+  return config?.fragment_payment_method === "usdt_ton" ? "USDT TON" : "TON";
+}
