@@ -178,6 +178,13 @@ export default function AdminPanel() {
   const [walletLoading, setWalletLoading] = useState(false);
   const [botStarsBalance, setBotStarsBalance] = useState(0);
 
+  // RobynHood merchant API
+  const [robynHistory, setRobynHistory] = useState([]);
+  const [robynHistoryLoading, setRobynHistoryLoading] = useState(false);
+  const [robynHistoryError, setRobynHistoryError] = useState("");
+  const [robynSyncOrderId, setRobynSyncOrderId] = useState("");
+  const [robynSyncLoading, setRobynSyncLoading] = useState(false);
+
   // Discount packages state
   const [discountPackages, setDiscountPackages] = useState([]);
   const [newPackage, setNewPackage] = useState({ stars: "", discount_percent: "" });
@@ -290,10 +297,68 @@ export default function AdminPanel() {
     return starPrices?.availableStars || 0;
   };
 
+  const fetchRobynHistory = async () => {
+    setRobynHistoryLoading(true);
+    setRobynHistoryError("");
+    try {
+      const res = await apiFetch("/api/admin/robynhood/history?limit=30&offset=0");
+      const data = await res.json();
+      if (!res.ok) {
+        setRobynHistoryError(data.error || "Robyn tarix yuklanmadi");
+        setRobynHistory([]);
+        return;
+      }
+      const items =
+        data.transactions ||
+        data.history ||
+        data.items ||
+        data.purchases ||
+        data.data ||
+        (Array.isArray(data) ? data : []);
+      setRobynHistory(Array.isArray(items) ? items : []);
+    } catch (err) {
+      setRobynHistoryError(err.message || "Tarmoq xatosi");
+      setRobynHistory([]);
+    } finally {
+      setRobynHistoryLoading(false);
+    }
+  };
+
+  const syncRobynOrder = async () => {
+    const id = String(robynSyncOrderId || "").trim();
+    if (!id) {
+      alert("Buyurtma ID kiriting");
+      return;
+    }
+    setRobynSyncLoading(true);
+    try {
+      const res = await apiFetch(`/api/admin/robynhood/sync-order/${id}`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Sync xato");
+        return;
+      }
+      if (data.updated) {
+        alert(`✅ Order #${id} yangilandi — tx: ${data.transaction_id || "?"}`);
+        fetchTransactions();
+      } else {
+        alert(data.message || JSON.stringify(data.remote?.status || "Holat o'zgarmadi"));
+      }
+      fetchRobynHistory();
+    } catch (err) {
+      alert(err.message || "Sync xato");
+    } finally {
+      setRobynSyncLoading(false);
+    }
+  };
+
   // Fetch wallet when analytics tab is active
   useEffect(() => {
     if (activeTab === "analytics" && isAuthenticated) {
       fetchWalletAndPrices();
+      fetchRobynHistory();
     }
   }, [activeTab, isAuthenticated]);
 
@@ -1985,6 +2050,63 @@ export default function AdminPanel() {
               <span className="info-label">💵 50 stars narxi:</span>
               <span className="info-value green">{walletLoading ? '...' : (starPrices.priceFor50 || 0).toFixed(3)} TON</span>
             </div>
+          </div>
+
+          {/* RobynHood merchant tarix */}
+          <div className="info-list robyn-history-list" style={{ marginTop: "1rem" }}>
+            <div className="list-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+              <span>🔗 RobynHood merchant tarix</span>
+              <button
+                type="button"
+                className="refresh-btn small"
+                onClick={fetchRobynHistory}
+                disabled={robynHistoryLoading}
+              >
+                {robynHistoryLoading ? "..." : "Yangilash"}
+              </button>
+            </div>
+            <div className="info-row" style={{ flexWrap: "wrap", gap: "8px" }}>
+              <input
+                type="number"
+                placeholder="Order ID (sync)"
+                value={robynSyncOrderId}
+                onChange={(e) => setRobynSyncOrderId(e.target.value)}
+                style={{ flex: 1, minWidth: "100px", padding: "6px 8px" }}
+              />
+              <button
+                type="button"
+                className="refresh-btn small"
+                onClick={syncRobynOrder}
+                disabled={robynSyncLoading}
+              >
+                {robynSyncLoading ? "..." : "Robyn sync"}
+              </button>
+            </div>
+            {robynHistoryError && (
+              <div className="info-row">
+                <span className="info-value" style={{ color: "#f66" }}>{robynHistoryError}</span>
+              </div>
+            )}
+            {robynHistoryLoading && !robynHistory.length ? (
+              <div className="info-row">⏳ Yuklanmoqda...</div>
+            ) : robynHistory.length === 0 && !robynHistoryError ? (
+              <div className="info-row no-data">Tarix bo'sh yoki ROB_API_KEY yo'q</div>
+            ) : (
+              robynHistory.slice(0, 15).map((row, i) => (
+                <div key={row.transaction_id || row.id || i} className="info-row has-data">
+                  <span className="info-label" style={{ fontSize: "0.75rem" }}>
+                    {row.product_type || row.type || "?"} · {row.status || "—"}
+                  </span>
+                  <span className="info-value" style={{ fontSize: "0.75rem", textAlign: "right" }}>
+                    {row.recipient || row.recipient_username || "—"}
+                    <br />
+                    <span style={{ opacity: 0.7 }}>
+                      {(row.transaction_id || "").slice(0, 12)}…
+                    </span>
+                  </span>
+                </div>
+              ))
+            )}
           </div>
 
           {/* Sales Stats List */}
