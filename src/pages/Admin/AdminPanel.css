@@ -1876,4 +1876,441 @@ html, body {
   color: #b8e6ff;
 }
 
+/* ==================== MOBILE UX — PASTKI NAV & QULAYLIK ==================== */
+
+.admin-panel-new {
+  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+}
+
+.admin-main {
+  min-height: 0;
+}
+
+.header-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.hdr-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ff4444;
+  color: #fff;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  border: 2px solid #1a1a2e;
+}
+
+.header-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 4px 0 8px;
+  margin-bottom: 4px;
+}
+
+.header-toolbar-row::-webkit-scrollbar {
+  display: none;
+}
+
+.header-secondary-nav {
+  display: none;
+}
+
+/* Pastki navigatsiya — mobil */
+.admin-bottom-nav {
+  display: none;
+}
+
+.admin-more-overlay {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .admin-panel-new {
+    padding: 8px 10px calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .tabs-desktop {
+    display: none !important;
+  }
+
+  .header-secondary-nav {
+    display: none !important;
+  }
+
+  .admin-bottom-nav {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 900;
+    padding: 6px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+    background: rgba(15, 20, 40, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.35);
+    justify-content: space-around;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  .bottom-nav-item {
+    flex: 1;
+    min-width: 0;
+    min-height: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.55);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    position: relative;
+    padding: 4px 2px;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .bottom-nav-item:active {
+    transform: scale(0.96);
+  }
+
+  .bottom-nav-item.active {
+    background: rgba(102, 126, 234, 0.22);
+    color: #fff;
+  }
+
+  .bottom-nav-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  .bottom-nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .bottom-nav-dot {
+    position: absolute;
+    top: 6px;
+    right: calc(50% - 18px);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #667eea;
+    box-shadow: 0 0 6px rgba(102, 126, 234, 0.8);
+  }
+
+  .admin-more-overlay {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 950;
+    background: rgba(0, 0, 0, 0.55);
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+    animation: adminFadeIn 0.2s ease;
+  }
+
+  .admin-more-sheet {
+    width: 100%;
+    max-height: 75vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: linear-gradient(180deg, #1e2746 0%, #151a30 100%);
+    border-radius: 20px 20px 0 0;
+    padding: 12px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+    animation: adminSheetUp 0.28s ease;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .admin-more-handle {
+    width: 40px;
+    height: 4px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.25);
+    margin: 0 auto 14px;
+  }
+
+  .admin-more-title {
+    margin: 0 0 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+  }
+
+  .admin-more-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .admin-more-item {
+    min-height: 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 8px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .admin-more-item.active {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.35), rgba(118, 75, 162, 0.35));
+    border-color: rgba(102, 126, 234, 0.5);
+    color: #fff;
+  }
+
+  .admin-more-item-icon {
+    font-size: 1.4rem;
+  }
+
+  .admin-more-close {
+    width: 100%;
+    min-height: 48px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* Filtrlar — ustma-ust */
+  .filters {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .search-input,
+  .filter-select {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    font-size: 16px; /* iOS zoom oldini olish */
+  }
+
+  .stats-text {
+    font-size: 0.8rem;
+    gap: 6px 10px;
+  }
+
+  /* Buyurtma kartasi */
+  .order-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+    padding: 14px !important;
+  }
+
+  .order-main {
+    width: 100%;
+  }
+
+  .order-status {
+    align-self: flex-start;
+    font-size: 0.7rem;
+    padding: 8px 12px;
+  }
+
+  .order-actions {
+    flex-direction: column;
+  }
+
+  .action-btn {
+    min-height: 48px;
+    width: 100%;
+    font-size: 1rem;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .detail-value {
+    font-size: 0.85rem;
+  }
+
+  /* User kartalar */
+  .user-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .user-stats {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  /* Analitika */
+  .analytics-list {
+    padding: 8px 0;
+  }
+
+  .period-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+
+  .period-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .period-chip {
+    flex: 0 0 auto;
+    min-width: 64px;
+    min-height: 40px;
+  }
+
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 10px 8px;
+  }
+
+  .info-value {
+    text-align: left;
+    width: 100%;
+    word-break: break-word;
+  }
+
+  /* Modallar — pastdan sheet */
+  .balance-modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .balance-modal {
+    max-width: 100%;
+    width: 100%;
+    border-radius: 20px 20px 0 0;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: adminSheetUp 0.28s ease;
+  }
+
+  .balance-btn {
+    min-height: 48px;
+  }
+
+  .packages-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .purchase-mode-switch--large {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .purchase-mode-switch--large .purchase-mode-btn {
+    padding: 12px 8px;
+    font-size: 12px;
+  }
+
+  .hdr-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+
+  .site-mini .site-txt {
+    display: inline;
+    font-size: 9px;
+  }
+
+  .purchase-mode-btn {
+    padding: 8px 10px;
+    font-size: 11px;
+    min-height: 36px;
+  }
+
+  .tab-content {
+    padding-bottom: 8px;
+  }
+
+  .show-all-btn {
+    min-height: 48px;
+  }
+}
+
+@keyframes adminSheetUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0.5;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes adminFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (min-width: 768px) {
+  .admin-panel-new {
+    padding-bottom: 30px;
+  }
+
+  .admin-bottom-nav,
+  .admin-more-overlay {
+    display: none !important;
+  }
+
+  .header-secondary-nav {
+    display: flex;
+  }
+
+  .tabs-desktop {
+    display: flex;
+  }
+}
+
 

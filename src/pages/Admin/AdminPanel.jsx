@@ -61,6 +61,15 @@ export default function AdminPanel() {
   // Users state
   const [users, setUsers] = useState([]);
   const [activeTab, setActiveTab] = useState("transactions");
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
+
+  const PRIMARY_TABS = ["transactions", "premium", "gift", "users"];
+  const isPrimaryTab = PRIMARY_TABS.includes(activeTab);
+
+  const goToTab = (tab) => {
+    setActiveTab(tab);
+    setMobileMoreOpen(false);
+  };
   const [userStats, setUserStats] = useState({
     total: 0,
     today: 0,
@@ -183,13 +192,6 @@ export default function AdminPanel() {
     currency: "USDT",
     error: null,
   });
-
-  // RobynHood merchant API
-  const [robynHistory, setRobynHistory] = useState([]);
-  const [robynHistoryLoading, setRobynHistoryLoading] = useState(false);
-  const [robynHistoryError, setRobynHistoryError] = useState("");
-  const [robynSyncOrderId, setRobynSyncOrderId] = useState("");
-  const [robynSyncLoading, setRobynSyncLoading] = useState(false);
 
   // Discount packages state
   const [discountPackages, setDiscountPackages] = useState([]);
@@ -327,68 +329,10 @@ export default function AdminPanel() {
     return starPrices?.availableStars || 0;
   };
 
-  const fetchRobynHistory = async () => {
-    setRobynHistoryLoading(true);
-    setRobynHistoryError("");
-    try {
-      const res = await apiFetch("/api/admin/robynhood/history?limit=30&offset=0");
-      const data = await res.json();
-      if (!res.ok) {
-        setRobynHistoryError(data.error || "Robyn tarix yuklanmadi");
-        setRobynHistory([]);
-        return;
-      }
-      const items =
-        data.transactions ||
-        data.history ||
-        data.items ||
-        data.purchases ||
-        data.data ||
-        (Array.isArray(data) ? data : []);
-      setRobynHistory(Array.isArray(items) ? items : []);
-    } catch (err) {
-      setRobynHistoryError(err.message || "Tarmoq xatosi");
-      setRobynHistory([]);
-    } finally {
-      setRobynHistoryLoading(false);
-    }
-  };
-
-  const syncRobynOrder = async () => {
-    const id = String(robynSyncOrderId || "").trim();
-    if (!id) {
-      alert("Buyurtma ID kiriting");
-      return;
-    }
-    setRobynSyncLoading(true);
-    try {
-      const res = await apiFetch(`/api/admin/robynhood/sync-order/${id}`, {
-        method: "POST",
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || "Sync xato");
-        return;
-      }
-      if (data.updated) {
-        alert(`✅ Order #${id} yangilandi — tx: ${data.transaction_id || "?"}`);
-        fetchTransactions();
-      } else {
-        alert(data.message || JSON.stringify(data.remote?.status || "Holat o'zgarmadi"));
-      }
-      fetchRobynHistory();
-    } catch (err) {
-      alert(err.message || "Sync xato");
-    } finally {
-      setRobynSyncLoading(false);
-    }
-  };
-
   // Fetch wallet when analytics tab is active
   useEffect(() => {
     if (activeTab === "analytics" && isAuthenticated) {
       fetchWalletAndPrices();
-      fetchRobynHistory();
     }
   }, [activeTab, isAuthenticated]);
 
@@ -1658,7 +1602,43 @@ export default function AdminPanel() {
       <header className="admin-header-v2">
         <div className="header-top">
           <h1 className="header-title">⚡ Admin</h1>
-          <div className="header-right header-toolbar-scroll">
+          <div className="header-top-actions">
+            <button
+              className="hdr-btn refresh"
+              type="button"
+              aria-label="Yangilash"
+              onClick={() => {
+                if (activeTab === "transactions") fetchTransactions();
+                else if (activeTab === "users") fetchUsers();
+                else if (activeTab === "premium") fetchPremiumOrders();
+                else if (activeTab === "gift") fetchGiftOrders();
+                else if (activeTab === "settings") fetchDiscountPackages();
+                else if (activeTab === "referrals") fetchReferralRequests(referralFilter);
+                else if (activeTab === "analytics") {
+                  fetchAnalytics();
+                  fetchWalletAndPrices();
+                }
+              }}
+            >
+              🔄
+            </button>
+            <button
+              className="hdr-btn referral-bell"
+              type="button"
+              onClick={() => goToTab("referrals")}
+              style={{ position: "relative" }}
+              title="Referral requests"
+            >
+              🔔
+              {referralRequests.filter((r) => !r.is_accepted && !r.rejected_at).length > 0 && (
+                <span className="hdr-badge">
+                  {referralRequests.filter((r) => !r.is_accepted && !r.rejected_at).length}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+        <div className="header-toolbar-row header-toolbar-scroll">
             {/* Compact site switch */}
             <div className={`site-mini ${maintenanceMode ? 'off' : 'on'}`}>
               <span className="site-dot"></span>
@@ -1715,112 +1695,86 @@ export default function AdminPanel() {
                 </button>
               </div>
             )}
-            {/* Refresh */}
-            <button className="hdr-btn refresh" onClick={() => {
-              if (activeTab === "transactions") fetchTransactions();
-              else if (activeTab === "users") fetchUsers();
-              else if (activeTab === "premium") fetchPremiumOrders();
-              else if (activeTab === "gift") fetchGiftOrders();
-              else if (activeTab === "settings") fetchDiscountPackages();
-              else if (activeTab === "referrals") fetchReferralRequests(referralFilter);
-              else if (activeTab === "analytics") { fetchAnalytics(); fetchWalletAndPrices(); }
-            }}>
-              🔄
-            </button>
-            
-            {/* Referral Bell Icon */}
-            <button 
-              className="hdr-btn referral-bell"
-              onClick={() => setActiveTab("referrals")}
-              style={{position: 'relative'}}
-              title="Referral requests"
-            >
-              🔔
-              {referralRequests.filter(r => !r.is_accepted && !r.rejected_at).length > 0 && (
-                <span style={{
-                  position: 'absolute',
-                  top: '-4px',
-                  right: '-4px',
-                  background: '#ff4444',
-                  color: '#fff',
-                  width: '18px',
-                  height: '18px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '10px',
-                  fontWeight: '700',
-                  border: '2px solid #1a1a2e'
-                }}>
-                  {referralRequests.filter(r => !r.is_accepted && !r.rejected_at).length}
-                </span>
-              )}
-            </button>
-          </div>
         </div>
-        <div className="header-btns header-toolbar-scroll">
-          <button 
+        <div className="header-btns header-toolbar-scroll header-secondary-nav">
+          <button
+            type="button"
             className={`hdr-nav-btn ${activeTab === "analytics" ? "active" : ""}`}
-            onClick={() => setActiveTab(activeTab === "analytics" ? "transactions" : "analytics")}
+            onClick={() => goToTab(activeTab === "analytics" ? "transactions" : "analytics")}
           >
             📊 Analitika
           </button>
-          <button 
+          <button
+            type="button"
             className={`hdr-nav-btn ${activeTab === "notifications" ? "active" : ""}`}
-            onClick={() => setActiveTab("notifications")}
+            onClick={() => goToTab("notifications")}
           >
-            🔔 Xabar
+            📣 Xabar
           </button>
           <button
+            type="button"
             className={`hdr-nav-btn ${activeTab === "fragment-cookie" ? "active" : ""}`}
-            onClick={() => setActiveTab("fragment-cookie")}
+            onClick={() => goToTab("fragment-cookie")}
           >
             🍪 Fragment
           </button>
-          <button 
+          <button
+            type="button"
             className={`hdr-nav-btn ${activeTab === "settings" ? "active" : ""}`}
-            onClick={() => setActiveTab("settings")}
+            onClick={() => goToTab("settings")}
           >
-             % Chegirma
+            % Chegirma
           </button>
-          <button 
+          <button
+            type="button"
             className={`hdr-nav-btn ${activeTab === "promocodes" ? "active" : ""}`}
-            onClick={() => setActiveTab("promocodes")}
+            onClick={() => goToTab("promocodes")}
           >
             ➕ Promokod
           </button>
-          
+          <button
+            type="button"
+            className={`hdr-nav-btn ${activeTab === "referrals" ? "active" : ""}`}
+            onClick={() => goToTab("referrals")}
+          >
+            🤝 Referral
+          </button>
         </div>
       </header>
 
-      {/* TABS */}
-      <div className="tabs">
-        <button 
+      {/* Desktop tabs */}
+      <div className="tabs tabs-desktop">
+        <button
+          type="button"
           className={`tab ${activeTab === "transactions" ? "active" : ""}`}
-          onClick={() => setActiveTab("transactions")}
+          onClick={() => goToTab("transactions")}
         >
-          Stars
+          ⭐ Stars
         </button>
-        <button 
+        <button
+          type="button"
           className={`tab ${activeTab === "premium" ? "active" : ""}`}
-          onClick={() => setActiveTab("premium")}
+          onClick={() => goToTab("premium")}
         >
-          Premium
+          💎 Premium
         </button>
-        <button 
+        <button
+          type="button"
           className={`tab ${activeTab === "gift" ? "active" : ""}`}
-          onClick={() => setActiveTab("gift")}
+          onClick={() => goToTab("gift")}
         >
-          Gift
+          🎁 Gift
         </button>
-        <button 
+        <button
+          type="button"
           className={`tab ${activeTab === "users" ? "active" : ""}`}
-          onClick={() => setActiveTab("users")}
+          onClick={() => goToTab("users")}
         >
-          Users
+          👥 Users
         </button>
       </div>
+
+      <div className="admin-main">
 
       {/* ==================== NOTIFICATIONS TAB ==================== */}
       {activeTab === "notifications" && (
@@ -2095,63 +2049,6 @@ export default function AdminPanel() {
                         })} ${paymeeWallet.currency}`}
               </span>
             </div>
-          </div>
-
-          {/* RobynHood merchant tarix */}
-          <div className="info-list robyn-history-list" style={{ marginTop: "1rem" }}>
-            <div className="list-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
-              <span>🔗 RobynHood merchant tarix</span>
-              <button
-                type="button"
-                className="refresh-btn small"
-                onClick={fetchRobynHistory}
-                disabled={robynHistoryLoading}
-              >
-                {robynHistoryLoading ? "..." : "Yangilash"}
-              </button>
-            </div>
-            <div className="info-row" style={{ flexWrap: "wrap", gap: "8px" }}>
-              <input
-                type="number"
-                placeholder="Order ID (sync)"
-                value={robynSyncOrderId}
-                onChange={(e) => setRobynSyncOrderId(e.target.value)}
-                style={{ flex: 1, minWidth: "100px", padding: "6px 8px" }}
-              />
-              <button
-                type="button"
-                className="refresh-btn small"
-                onClick={syncRobynOrder}
-                disabled={robynSyncLoading}
-              >
-                {robynSyncLoading ? "..." : "Robyn sync"}
-              </button>
-            </div>
-            {robynHistoryError && (
-              <div className="info-row">
-                <span className="info-value" style={{ color: "#f66" }}>{robynHistoryError}</span>
-              </div>
-            )}
-            {robynHistoryLoading && !robynHistory.length ? (
-              <div className="info-row">⏳ Yuklanmoqda...</div>
-            ) : robynHistory.length === 0 && !robynHistoryError ? (
-              <div className="info-row no-data">Tarix bo'sh yoki ROB_API_KEY yo'q</div>
-            ) : (
-              robynHistory.slice(0, 15).map((row, i) => (
-                <div key={row.transaction_id || row.id || i} className="info-row has-data">
-                  <span className="info-label" style={{ fontSize: "0.75rem" }}>
-                    {row.product_type || row.type || "?"} · {row.status || "—"}
-                  </span>
-                  <span className="info-value" style={{ fontSize: "0.75rem", textAlign: "right" }}>
-                    {row.recipient || row.recipient_username || "—"}
-                    <br />
-                    <span style={{ opacity: 0.7 }}>
-                      {(row.transaction_id || "").slice(0, 12)}…
-                    </span>
-                  </span>
-                </div>
-              ))
-            )}
           </div>
 
           {/* Sales Stats List */}
@@ -3860,6 +3757,98 @@ export default function AdminPanel() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      </div>
+
+      {/* Mobil: pastki navigatsiya */}
+      <nav className="admin-bottom-nav" aria-label="Asosiy bo'limlar">
+        <button
+          type="button"
+          className={`bottom-nav-item ${activeTab === "transactions" ? "active" : ""}`}
+          onClick={() => goToTab("transactions")}
+        >
+          <span className="bottom-nav-icon">⭐</span>
+          <span className="bottom-nav-label">Stars</span>
+        </button>
+        <button
+          type="button"
+          className={`bottom-nav-item ${activeTab === "premium" ? "active" : ""}`}
+          onClick={() => goToTab("premium")}
+        >
+          <span className="bottom-nav-icon">💎</span>
+          <span className="bottom-nav-label">Premium</span>
+        </button>
+        <button
+          type="button"
+          className={`bottom-nav-item ${activeTab === "gift" ? "active" : ""}`}
+          onClick={() => goToTab("gift")}
+        >
+          <span className="bottom-nav-icon">🎁</span>
+          <span className="bottom-nav-label">Gift</span>
+        </button>
+        <button
+          type="button"
+          className={`bottom-nav-item ${activeTab === "users" ? "active" : ""}`}
+          onClick={() => goToTab("users")}
+        >
+          <span className="bottom-nav-icon">👥</span>
+          <span className="bottom-nav-label">Users</span>
+        </button>
+        <button
+          type="button"
+          className={`bottom-nav-item ${!isPrimaryTab ? "active" : ""}`}
+          onClick={() => setMobileMoreOpen(true)}
+        >
+          <span className="bottom-nav-icon">⋯</span>
+          <span className="bottom-nav-label">Boshqa</span>
+          {!isPrimaryTab && <span className="bottom-nav-dot" />}
+        </button>
+      </nav>
+
+      {mobileMoreOpen && (
+        <div
+          className="admin-more-overlay"
+          role="presentation"
+          onClick={() => setMobileMoreOpen(false)}
+        >
+          <div
+            className="admin-more-sheet"
+            role="dialog"
+            aria-label="Qo'shimcha bo'limlar"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="admin-more-handle" />
+            <h3 className="admin-more-title">Boshqa bo'limlar</h3>
+            <div className="admin-more-grid">
+              {[
+                { id: "analytics", icon: "📊", label: "Analitika" },
+                { id: "notifications", icon: "📣", label: "Xabarlar" },
+                { id: "fragment-cookie", icon: "🍪", label: "Fragment" },
+                { id: "settings", icon: "%", label: "Chegirma" },
+                { id: "promocodes", icon: "➕", label: "Promokod" },
+                { id: "referrals", icon: "🤝", label: "Referral" },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`admin-more-item ${activeTab === item.id ? "active" : ""}`}
+                  onClick={() => goToTab(item.id)}
+                >
+                  <span className="admin-more-item-icon">{item.icon}</span>
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="admin-more-close"
+              onClick={() => setMobileMoreOpen(false)}
+            >
+              Yopish
+            </button>
           </div>
         </div>
       )}
