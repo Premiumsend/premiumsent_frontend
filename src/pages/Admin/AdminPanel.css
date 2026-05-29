@@ -179,6 +179,11 @@ html, body {
   color: #a29bfe;
 }
 
+.purchase-mode-btn.active.paymee {
+  background: rgba(16, 185, 129, 0.3);
+  color: #6ee7b7;
+}
+
 .purchase-mode-btn.active.ton {
   background: rgba(0, 152, 234, 0.25);
   color: #74c0fc;

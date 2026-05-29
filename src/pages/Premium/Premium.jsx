@@ -7,7 +7,11 @@ import premiumGif from "../../assets/premium_gif.gif";
 import premiumSticker from "../../assets/AnimatedSticker_premium.tgs";
 import { TGSSticker } from "../../components/TGSSticker";
 import apiFetch from "../../utils/apiFetch";
-import { getFragmentPaymentLabel } from "../../utils/starsPurchaseRoute";
+import {
+  getFragmentPaymentLabel,
+  isCardDeliveryVariant,
+  premiumApiPrefix,
+} from "../../utils/starsPurchaseRoute";
 function normalizePremiumPollStatus(status) {
   if (status === "completed" || status === "delivered") return "premium_sent";
   return status;
@@ -15,6 +19,9 @@ function normalizePremiumPollStatus(status) {
 
 export function PremiumPurchasePage({ variant = "robynhood" }) {
   const isFragment = variant === "fragment";
+  const isPaymee = variant === "paymee";
+  const isCardFlow = isCardDeliveryVariant(variant);
+  const premiumApi = premiumApiPrefix(variant);
   const navigate = useNavigate();
   const PREMIUM_3 = parseInt(import.meta.env.VITE_PREMIUM_3);
   const PREMIUM_6 = parseInt(import.meta.env.VITE_PREMIUM_6);
@@ -100,26 +107,30 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
   }, [showModal, showWarningModal, navigate]);
 
   useEffect(() => {
-    if (!isFragment) {
+    if (!isCardFlow) {
       setFragmentPayLabel("");
+      return;
+    }
+    if (isPaymee) {
+      setFragmentPayLabel("Paymee API");
       return;
     }
     apiFetch("/api/app-config")
       .then((r) => r.json())
       .then((cfg) => setFragmentPayLabel(getFragmentPaymentLabel(cfg)))
       .catch(() => setFragmentPayLabel("TON"));
-  }, [isFragment]);
+  }, [isCardFlow, isPaymee]);
 
   // Fragment: slot narxi backenddan (to'lov summasi mos bo'lishi uchun)
   useEffect(() => {
-    if (!isFragment) {
+    if (!isCardFlow) {
       setFragmentPlanPrice(null);
       setFragmentSlotsFull(false);
       return;
     }
 
     setFragmentPriceLoading(true);
-    apiFetch(`/api/usdt-premium/price/${selectedPlan.months}`)
+    apiFetch(`${premiumApi}/price/${selectedPlan.months}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.available && data.price) {
@@ -135,7 +146,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
         setFragmentSlotsFull(false);
       })
       .finally(() => setFragmentPriceLoading(false));
-  }, [isFragment, selectedPlan.months]);
+  }, [isCardFlow, selectedPlan.months, premiumApi]);
 
   // ================================
   // 🔍 PREMIUM SEARCH
@@ -155,7 +166,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
 
         const clean = username.replace("@", "");
 
-        if (isFragment) {
+        if (isCardFlow) {
           if (/^[a-zA-Z0-9_]{4,32}$/.test(clean)) {
             setProfile({ username: clean, recipient: clean, fullName: clean });
             setSearchError(null);
@@ -199,13 +210,13 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
       } finally {
         setLoadingProfile(false);
       }
-    }, isFragment ? 300 : 500);
+    }, isCardFlow ? 300 : 500);
 
     return () => {
       clearTimeout(delay);
       controller.abort();
     };
-  }, [username, selectedPlan, isFragment]);
+  }, [username, selectedPlan, isCardFlow]);
 
   // 🔹 Telegramdan username olish
   const fillMyUsername = () => {
@@ -276,12 +287,12 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
       return;
     }
 
-    if (!isFragment && (!profile?.username || !profile?.recipient)) {
+    if (!isCardFlow && (!profile?.username || !profile?.recipient)) {
       alert("Foydalanuvchi topilmadi!");
       return;
     }
 
-    if (isFragment && fragmentSlotsFull) {
+    if (isCardFlow && fragmentSlotsFull) {
       alert("⏳ Hozirda juda ko'p buyurtmalar mavjud.\n\nIltimos, 1-2 daqiqadan keyin qayta urinib ko'ring.");
       return;
     }
@@ -289,7 +300,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
     setLoadingBuy(true);
 
     try {
-      const orderBody = isFragment
+      const orderBody = isCardFlow
         ? {
             username: cleanUsername,
             months: selectedPlan.months,
@@ -302,7 +313,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
             applied_promocode: appliedPromo?.code || null,
           };
 
-      const res = await apiFetch(isFragment ? "/api/usdt-premium/order" : "/api/premium", {
+      const res = await apiFetch(isCardFlow ? `${premiumApi}/order` : "/api/premium", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderBody),
@@ -344,8 +355,8 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
     stopPolling();
     pollingRef.current = setInterval(async () => {
       try {
-        const pollUrl = isFragment
-          ? `/api/usdt-premium/transactions/${id}`
+        const pollUrl = isCardFlow
+          ? `${premiumApi}/transactions/${id}`
           : `/api/premium/transactions/${id}`;
         const res = await apiFetch(pollUrl);
         const data = await res.json();
@@ -486,7 +497,14 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
 
       <div className="premium-page-title">
         <h1>Telegram Premium</h1>
-        <p>xarid qilish{isFragment && fragmentPayLabel ? ` · Fragment (${fragmentPayLabel})` : ""}</p>
+        <p>
+          xarid qilish
+          {isCardFlow && fragmentPayLabel
+            ? isPaymee
+              ? ` · ${fragmentPayLabel}`
+              : ` · Fragment (${fragmentPayLabel})`
+            : ""}
+        </p>
       </div>
 
       {/* SEARCH */}
@@ -541,7 +559,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
             <div className="narx">
               <span>{p.label}</span>
               <span>
-                {isFragment && selectedPlan.id === p.id
+                {isCardFlow && selectedPlan.id === p.id
                   ? fragmentPriceLoading
                     ? "..."
                     : fragmentPlanPrice != null

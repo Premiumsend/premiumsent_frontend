@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Stars from "./pages/Stars/Stars";
 import UsdtStars from "./pages/UsdtStars/UsdtStars";
+import PaymeeStars from "./pages/PaymeeStars/PaymeeStars";
+import PaymeePremium from "./pages/PaymeePremium/PaymeePremium";
 import AdminPanel from "./pages/Admin/AdminPanel";
 import Premium from "./pages/Premium/Premium";
 import UsdtPremium from "./pages/UsdtPremium/UsdtPremium";
@@ -70,8 +72,10 @@ function App() {
                 <Route path="/" element={<Dashboard/>} />
                 <Route path="/stars" element={<Stars />} />
                 <Route path="/usdtstars" element={<UsdtStars />} />
+                <Route path="/paymeestars" element={<PaymeeStars />} />
                 <Route path="/premium" element={<Premium />} />
                 <Route path="/usdtpremium" element={<UsdtPremium />} />
+                <Route path="/paymeepremium" element={<PaymeePremium />} />
                 <Route path="/referral" element={<Referral />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/history" element={<History />} />

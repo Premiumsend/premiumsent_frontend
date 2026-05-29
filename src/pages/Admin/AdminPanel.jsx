@@ -1574,7 +1574,7 @@ export default function AdminPanel() {
                 </span>
               </button>
             </div>
-            <div className="purchase-mode-switch" title="Dashboard: Stars → /stars yoki /usdtstars">
+            <div className="purchase-mode-switch" title="Dashboard: Stars/Premium yo'nalishi">
               <button
                 type="button"
                 className={`purchase-mode-btn ${starsPurchaseMode === "robynhood" ? "active robyn" : ""}`}
@@ -1590,6 +1590,14 @@ export default function AdminPanel() {
                 disabled={purchaseModeLoading}
               >
                 Fragment
+              </button>
+              <button
+                type="button"
+                className={`purchase-mode-btn ${starsPurchaseMode === "paymee" ? "active paymee" : ""}`}
+                onClick={() => setPurchaseMode("paymee")}
+                disabled={purchaseModeLoading}
+              >
+                Paymee
               </button>
             </div>
             {starsPurchaseMode === "fragment" && (
@@ -3115,11 +3123,21 @@ export default function AdminPanel() {
               >
                 Fragment (USDT)
               </button>
+              <button
+                type="button"
+                className={`purchase-mode-btn ${starsPurchaseMode === "paymee" ? "active paymee" : ""}`}
+                onClick={() => setPurchaseMode("paymee")}
+                disabled={purchaseModeLoading}
+              >
+                Paymee API
+              </button>
             </div>
             <p className="settings-hint">
               {starsPurchaseMode === "fragment"
-                ? "Hozir: /usdtstars va /usdtpremium (karta to‘lov + Fragment yetkazish)"
-                : "Hozir: /stars va /premium (RobynHood API)"}
+                ? "Hozir: /usdtstars va /usdtpremium (karta + Fragment)"
+                : starsPurchaseMode === "paymee"
+                  ? "Hozir: /paymeestars va /paymeepremium (karta + StarsPaymee Partner API)"
+                  : "Hozir: /stars va /premium (RobynHood API)"}
             </p>
           </div>
 

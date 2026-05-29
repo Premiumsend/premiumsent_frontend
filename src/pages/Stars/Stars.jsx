@@ -3,7 +3,12 @@ import starsSticker from "../../assets/AnimatedSticker_stars.tgs";
 import { TGSSticker } from "../../components/TGSSticker";
 import { useNavigate } from "react-router-dom";
 import apiFetch from "../../utils/apiFetch";
-import { getPremiumPurchasePath, getFragmentPaymentLabel } from "../../utils/starsPurchaseRoute";
+import {
+  getPremiumPurchasePath,
+  getFragmentPaymentLabel,
+  isCardDeliveryVariant,
+  starsApiPrefix,
+} from "../../utils/starsPurchaseRoute";
 import "./Stars.css";
 
 import WebApp from "@twa-dev/sdk";
@@ -40,6 +45,9 @@ const POLLING_DURATION = 8 * 60 * 1000; // 8 daqiqa millisekondda
 
 export function StarsPurchasePage({ variant = "robynhood" }) {
   const isFragment = variant === "fragment";
+  const isPaymee = variant === "paymee";
+  const isCardFlow = isCardDeliveryVariant(variant);
+  const starsApi = starsApiPrefix(variant);
   const CARD_NUMBER = import.meta.env.VITE_CARD_NUMBER;
   const CARD_NAME = import.meta.env.VITE_CARD_NAME;
   const NARX = parseInt(import.meta.env.VITE_NARX);
@@ -90,7 +98,9 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
       const cfg = await res.json();
       navigate(getPremiumPurchasePath(cfg));
     } catch {
-      navigate(isFragment ? "/usdtpremium" : "/premium");
+      navigate(
+        isPaymee ? "/paymeepremium" : isFragment ? "/usdtpremium" : "/premium"
+      );
     }
   };
 
@@ -117,15 +127,19 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
     num?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
   useEffect(() => {
-    if (!isFragment) {
+    if (!isCardFlow) {
       setFragmentPayLabel("");
+      return;
+    }
+    if (isPaymee) {
+      setFragmentPayLabel("Paymee API");
       return;
     }
     apiFetch("/api/app-config")
       .then((r) => r.json())
       .then((cfg) => setFragmentPayLabel(getFragmentPaymentLabel(cfg)))
       .catch(() => setFragmentPayLabel("TON"));
-  }, [isFragment]);
+  }, [isCardFlow, isPaymee]);
 
   // Discount paketlarni yuklash (refreshable)
   const fetchDiscountPackages = async () => {
@@ -205,7 +219,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
     setPriceLoading(true);
     
     // Slot-based narx - backend dan olish
-    apiFetch(isFragment ? `/api/usdt-stars/price/${starNum}` : `/api/stars/price/${starNum}`)
+    apiFetch(isCardFlow ? `${starsApi}/price/${starNum}` : `/api/stars/price/${starNum}`)
       .then(res => res.json())
       .then(data => {
         if (data.available && data.price) {
@@ -220,7 +234,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
         setPrice(starNum * NARX);
       })
       .finally(() => setPriceLoading(false));
-  }, [stars, isFragment]);
+  }, [stars, isCardFlow, starsApi]);
 
   // Timer for stars_sent
   useEffect(() => {
@@ -253,7 +267,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
           ? username.slice(1)
           : username;
 
-        if (isFragment) {
+        if (isCardFlow) {
           if (/^[a-zA-Z0-9_]{4,32}$/.test(cleanUsername)) {
             setProfile({ username: cleanUsername, recipient: cleanUsername });
           } else {
@@ -277,10 +291,10 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
       } finally {
         setLoadingProfile(false);
       }
-    }, isFragment ? 300 : 1000);
+    }, isCardFlow ? 300 : 1000);
 
     return () => clearTimeout(timeout);
-  }, [username, isFragment]);
+  }, [username, isCardFlow]);
 
   // Copy card
   const handleCopy = () => {
@@ -506,13 +520,13 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
       return;
     }
 
-    if (!isFragment && (!profile || !profile.recipient)) {
+    if (!isCardFlow && (!profile || !profile.recipient)) {
       alert("Foydalanuvchi topilmadi!");
       return;
     }
 
     try {
-      const payload = isFragment
+      const payload = isCardFlow
         ? { username: cleanUsername, stars: parseInt(stars, 10) }
         : {
             username: profile.username,
@@ -525,7 +539,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
         payload.applied_promocode = appliedPromo.code;
       }
 
-      const res = await apiFetch(isFragment ? "/api/usdt-stars/order" : "/api/order", {
+      const res = await apiFetch(isCardFlow ? `${starsApi}/order` : "/api/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -583,7 +597,14 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
 
       <div className="stars-page-title">
         <h1>Telegram Stars</h1>
-        <p>xarid qilish{isFragment && fragmentPayLabel ? ` · Fragment (${fragmentPayLabel})` : ""}</p>
+        <p>
+          xarid qilish
+          {isCardFlow && fragmentPayLabel
+            ? isPaymee
+              ? ` · ${fragmentPayLabel}`
+              : ` · Fragment (${fragmentPayLabel})`
+            : ""}
+        </p>
       </div>
 
       {/* Profile */}
