@@ -3,16 +3,6 @@ import "./AdminPanel.css";
 import { TGSSticker } from "../../components/TGSSticker";
 import adminSticker from "../../assets/AnimatedSticker_admin.tgs";
 import apiFetch from "../../utils/apiFetch";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer
-} from "recharts";
-
 export default function AdminPanel() {
   // ========== TELEGRAM AUTH PROTECTION ==========
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -61,15 +51,36 @@ export default function AdminPanel() {
   // Users state
   const [users, setUsers] = useState([]);
   const [activeTab, setActiveTab] = useState("transactions");
-  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
 
-  const PRIMARY_TABS = ["transactions", "premium", "gift", "users"];
-  const isPrimaryTab = PRIMARY_TABS.includes(activeTab);
+  const [bottomMenuOpen, setBottomMenuOpen] = useState(false);
 
   const goToTab = (tab) => {
     setActiveTab(tab);
-    setMobileMoreOpen(false);
+    setBottomMenuOpen(false);
   };
+
+  const SECONDARY_NAV_MENU = [
+    { id: "notifications", icon: "📣", label: "Xabar" },
+    { id: "fragment-cookie", icon: "🍪", label: "Fragment" },
+  ];
+
+  const SECONDARY_NAV_BOTTOM = [
+    { id: "analytics", icon: "📊", label: "Stat" },
+    { id: "settings", icon: "%", label: "Cheg" },
+    { id: "promocodes", icon: "➕", label: "Promo" },
+    { id: "referrals", icon: "🤝", label: "Ref" },
+  ];
+
+  const SECONDARY_NAV_HEADER = [
+    { id: "analytics", icon: "📊", label: "Analitika" },
+    { id: "notifications", icon: "📣", label: "Xabar" },
+    { id: "fragment-cookie", icon: "🍪", label: "Fragment" },
+    { id: "settings", icon: "%", label: "Chegirma" },
+    { id: "promocodes", icon: "➕", label: "Promokod" },
+    { id: "referrals", icon: "🤝", label: "Referral" },
+  ];
+
+  const isBottomMenuTabActive = SECONDARY_NAV_MENU.some((item) => item.id === activeTab);
   const [userStats, setUserStats] = useState({
     total: 0,
     today: 0,
@@ -171,7 +182,6 @@ export default function AdminPanel() {
 
   // Analytics state
   const [analyticsPeriod, setAnalyticsPeriod] = useState("all"); // day, week, month, all
-  const [analyticsType, setAnalyticsType] = useState("all"); // all, stars, premium, gift
   const [analyticsData, setAnalyticsData] = useState({
     stars: { count: 0, totalStars: 0, totalAmount: 0 },
     premium: { count: 0, totalAmount: 0 },
@@ -190,6 +200,8 @@ export default function AdminPanel() {
     configured: false,
     balanceUsdt: null,
     currency: "USDT",
+    usdtPerStar: null,
+    availableStars: null,
     error: null,
   });
 
@@ -283,6 +295,11 @@ export default function AdminPanel() {
             configured: true,
             balanceUsdt: Number(pm.balance_usdt),
             currency: pm.currency || "USDT",
+            usdtPerStar: pm.usdt_per_star != null ? Number(pm.usdt_per_star) : null,
+            availableStars:
+              pm.available_stars != null
+                ? Number(pm.available_stars)
+                : data.available_stars ?? null,
             error: null,
           });
         } else if (pm?.configured) {
@@ -290,6 +307,8 @@ export default function AdminPanel() {
             configured: true,
             balanceUsdt: null,
             currency: "USDT",
+            usdtPerStar: null,
+            availableStars: null,
             error: pm.error || "Balans olinmadi",
           });
         } else {
@@ -297,6 +316,8 @@ export default function AdminPanel() {
             configured: false,
             balanceUsdt: null,
             currency: "USDT",
+            usdtPerStar: null,
+            availableStars: null,
             error: null,
           });
         }
@@ -1600,11 +1621,94 @@ export default function AdminPanel() {
     <div className="admin-panel-new">
       {/* Header with controls */}
       <header className="admin-header-v2">
-        <div className="header-top">
-          <h1 className="header-title">⚡ Admin</h1>
+        <div className="header-compact-row">
+          <h1 className="header-title">
+            <span className="header-title-icon">⚡</span>
+            <span className="header-title-text">Admin</span>
+          </h1>
+
+          <div className={`site-mini site-mini--compact ${maintenanceMode ? "off" : "on"}`}>
+            <span className="site-dot" />
+            <span className="site-txt">{maintenanceMode ? "OFF" : "ON"}</span>
+            <button
+              type="button"
+              className="site-toggle"
+              onClick={toggleMaintenance}
+              disabled={maintenanceLoading}
+              aria-label="Sayt rejimi"
+            >
+              <span className={`toggle-track ${maintenanceMode ? "active" : ""}`}>
+                <span className="toggle-thumb" />
+              </span>
+            </button>
+          </div>
+
+          <div
+            className="mode-radio-group mode-radio-group--header"
+            role="radiogroup"
+            aria-label="Yetkazish rejimi"
+          >
+            {[
+              { id: "robynhood", label: "Robyn", cls: "robyn" },
+              { id: "fragment", label: "Frag", cls: "frag" },
+              { id: "paymee", label: "Paymee", cls: "paymee" },
+            ].map((opt) => (
+              <label
+                key={opt.id}
+                className={`mode-radio mode-radio--${opt.cls} ${
+                  starsPurchaseMode === opt.id ? "is-checked" : ""
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="headerPurchaseMode"
+                  className="mode-radio-input"
+                  value={opt.id}
+                  checked={starsPurchaseMode === opt.id}
+                  disabled={purchaseModeLoading}
+                  onChange={() => setPurchaseMode(opt.id)}
+                />
+                <span className="mode-radio-mark" aria-hidden="true" />
+                <span className="mode-radio-label">{opt.label}</span>
+              </label>
+            ))}
+          </div>
+
+          {starsPurchaseMode === "fragment" && (
+            <div
+              className="mode-radio-group mode-radio-group--pay"
+              role="radiogroup"
+              aria-label="Fragment to'lov"
+            >
+              {[
+                { id: "ton", label: "TON" },
+                { id: "usdt_ton", label: "USDT" },
+              ].map((opt) => (
+                <label
+                  key={opt.id}
+                  className={`mode-radio mode-radio--mini ${
+                    fragmentPaymentMethod === opt.id ? "is-checked" : ""
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="headerFragmentPay"
+                    className="mode-radio-input"
+                    value={opt.id}
+                    checked={fragmentPaymentMethod === opt.id}
+                    disabled={fragmentPayLoading}
+                    onChange={() => setFragmentPayMethod(opt.id)}
+                  />
+                  <span className="mode-radio-mark" aria-hidden="true" />
+                  <span className="mode-radio-label">{opt.label}</span>
+                </label>
+              ))}
+            </div>
+          )}
+
           <div className="header-top-actions">
             <button
-              className="hdr-btn refresh"
+              className="hdr-btn refresh hdr-btn--sm"
               type="button"
               aria-label="Yangilash"
               onClick={() => {
@@ -1623,11 +1727,11 @@ export default function AdminPanel() {
               🔄
             </button>
             <button
-              className="hdr-btn referral-bell"
+              className="hdr-btn referral-bell hdr-btn--sm"
               type="button"
               onClick={() => goToTab("referrals")}
-              style={{ position: "relative" }}
               title="Referral requests"
+              aria-label="Referral"
             >
               🔔
               {referralRequests.filter((r) => !r.is_accepted && !r.rejected_at).length > 0 && (
@@ -1638,112 +1742,28 @@ export default function AdminPanel() {
             </button>
           </div>
         </div>
-        <div className="header-toolbar-row header-toolbar-scroll">
-            {/* Compact site switch */}
-            <div className={`site-mini ${maintenanceMode ? 'off' : 'on'}`}>
-              <span className="site-dot"></span>
-              <span className="site-txt">{maintenanceMode ? 'OFF' : 'ON'}</span>
-              <button className="site-toggle" onClick={toggleMaintenance} disabled={maintenanceLoading}>
-                <span className={`toggle-track ${maintenanceMode ? 'active' : ''}`}>
-                  <span className="toggle-thumb"></span>
-                </span>
-              </button>
-            </div>
-            <div className="purchase-mode-switch" title="Dashboard: Stars/Premium yo'nalishi">
-              <button
-                type="button"
-                className={`purchase-mode-btn ${starsPurchaseMode === "robynhood" ? "active robyn" : ""}`}
-                onClick={() => setPurchaseMode("robynhood")}
-                disabled={purchaseModeLoading}
-              >
-                Robyn
-              </button>
-              <button
-                type="button"
-                className={`purchase-mode-btn ${starsPurchaseMode === "fragment" ? "active frag" : ""}`}
-                onClick={() => setPurchaseMode("fragment")}
-                disabled={purchaseModeLoading}
-              >
-                Fragment
-              </button>
-              <button
-                type="button"
-                className={`purchase-mode-btn ${starsPurchaseMode === "paymee" ? "active paymee" : ""}`}
-                onClick={() => setPurchaseMode("paymee")}
-                disabled={purchaseModeLoading}
-              >
-                Paymee
-              </button>
-            </div>
-            {starsPurchaseMode === "fragment" && (
-              <div className="purchase-mode-switch payment-method-switch" title="Fragment hamyon: TON yoki USDT TON">
-                <button
-                  type="button"
-                  className={`purchase-mode-btn ${fragmentPaymentMethod === "ton" ? "active ton" : ""}`}
-                  onClick={() => setFragmentPayMethod("ton")}
-                  disabled={fragmentPayLoading}
-                >
-                  TON
-                </button>
-                <button
-                  type="button"
-                  className={`purchase-mode-btn ${fragmentPaymentMethod === "usdt_ton" ? "active usdt" : ""}`}
-                  onClick={() => setFragmentPayMethod("usdt_ton")}
-                  disabled={fragmentPayLoading}
-                >
-                  USDT
-                </button>
-              </div>
-            )}
-        </div>
         <div className="header-btns header-toolbar-scroll header-secondary-nav">
-          <button
-            type="button"
-            className={`hdr-nav-btn ${activeTab === "analytics" ? "active" : ""}`}
-            onClick={() => goToTab(activeTab === "analytics" ? "transactions" : "analytics")}
-          >
-            📊 Analitika
-          </button>
-          <button
-            type="button"
-            className={`hdr-nav-btn ${activeTab === "notifications" ? "active" : ""}`}
-            onClick={() => goToTab("notifications")}
-          >
-            📣 Xabar
-          </button>
-          <button
-            type="button"
-            className={`hdr-nav-btn ${activeTab === "fragment-cookie" ? "active" : ""}`}
-            onClick={() => goToTab("fragment-cookie")}
-          >
-            🍪 Fragment
-          </button>
-          <button
-            type="button"
-            className={`hdr-nav-btn ${activeTab === "settings" ? "active" : ""}`}
-            onClick={() => goToTab("settings")}
-          >
-            % Chegirma
-          </button>
-          <button
-            type="button"
-            className={`hdr-nav-btn ${activeTab === "promocodes" ? "active" : ""}`}
-            onClick={() => goToTab("promocodes")}
-          >
-            ➕ Promokod
-          </button>
-          <button
-            type="button"
-            className={`hdr-nav-btn ${activeTab === "referrals" ? "active" : ""}`}
-            onClick={() => goToTab("referrals")}
-          >
-            🤝 Referral
-          </button>
+          {SECONDARY_NAV_HEADER.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`hdr-nav-btn ${activeTab === item.id ? "active" : ""}`}
+              onClick={() =>
+                goToTab(
+                  item.id === "analytics" && activeTab === "analytics"
+                    ? "transactions"
+                    : item.id
+                )
+              }
+            >
+              {item.icon} {item.label}
+            </button>
+          ))}
         </div>
       </header>
 
-      {/* Desktop tabs */}
-      <div className="tabs tabs-desktop">
+      {/* Asosiy 4 tab — header ostida (mobil + desktop) */}
+      <div className="tabs tabs-primary">
         <button
           type="button"
           className={`tab ${activeTab === "transactions" ? "active" : ""}`}
@@ -1941,65 +1961,25 @@ export default function AdminPanel() {
       {/* ==================== ANALYTICS TAB ==================== */}
       {activeTab === "analytics" && (
         <div className="tab-content analytics-list">
-          
-          {/* O'sib/kamayib boruvchi chart */}
-          <div className="analytics-chart-container" style={{ width: "100%", height: 300, background: "rgba(255,255,255,0.05)", padding: "15px", borderRadius: "14px", marginBottom: "15px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
-              <h3 style={{ fontSize: "16px", color: "#fff", margin: 0 }}>Loyiha daromadi grafigi</h3>
-              <select 
-                value={analyticsType}
-                onChange={(e) => setAnalyticsType(e.target.value)}
-                style={{ background: "#2b2d31", color: "#fff", border: "1px solid #444", borderRadius: "8px", padding: "5px 10px", fontSize: "14px", outline: "none", cursor: "pointer" }}
-              >
-                <option value="all">Umumiy</option>
-                <option value="stars">Stars</option>
-                <option value="premium">Premium</option>
-                <option value="gift">Gift</option>
-              </select>
-            </div>
-            {analyticsLoading ? (
-              <div style={{ textAlign: "center", paddingTop: "50px" }}>Yuklanmoqda...</div>
-            ) : dailyStats.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={dailyStats}
-                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis 
-                    dataKey="date" 
-                    stroke="#888" 
-                    fontSize={12} 
-                    tickFormatter={(val) => new Date(val).toLocaleDateString('uz-UZ', { day: 'numeric', month: 'short' })}
-                  />
-                  <YAxis 
-                    stroke="#888" 
-                    fontSize={12}
-                    tickFormatter={(val) => (val / 1000).toFixed(0) + 'k'} 
-                  />
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#222', borderRadius: '10px', border: 'none' }}
-                    labelStyle={{ color: '#fff' }}
-                    formatter={(value) => [Number(value).toLocaleString() + " so'm", "Summa"]}
-                    labelFormatter={(label) => new Date(label).toLocaleDateString('uz-UZ', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey={analyticsType === "all" ? "amount" : `${analyticsType}_amount`} 
-                    stroke="#8884d8" 
-                    fillOpacity={1} 
-                    fill="url(#colorAmount)" 
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div style={{ textAlign: "center", paddingTop: "50px", color: "#888" }}>Ma'lumot yo'q</div>
+          <div className="paymee-balance-hero">
+            <span className="paymee-balance-hero-label">💳 Paymee API balansi</span>
+            <span className="paymee-balance-hero-value">
+              {walletLoading
+                ? "..."
+                : !paymeeWallet.configured
+                  ? "— (API sozlanmagan)"
+                  : paymeeWallet.error
+                    ? paymeeWallet.error
+                    : `${Number(paymeeWallet.balanceUsdt).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })} ${paymeeWallet.currency}`}
+            </span>
+            {!walletLoading && paymeeWallet.configured && !paymeeWallet.error && paymeeWallet.usdtPerStar > 0 && (
+              <span className="paymee-balance-hero-sub">
+                ≈ {getAvailableStars().toLocaleString()} stars (
+                {paymeeWallet.balanceUsdt} ÷ {paymeeWallet.usdtPerStar} USDT)
+              </span>
             )}
           </div>
 
@@ -2019,8 +1999,16 @@ export default function AdminPanel() {
           {/* Wallet Info List */}
           <div className="info-list wallet-list">
             <div className="info-row">
-              <span className="info-label">⭐ Mavjud stars:</span>
-              <span className="info-value gold">{walletLoading ? '...' : getAvailableStars().toLocaleString()}</span>
+              <span className="info-label">⭐ Mavjud stars (Paymee):</span>
+              <span className="info-value gold">
+                {walletLoading
+                  ? "..."
+                  : !paymeeWallet.configured
+                    ? "—"
+                    : paymeeWallet.error
+                      ? "—"
+                      : getAvailableStars().toLocaleString()}
+              </span>
             </div>
             <div className="info-row">
               <span className="info-label">⭐ Userbot balansi:</span>
@@ -2031,23 +2019,18 @@ export default function AdminPanel() {
               <span className="info-value">{walletLoading ? '...' : walletBalance.mainnet.toFixed(2)}</span>
             </div>
             <div className="info-row">
-              <span className="info-label">💵 50 stars narxi:</span>
-              <span className="info-value green">{walletLoading ? '...' : (starPrices.priceFor50 || 0).toFixed(3)} TON</span>
-            </div>
-            <div className="info-row">
-              <span className="info-label">💳 Paymee API balansi:</span>
+              <span className="info-label">💵 1 star (Paymee):</span>
               <span className="info-value green">
                 {walletLoading
                   ? "..."
-                  : !paymeeWallet.configured
-                    ? "— (API sozlanmagan)"
-                    : paymeeWallet.error
-                      ? paymeeWallet.error
-                      : `${Number(paymeeWallet.balanceUsdt).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })} ${paymeeWallet.currency}`}
+                  : paymeeWallet.usdtPerStar != null
+                    ? `${paymeeWallet.usdtPerStar} USDT`
+                    : "—"}
               </span>
+            </div>
+            <div className="info-row">
+              <span className="info-label">💵 50 stars (Robyn TON):</span>
+              <span className="info-value">{walletLoading ? "..." : (starPrices.priceFor50 || 0).toFixed(3)} TON</span>
             </div>
           </div>
 
@@ -2087,8 +2070,8 @@ export default function AdminPanel() {
           <div className="info-list daily-list">
             <div className="list-title">📅 Kunlik statistika</div>
             {[...dailyStats].reverse().map((day, i) => {
-              const currentAmount = analyticsType === "all" ? day.amount : day[`${analyticsType}_amount`];
-              const currentCount = analyticsType === "all" ? day.count : day[`${analyticsType}_count`];
+              const currentAmount = day.amount;
+              const currentCount = day.count;
               
               return (
                 <div key={i} className={`info-row ${currentCount > 0 ? 'has-data' : 'no-data'}`}>
@@ -3763,95 +3746,69 @@ export default function AdminPanel() {
 
       </div>
 
-      {/* Mobil: pastki navigatsiya */}
-      <nav className="admin-bottom-nav" aria-label="Asosiy bo'limlar">
+      {/* Mobil: qo'shimcha bo'limlar — eng pastda */}
+      {bottomMenuOpen && (
         <button
           type="button"
-          className={`bottom-nav-item ${activeTab === "transactions" ? "active" : ""}`}
-          onClick={() => goToTab("transactions")}
-        >
-          <span className="bottom-nav-icon">⭐</span>
-          <span className="bottom-nav-label">Stars</span>
-        </button>
-        <button
-          type="button"
-          className={`bottom-nav-item ${activeTab === "premium" ? "active" : ""}`}
-          onClick={() => goToTab("premium")}
-        >
-          <span className="bottom-nav-icon">💎</span>
-          <span className="bottom-nav-label">Premium</span>
-        </button>
-        <button
-          type="button"
-          className={`bottom-nav-item ${activeTab === "gift" ? "active" : ""}`}
-          onClick={() => goToTab("gift")}
-        >
-          <span className="bottom-nav-icon">🎁</span>
-          <span className="bottom-nav-label">Gift</span>
-        </button>
-        <button
-          type="button"
-          className={`bottom-nav-item ${activeTab === "users" ? "active" : ""}`}
-          onClick={() => goToTab("users")}
-        >
-          <span className="bottom-nav-icon">👥</span>
-          <span className="bottom-nav-label">Users</span>
-        </button>
-        <button
-          type="button"
-          className={`bottom-nav-item ${!isPrimaryTab ? "active" : ""}`}
-          onClick={() => setMobileMoreOpen(true)}
-        >
-          <span className="bottom-nav-icon">⋯</span>
-          <span className="bottom-nav-label">Boshqa</span>
-          {!isPrimaryTab && <span className="bottom-nav-dot" />}
-        </button>
-      </nav>
-
-      {mobileMoreOpen && (
-        <div
-          className="admin-more-overlay"
-          role="presentation"
-          onClick={() => setMobileMoreOpen(false)}
-        >
-          <div
-            className="admin-more-sheet"
-            role="dialog"
-            aria-label="Qo'shimcha bo'limlar"
-            onClick={(e) => e.stopPropagation()}
+          className="bottom-nav-menu-backdrop"
+          aria-label="Menyuni yopish"
+          onClick={() => setBottomMenuOpen(false)}
+        />
+      )}
+      <nav className="admin-bottom-nav admin-bottom-nav--secondary" aria-label="Qo'shimcha bo'limlar">
+        {SECONDARY_NAV_BOTTOM.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={`bottom-nav-item ${activeTab === item.id ? "active" : ""}`}
+            onClick={() => goToTab(item.id)}
           >
-            <div className="admin-more-handle" />
-            <h3 className="admin-more-title">Boshqa bo'limlar</h3>
-            <div className="admin-more-grid">
-              {[
-                { id: "analytics", icon: "📊", label: "Analitika" },
-                { id: "notifications", icon: "📣", label: "Xabarlar" },
-                { id: "fragment-cookie", icon: "🍪", label: "Fragment" },
-                { id: "settings", icon: "%", label: "Chegirma" },
-                { id: "promocodes", icon: "➕", label: "Promokod" },
-                { id: "referrals", icon: "🤝", label: "Referral" },
-              ].map((item) => (
+            <span className="bottom-nav-icon">{item.icon}</span>
+            <span className="bottom-nav-label">{item.label}</span>
+            {item.id === "referrals" &&
+              referralRequests.filter((r) => !r.is_accepted && !r.rejected_at).length > 0 && (
+                <span className="bottom-nav-badge">
+                  {referralRequests.filter((r) => !r.is_accepted && !r.rejected_at).length}
+                </span>
+              )}
+          </button>
+        ))}
+        <div className="bottom-nav-menu-wrap">
+          <button
+            type="button"
+            className={`bottom-nav-item bottom-nav-item--menu ${
+              isBottomMenuTabActive || bottomMenuOpen ? "active" : ""
+            }`}
+            onClick={() => setBottomMenuOpen((v) => !v)}
+            aria-expanded={bottomMenuOpen}
+            aria-haspopup="true"
+          >
+            <span className="bottom-nav-icon">☰</span>
+            <span className="bottom-nav-label">Menu</span>
+            {isBottomMenuTabActive && !bottomMenuOpen && (
+              <span className="bottom-nav-dot" />
+            )}
+          </button>
+          {bottomMenuOpen && (
+            <div className="bottom-nav-menu-popover" role="menu">
+              {SECONDARY_NAV_MENU.map((item) => (
                 <button
                   key={item.id}
                   type="button"
-                  className={`admin-more-item ${activeTab === item.id ? "active" : ""}`}
+                  role="menuitem"
+                  className={`bottom-nav-menu-option ${
+                    activeTab === item.id ? "active" : ""
+                  }`}
                   onClick={() => goToTab(item.id)}
                 >
-                  <span className="admin-more-item-icon">{item.icon}</span>
+                  <span className="bottom-nav-menu-option-icon">{item.icon}</span>
                   <span>{item.label}</span>
                 </button>
               ))}
             </div>
-            <button
-              type="button"
-              className="admin-more-close"
-              onClick={() => setMobileMoreOpen(false)}
-            >
-              Yopish
-            </button>
-          </div>
+          )}
         </div>
-      )}
+      </nav>
 
       {/* Manual Premium Order Modal */}
       {manualPremiumModal && (
