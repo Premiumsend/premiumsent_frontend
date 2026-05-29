@@ -3,6 +3,73 @@ import "./AdminPanel.css";
 import { TGSSticker } from "../../components/TGSSticker";
 import adminSticker from "../../assets/AnimatedSticker_admin.tgs";
 import apiFetch from "../../utils/apiFetch";
+import AdminCustomSelect from "../../components/AdminCustomSelect";
+
+const PURCHASE_MODE_OPTIONS = [
+  { value: "robynhood", label: "RobynHood", icon: "🔷" },
+  { value: "fragment", label: "Fragment", icon: "🟣" },
+  { value: "paymee", label: "Paymee", icon: "🟢" },
+];
+
+const FRAGMENT_PAY_OPTIONS = [
+  { value: "ton", label: "TON", icon: "💎" },
+  { value: "usdt_ton", label: "USDT", icon: "💵" },
+];
+
+const ORDER_STATUS_FILTER_OPTIONS = [
+  { value: "all", label: "Hammasi", icon: "📋" },
+  { value: "pending", label: "Pending", icon: "⏳" },
+  { value: "completed", label: "Completed", icon: "✅" },
+  { value: "expired", label: "Expired", icon: "❌" },
+  { value: "stars_sent", label: "Sent", icon: "🌟" },
+  { value: "failed", label: "Failed", icon: "⚠️" },
+  { value: "error", label: "Error", icon: "🔴" },
+];
+
+const GIFT_STATUS_FILTER_OPTIONS = [
+  { value: "all", label: "Hammasi", icon: "📋" },
+  { value: "pending", label: "Pending", icon: "⏳" },
+  { value: "completed", label: "Completed", icon: "✅" },
+  { value: "gift_sent", label: "Sent", icon: "🎁" },
+  { value: "expired", label: "Expired", icon: "❌" },
+  { value: "error", label: "Error", icon: "🔴" },
+];
+
+const PREMIUM_STATUS_FILTER_OPTIONS = [
+  { value: "all", label: "Hammasi", icon: "📋" },
+  { value: "pending", label: "Pending", icon: "⏳" },
+  { value: "delivered", label: "Sent", icon: "💎" },
+  { value: "expired", label: "Expired", icon: "❌" },
+  { value: "failed", label: "Failed", icon: "⚠️" },
+  { value: "error", label: "Error", icon: "🔴" },
+];
+
+const isPaymeeOrder = (tx) =>
+  tx?.order_type === "stars_paymee" || tx?.order_type === "premium_paymee";
+
+const isFragmentOrder = (tx) =>
+  tx?.order_type === "stars_usdt" ||
+  tx?.order_type === "premium_usdt" ||
+  tx?.delivery_type === "fragment";
+
+const ADMIN_SEND_STATUSES = ["pending", "failed", "expired"];
+
+const getOrderCardClassName = (tx) => {
+  const classes = ["order-card"];
+  if (isPaymeeOrder(tx)) classes.push("order-card--paymee");
+  if (tx?.status === "failed") classes.push("order-card--failed");
+  return classes.join(" ");
+};
+
+const getGiftStickerPath = (giftId) => {
+  if (!giftId) return null;
+  try {
+    return new URL(`../../assets/${giftId}.tgs`, import.meta.url).href;
+  } catch {
+    return null;
+  }
+};
+
 export default function AdminPanel() {
   // ========== TELEGRAM AUTH PROTECTION ==========
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -179,6 +246,7 @@ export default function AdminPanel() {
     failed: 0
   });
   const [giftShowAll, setGiftShowAll] = useState(false);
+  const [adminSendingOrderId, setAdminSendingOrderId] = useState(null);
 
   // Analytics state
   const [analyticsPeriod, setAnalyticsPeriod] = useState("all"); // day, week, month, all
@@ -1183,17 +1251,11 @@ export default function AdminPanel() {
     }
   };
 
-  // Premium order send
-  const sendPremium = async (id) => {
+  const executeSendPremium = async (id) => {
+    setAdminSendingOrderId(id);
     try {
-      if (!window.confirm("💎 Ushbu buyurtmaga premium yuborilsinmi?")) return;
-
-      const res = await apiFetch(`/api/admin/premium/resend/${id}`, {
-        method: "POST",
-      });
-
+      const res = await apiFetch(`/api/admin/premium/resend/${id}`, { method: "POST" });
       const data = await res.json();
-
       if (data.success) {
         alert("💎 Premium yuborildi!");
         fetchPremiumOrders();
@@ -1201,9 +1263,33 @@ export default function AdminPanel() {
       } else {
         alert("❌ Xato: " + data.error);
       }
+    } finally {
+      setAdminSendingOrderId(null);
+    }
+  };
+
+  const premiumSendConfirmMessage = (status) => {
+    if (status === "expired") return "⏱️ Expired premium buyurtmani mijozga yuborasizmi?";
+    if (status === "failed") return "⚠️ Failed premium buyurtmani mijozga yuborasizmi?";
+    if (status === "pending") return "💎 Pending premium buyurtmani mijozga yuborasizmi?";
+    if (status === "error" || status === "processing") {
+      return "💎 Ushbu premium buyurtmani mijozga yuborasizmi?";
+    }
+    return "💎 Ushbu premium buyurtmani mijozga yuborasizmi?";
+  };
+
+  const premiumCanAdminSend = (status) =>
+    ADMIN_SEND_STATUSES.includes(status) || status === "error" || status === "processing";
+
+  const adminSendPremium = async (id, status) => {
+    if (adminSendingOrderId !== null) return;
+    try {
+      if (!window.confirm(premiumSendConfirmMessage(status))) return;
+      await executeSendPremium(id);
     } catch (err) {
       console.error("❌ Premium yuborishda xato:", err);
       alert("Server xato!");
+      setAdminSendingOrderId(null);
     }
   };
 
@@ -1263,16 +1349,11 @@ export default function AdminPanel() {
     }
   };
 
-  const sendStars = async (id) => {
+  const executeSendStars = async (id) => {
+    setAdminSendingOrderId(id);
     try {
-      if (!window.confirm("⭐ Ushbu buyurtmaga stars yuborilsinmi?")) return;
-
-      const res = await apiFetch(`/api/admin/stars/send/${id}`, {
-        method: "POST",
-      });
-
+      const res = await apiFetch(`/api/admin/stars/send/${id}`, { method: "POST" });
       const data = await res.json();
-
       if (data.success) {
         alert("🌟 Stars yuborildi!");
         fetchTransactions();
@@ -1280,9 +1361,30 @@ export default function AdminPanel() {
       } else {
         alert("❌ Xato: " + data.error);
       }
+    } finally {
+      setAdminSendingOrderId(null);
+    }
+  };
+
+  const starsSendConfirmMessage = (status) => {
+    if (status === "expired") return "⏱️ Expired buyurtmani mijozga yuborasizmi?";
+    if (status === "failed") return "⚠️ Failed buyurtmani mijozga yuborasizmi?";
+    if (status === "pending") return "⭐ Pending buyurtmani mijozga yuborasizmi?";
+    return "⭐ Ushbu buyurtmani mijozga yuborasizmi?";
+  };
+
+  const starsCanAdminSend = (status) =>
+    ADMIN_SEND_STATUSES.includes(status) || status === "error" || status === "processing";
+
+  const adminSendStars = async (id, status) => {
+    if (adminSendingOrderId !== null) return;
+    try {
+      if (!window.confirm(starsSendConfirmMessage(status))) return;
+      await executeSendStars(id);
     } catch (err) {
       console.error("❌ Stars yuborishda xato:", err);
       alert("Server xato!");
+      setAdminSendingOrderId(null);
     }
   };
 
@@ -1311,17 +1413,11 @@ export default function AdminPanel() {
     }
   };
 
-  // Gift order send
-  const sendGift = async (id) => {
+  const executeSendGift = async (id) => {
+    setAdminSendingOrderId(id);
     try {
-      if (!window.confirm("🎁 Ushbu buyurtmaga gift yuborilsinmi?")) return;
-
-      const res = await apiFetch(`/api/admin/gift/send/${id}`, {
-        method: "POST",
-      });
-
+      const res = await apiFetch(`/api/admin/gift/send/${id}`, { method: "POST" });
       const data = await res.json();
-
       if (data.success) {
         alert("🎁 Gift yuborildi!");
         fetchGiftOrders();
@@ -1329,10 +1425,57 @@ export default function AdminPanel() {
       } else {
         alert("❌ Xato: " + data.error);
       }
+    } finally {
+      setAdminSendingOrderId(null);
+    }
+  };
+
+  const giftSendConfirmMessage = (status) => {
+    if (status === "expired") return "⏱️ Expired gift buyurtmani mijozga yuborasizmi?";
+    if (status === "failed") return "⚠️ Failed gift buyurtmani mijozga yuborasizmi?";
+    if (status === "pending") return "🎁 Pending gift buyurtmani mijozga yuborasizmi?";
+    return "🎁 Ushbu gift buyurtmani mijozga yuborasizmi?";
+  };
+
+  const giftCanAdminSend = (status) =>
+    ADMIN_SEND_STATUSES.includes(status) || status === "error" || status === "processing";
+
+  const adminSendGift = async (id, status) => {
+    if (adminSendingOrderId !== null) return;
+    try {
+      if (!window.confirm(giftSendConfirmMessage(status))) return;
+      await executeSendGift(id);
     } catch (err) {
       console.error("❌ Gift yuborishda xato:", err);
       alert("Server xato!");
+      setAdminSendingOrderId(null);
     }
+  };
+
+  const renderAdminSendButton = (orderId, onSend) => {
+    const sending = adminSendingOrderId === orderId;
+    const busy = adminSendingOrderId !== null;
+    return (
+      <button
+        type="button"
+        className={`action-btn send${sending ? " action-btn--sending" : ""}`}
+        disabled={busy}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (busy) return;
+          onSend();
+        }}
+      >
+        {sending ? (
+          <span className="action-btn-send-inner">
+            <span className="action-btn-spinner" aria-hidden="true" />
+            Yuborilmoqda...
+          </span>
+        ) : (
+          "📤 Yuborish"
+        )}
+      </button>
+    );
   };
 
   // Gift order update status
@@ -1597,8 +1740,10 @@ export default function AdminPanel() {
       stars_sent: "#3498db",
       premium_sent: "#3498db",
       gift_sent: "#9b59b6",
-      failed: "#c0392b",
-      error: "#8e44ad"
+      failed: "#9b59b6",
+      error: "#8e44ad",
+      processing: "#3498db",
+      delivered: "#27ae60"
     };
     return colors[status] || "#95a5a6";
   };
@@ -1643,67 +1788,24 @@ export default function AdminPanel() {
             </button>
           </div>
 
-          <div
-            className="mode-radio-group mode-radio-group--header"
-            role="radiogroup"
-            aria-label="Yetkazish rejimi"
-          >
-            {[
-              { id: "robynhood", label: "Robyn", cls: "robyn" },
-              { id: "fragment", label: "Frag", cls: "frag" },
-              { id: "paymee", label: "Paymee", cls: "paymee" },
-            ].map((opt) => (
-              <label
-                key={opt.id}
-                className={`mode-radio mode-radio--${opt.cls} ${
-                  starsPurchaseMode === opt.id ? "is-checked" : ""
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="headerPurchaseMode"
-                  className="mode-radio-input"
-                  value={opt.id}
-                  checked={starsPurchaseMode === opt.id}
-                  disabled={purchaseModeLoading}
-                  onChange={() => setPurchaseMode(opt.id)}
-                />
-                <span className="mode-radio-mark" aria-hidden="true" />
-                <span className="mode-radio-label">{opt.label}</span>
-              </label>
-            ))}
-          </div>
+          <AdminCustomSelect
+            className="admin-custom-select--header-mode"
+            value={starsPurchaseMode}
+            onChange={setPurchaseMode}
+            options={PURCHASE_MODE_OPTIONS}
+            disabled={purchaseModeLoading}
+            ariaLabel="Yetkazish rejimi"
+          />
 
           {starsPurchaseMode === "fragment" && (
-            <div
-              className="mode-radio-group mode-radio-group--pay"
-              role="radiogroup"
-              aria-label="Fragment to'lov"
-            >
-              {[
-                { id: "ton", label: "TON" },
-                { id: "usdt_ton", label: "USDT" },
-              ].map((opt) => (
-                <label
-                  key={opt.id}
-                  className={`mode-radio mode-radio--mini ${
-                    fragmentPaymentMethod === opt.id ? "is-checked" : ""
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="headerFragmentPay"
-                    className="mode-radio-input"
-                    value={opt.id}
-                    checked={fragmentPaymentMethod === opt.id}
-                    disabled={fragmentPayLoading}
-                    onChange={() => setFragmentPayMethod(opt.id)}
-                  />
-                  <span className="mode-radio-mark" aria-hidden="true" />
-                  <span className="mode-radio-label">{opt.label}</span>
-                </label>
-              ))}
-            </div>
+            <AdminCustomSelect
+              className="admin-custom-select--header-pay"
+              value={fragmentPaymentMethod}
+              onChange={setFragmentPayMethod}
+              options={FRAGMENT_PAY_OPTIONS}
+              disabled={fragmentPayLoading}
+              ariaLabel="Fragment to'lov"
+            />
           )}
 
           <div className="header-top-actions">
@@ -2108,15 +2210,13 @@ export default function AdminPanel() {
               onChange={(e) => setSearch(e.target.value)}
               className="search-input"
             />
-            <select value={filter} onChange={(e) => setFilter(e.target.value)} className="filter-select">
-              <option value="all">Hammasi</option>
-              <option value="pending">⏳ Pending</option>
-              <option value="completed">✅ Completed</option>
-              <option value="expired">❌ Expired</option>
-              <option value="stars_sent">🌟 Sent</option>
-              <option value="failed">⚠️ Failed</option>
-              <option value="error">🔴 Error</option>
-            </select>
+            <AdminCustomSelect
+              className="admin-custom-select--filter"
+              value={filter}
+              onChange={setFilter}
+              options={ORDER_STATUS_FILTER_OPTIONS}
+              ariaLabel="Status filtri"
+            />
           </div>
 
           {/* Orders List */}
@@ -2128,7 +2228,15 @@ export default function AdminPanel() {
                 <div className="empty-state">📭 Buyurtmalar yo'q</div>
               ) : (
                 displayedTransactions.map((tx) => (
-                  <div key={tx.id} className="order-card">
+                  <div
+                    key={tx.id}
+                    className={getOrderCardClassName(tx)}
+                  >
+                    {isPaymeeOrder(tx) && (
+                      <span className="order-card-provider-badge order-card-provider-badge--paymee">
+                        Paymee
+                      </span>
+                    )}
                     {/* Order Header - Horizontal */}
                     <div 
                       className="order-header"
@@ -2138,7 +2246,7 @@ export default function AdminPanel() {
                       <div className="order-main" style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                           <span className="order-user" style={{ fontWeight: "bold" }}>@{tx.sender_username || tx.owner_user_id || '?'} → @{tx.username || tx.recipient || '?'}</span>
-                          {(tx.order_type === "stars_usdt" || tx.delivery_type === "fragment") && (
+                          {isFragmentOrder(tx) && (
                             <span style={{ fontSize: "10px", background: "#6c5ce7", color: "#fff", padding: "2px 6px", borderRadius: "4px" }}>Fragment</span>
                           )}
                         </div>
@@ -2183,21 +2291,28 @@ export default function AdminPanel() {
                           </div>
                         </div>
 
-                        {/* Actions - for pending, processing va error */}
-                        {(tx.status === "pending" || tx.status === "error" || tx.status === "processing") && (
+                        {(starsCanAdminSend(tx.status) ||
+                          tx.status === "pending" ||
+                          tx.status === "error" ||
+                          tx.status === "processing") && (
                           <div className="order-actions">
-                            <button 
-                              className="action-btn send"
-                              onClick={(e) => { e.stopPropagation(); sendStars(tx.id); }}
-                            >
-                              🌟 Stars Send
-                            </button>
-                            <button 
-                              className="action-btn expire"
-                              onClick={(e) => { e.stopPropagation(); updateStatus(tx.id, "expired"); }}
-                            >
-                              ❌ Expire
-                            </button>
+                            {starsCanAdminSend(tx.status) &&
+                              renderAdminSendButton(tx.id, () =>
+                                adminSendStars(tx.id, tx.status)
+                              )}
+                            {(tx.status === "pending" ||
+                              tx.status === "error" ||
+                              tx.status === "processing") && (
+                              <button
+                                className="action-btn expire"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateStatus(tx.id, "expired");
+                                }}
+                              >
+                                ❌ Expire
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -2245,14 +2360,13 @@ export default function AdminPanel() {
               onChange={(e) => setSearch(e.target.value)}
               className="search-input"
             />
-            <select value={giftFilter} onChange={(e) => setGiftFilter(e.target.value)} className="filter-select">
-              <option value="all">Hammasi</option>
-              <option value="pending">⏳ Pending</option>
-              <option value="completed">✅ Completed</option>
-              <option value="gift_sent">🎁 Sent</option>
-              <option value="expired">❌ Expired</option>
-              <option value="error">🔴 Error</option>
-            </select>
+            <AdminCustomSelect
+              className="admin-custom-select--filter"
+              value={giftFilter}
+              onChange={setGiftFilter}
+              options={GIFT_STATUS_FILTER_OPTIONS}
+              ariaLabel="Gift status"
+            />
           </div>
 
           {loading && !autoRefresh ? (
@@ -2275,9 +2389,9 @@ export default function AdminPanel() {
                   })
                   .slice(0, giftShowAll ? giftOrders.length : 20)
                   .map((tx) => (
-                  <div key={tx.id} className="order-card">
+                  <div key={tx.id} className={getOrderCardClassName(tx)}>
                     <div 
-                      className="order-header"
+                      className="order-header order-header--gift"
                       onClick={() => setGiftExpandedId(giftExpandedId === tx.id ? null : tx.id)}
                       style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}
                     >
@@ -2289,7 +2403,21 @@ export default function AdminPanel() {
                           {new Date(tx.created_at).toLocaleString()} • {tx.amount?.toLocaleString()} so'm
                         </div>
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        {tx.gift_id && getGiftStickerPath(tx.gift_id) && (
+                          <div
+                            className="admin-gift-sticker-wrap admin-gift-sticker-wrap--header"
+                            onClick={(e) => e.stopPropagation()}
+                            title={`Gift: ${tx.gift_id}`}
+                          >
+                            <TGSSticker
+                              stickerPath={getGiftStickerPath(tx.gift_id)}
+                              className="admin-gift-sticker admin-gift-sticker--header"
+                              autoplay
+                              loop
+                            />
+                          </div>
+                        )}
                         <span className="order-stars">{tx.stars} ⭐ 🎁</span>
                         <div 
                           className="order-status"
@@ -2302,6 +2430,17 @@ export default function AdminPanel() {
 
                     {giftExpandedId === tx.id && (
                       <div className="order-details">
+                        {tx.gift_id && getGiftStickerPath(tx.gift_id) && (
+                          <div className="admin-gift-sticker-preview">
+                            <TGSSticker
+                              stickerPath={getGiftStickerPath(tx.gift_id)}
+                              className="admin-gift-sticker admin-gift-sticker--detail"
+                              autoplay
+                              loop
+                            />
+                            <span className="admin-gift-sticker-caption">{tx.stars} ⭐ gift</span>
+                          </div>
+                        )}
                         <div className="detail-grid">
                           <div className="detail-item">
                             <span className="detail-label">Kimdan</span>
@@ -2313,7 +2452,7 @@ export default function AdminPanel() {
                           </div>
                           <div className="detail-item">
                             <span className="detail-label">Gift ID</span>
-                            <span className="detail-value" style={{fontSize: '11px'}}>{tx.gift_id}</span>
+                            <span className="detail-value" style={{fontSize: '11px'}}>{tx.gift_id || "—"}</span>
                           </div>
                           <div className="detail-item">
                             <span className="detail-label">Stars</span>
@@ -2341,21 +2480,24 @@ export default function AdminPanel() {
                           </div>
                         </div>
 
-                        {/* Actions */}
-                        {(tx.status === "pending" || tx.status === "completed" || tx.status === "error") && (
+                        {(giftCanAdminSend(tx.status) ||
+                          tx.status === "pending" ||
+                          tx.status === "error" ||
+                          tx.status === "processing") && (
                           <div className="order-actions">
-                            {(tx.status === "pending" || tx.status === "completed" || tx.status === "error") && (
-                              <button 
-                                className="action-btn send"
-                                onClick={(e) => { e.stopPropagation(); sendGift(tx.id); }}
-                              >
-                                🎁 Gift Yuborish
-                              </button>
-                            )}
-                            {(tx.status === "pending" || tx.status === "error") && (
-                              <button 
+                            {giftCanAdminSend(tx.status) &&
+                              renderAdminSendButton(tx.id, () =>
+                                adminSendGift(tx.id, tx.status)
+                              )}
+                            {(tx.status === "pending" ||
+                              tx.status === "error" ||
+                              tx.status === "processing") && (
+                              <button
                                 className="action-btn expire"
-                                onClick={(e) => { e.stopPropagation(); expireGiftOrder(tx.id); }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  expireGiftOrder(tx.id);
+                                }}
                               >
                                 ❌ Expired qilish
                               </button>
@@ -2653,14 +2795,13 @@ export default function AdminPanel() {
               onChange={(e) => setSearch(e.target.value)}
               className="search-input"
             />
-            <select value={premiumFilter} onChange={(e) => setPremiumFilter(e.target.value)} className="filter-select">
-              <option value="all">Hammasi</option>
-              <option value="pending">⏳ Pending</option>
-              <option value="delivered">💎 Sent</option>
-              <option value="expired">❌ Expired</option>
-              <option value="failed">⚠️ Failed</option>
-              <option value="error">🔴 Error</option>
-            </select>
+            <AdminCustomSelect
+              className="admin-custom-select--filter"
+              value={premiumFilter}
+              onChange={setPremiumFilter}
+              options={PREMIUM_STATUS_FILTER_OPTIONS}
+              ariaLabel="Premium status"
+            />
           </div>
 
           {loading && !autoRefresh ? (
@@ -2683,7 +2824,15 @@ export default function AdminPanel() {
                   })
                   .slice(0, premiumShowAll ? premiumOrders.length : 20)
                   .map((tx) => (
-                  <div key={tx.id} className="order-card">
+                  <div
+                    key={tx.id}
+                    className={getOrderCardClassName(tx)}
+                  >
+                    {isPaymeeOrder(tx) && (
+                      <span className="order-card-provider-badge order-card-provider-badge--paymee">
+                        Paymee
+                      </span>
+                    )}
                     <div 
                       className="order-header"
                       onClick={() => setPremiumExpandedId(premiumExpandedId === tx.id ? null : tx.id)}
@@ -2692,7 +2841,7 @@ export default function AdminPanel() {
                       <div className="order-main" style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                           <span className="order-user" style={{ fontWeight: "bold" }}>@{tx.sender_username || tx.owner_user_id || '?'} → @{tx.username || tx.recipient || '?'}</span>
-                          {(tx.order_type === "premium_usdt" || tx.delivery_type === "fragment") && (
+                          {isFragmentOrder(tx) && (
                             <span style={{ fontSize: "10px", background: "#6c5ce7", color: "#fff", padding: "2px 6px", borderRadius: "4px" }}>Fragment</span>
                           )}
                         </div>
@@ -2744,23 +2893,28 @@ export default function AdminPanel() {
                           </div>
                         </div>
 
-                        {/* Actions - for pending, processing va error */}
-                        {(tx.status === "pending" || tx.status === "error" || tx.status === "processing") && (
+                        {(premiumCanAdminSend(tx.status) ||
+                          tx.status === "pending" ||
+                          tx.status === "error" ||
+                          tx.status === "processing") && (
                           <div className="order-actions">
-                            {(tx.status === "error" || tx.status === "processing") && (
-                              <button 
-                                className="action-btn send"
-                                onClick={(e) => { e.stopPropagation(); sendPremium(tx.id); }}
+                            {premiumCanAdminSend(tx.status) &&
+                              renderAdminSendButton(tx.id, () =>
+                                adminSendPremium(tx.id, tx.status)
+                              )}
+                            {(tx.status === "pending" ||
+                              tx.status === "error" ||
+                              tx.status === "processing") && (
+                              <button
+                                className="action-btn expire"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  expirePremiumOrder(tx.id);
+                                }}
                               >
-                                💎 Premium Send
+                                ❌ Expired qilish
                               </button>
                             )}
-                            <button 
-                              className="action-btn expire"
-                              onClick={(e) => { e.stopPropagation(); expirePremiumOrder(tx.id); }}
-                            >
-                              ❌ Expired qilish
-                            </button>
                           </div>
                         )}
                       </div>
@@ -3755,7 +3909,12 @@ export default function AdminPanel() {
           onClick={() => setBottomMenuOpen(false)}
         />
       )}
-      <nav className="admin-bottom-nav admin-bottom-nav--secondary" aria-label="Qo'shimcha bo'limlar">
+      <nav
+        className={`admin-bottom-nav admin-bottom-nav--secondary${
+          bottomMenuOpen ? " admin-bottom-nav--menu-open" : ""
+        }`}
+        aria-label="Qo'shimcha bo'limlar"
+      >
         {SECONDARY_NAV_BOTTOM.map((item) => (
           <button
             key={item.id}
@@ -3789,26 +3948,29 @@ export default function AdminPanel() {
               <span className="bottom-nav-dot" />
             )}
           </button>
-          {bottomMenuOpen && (
-            <div className="bottom-nav-menu-popover" role="menu">
-              {SECONDARY_NAV_MENU.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  role="menuitem"
-                  className={`bottom-nav-menu-option ${
-                    activeTab === item.id ? "active" : ""
-                  }`}
-                  onClick={() => goToTab(item.id)}
-                >
-                  <span className="bottom-nav-menu-option-icon">{item.icon}</span>
-                  <span>{item.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       </nav>
+
+      {bottomMenuOpen && (
+        <div
+          className="bottom-nav-menu-popover bottom-nav-menu-popover--fixed"
+          role="menu"
+          aria-label="Menu bo'limlari"
+        >
+          {SECONDARY_NAV_MENU.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="menuitem"
+              className={`bottom-nav-menu-option ${activeTab === item.id ? "active" : ""}`}
+              onClick={() => goToTab(item.id)}
+            >
+              <span className="bottom-nav-menu-option-icon">{item.icon}</span>
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Manual Premium Order Modal */}
       {manualPremiumModal && (

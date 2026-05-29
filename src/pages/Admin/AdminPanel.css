@@ -257,6 +257,129 @@ html, body {
   border-radius: 8px;
 }
 
+/* Custom select — rasmdagi dropdown uslubi */
+.admin-custom-select {
+  position: relative;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.admin-custom-select--header-mode {
+  flex: 1;
+  max-width: 118px;
+}
+
+.admin-custom-select--header-pay {
+  flex: 0 0 auto;
+  width: 72px;
+}
+
+.admin-custom-select--filter {
+  flex: 0 0 auto;
+  width: 132px;
+  max-width: 42%;
+}
+
+.admin-custom-select-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 8px 10px;
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(102, 156, 246, 0.65);
+  background: rgba(15, 22, 48, 0.95);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 0 0 1px rgba(102, 156, 246, 0.12);
+}
+
+.admin-custom-select.is-open .admin-custom-select-trigger {
+  border-color: #6ea8fe;
+  box-shadow: 0 0 0 2px rgba(102, 156, 246, 0.25);
+}
+
+.admin-custom-select-trigger:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.admin-custom-select-trigger-text {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-custom-select-chevron {
+  flex-shrink: 0;
+  font-size: 11px;
+  opacity: 0.85;
+  transition: transform 0.2s;
+}
+
+.admin-custom-select.is-open .admin-custom-select-chevron {
+  transform: rotate(180deg);
+}
+
+.admin-custom-select-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 1200;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border-radius: 10px;
+  border: 1.5px solid rgba(102, 156, 246, 0.55);
+  background: rgba(15, 22, 48, 0.98);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+  max-height: min(280px, 50vh);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-custom-select-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.admin-custom-select-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.admin-custom-select-option.is-active {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.admin-custom-select-option-icon {
+  flex-shrink: 0;
+  font-size: 1rem;
+  line-height: 1;
+}
+
 .header-right {
   display: flex;
   align-items: center;
@@ -698,11 +821,115 @@ html, body {
 }
 
 .order-card {
+  position: relative;
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 14px;
   overflow: hidden;
   transition: all 0.3s;
+}
+
+.order-card--paymee .order-header {
+  padding-right: 76px;
+}
+
+.order-card-provider-badge {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 2;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 4px 9px;
+  border-radius: 6px;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+
+.order-card-provider-badge--paymee {
+  background: linear-gradient(135deg, #00b894, #00cec9);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 184, 148, 0.35);
+}
+
+.order-card--failed {
+  border-color: rgba(155, 89, 182, 0.55);
+  background: linear-gradient(
+    135deg,
+    rgba(155, 89, 182, 0.14) 0%,
+    rgba(255, 255, 255, 0.03) 55%
+  );
+  box-shadow: 0 0 0 1px rgba(155, 89, 182, 0.12);
+}
+
+.order-card--failed .order-status {
+  background-color: #9b59b6 !important;
+}
+
+.order-card--failed:hover {
+  border-color: rgba(155, 89, 182, 0.75);
+}
+
+.order-header--gift {
+  align-items: center;
+}
+
+.admin-gift-sticker-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-gift-sticker-wrap--header {
+  width: 52px;
+  height: 52px;
+  padding: 4px;
+}
+
+.admin-gift-sticker-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px 4px;
+  margin-bottom: 8px;
+}
+
+.admin-gift-sticker-caption {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.65);
+  font-weight: 600;
+}
+
+.admin-gift-sticker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-gift-sticker--header {
+  width: 44px;
+  height: 44px;
+}
+
+.admin-gift-sticker--header svg {
+  width: 100%;
+  height: 100%;
+}
+
+.admin-gift-sticker--detail {
+  width: 96px;
+  height: 96px;
+}
+
+.admin-gift-sticker--detail svg {
+  width: 100%;
+  height: 100%;
 }
 
 .order-card:hover {
@@ -826,9 +1053,43 @@ html, body {
   color: #000;
 }
 
-.action-btn.send:hover {
+.action-btn.send:hover:not(:disabled) {
   transform: scale(1.02);
   box-shadow: 0 4px 15px rgba(241, 196, 15, 0.4);
+}
+
+.action-btn.send:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.action-btn--sending {
+  min-width: 140px;
+}
+
+.action-btn-send-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.action-btn-spinner {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  border-top-color: rgba(0, 0, 0, 0.75);
+  border-radius: 50%;
+  animation: adminSendSpin 0.65s linear infinite;
+}
+
+@keyframes adminSendSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .action-btn.expire {
@@ -2228,7 +2489,7 @@ html, body {
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 900;
+    z-index: 1090;
     padding: 4px 6px calc(6px + env(safe-area-inset-bottom, 0px));
     background: rgba(12, 16, 32, 0.98);
     backdrop-filter: blur(16px);
@@ -2242,9 +2503,14 @@ html, body {
   .admin-bottom-nav--secondary {
     justify-content: space-between;
     overflow-x: auto;
+    overflow-y: visible;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     flex-wrap: nowrap;
+  }
+
+  .admin-bottom-nav--secondary.admin-bottom-nav--menu-open {
+    overflow: visible;
   }
 
   .admin-bottom-nav--secondary::-webkit-scrollbar {
@@ -2332,27 +2598,30 @@ html, body {
 
   .bottom-nav-menu-backdrop {
     position: fixed;
-    inset: 0;
-    z-index: 895;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: calc(54px + env(safe-area-inset-bottom, 0px));
+    z-index: 1085;
     border: none;
-    background: rgba(0, 0, 0, 0.35);
+    background: rgba(0, 0, 0, 0.45);
     cursor: pointer;
     padding: 0;
   }
 
-  .bottom-nav-menu-popover {
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    min-width: 152px;
-    z-index: 910;
-    padding: 6px;
+  .bottom-nav-menu-popover--fixed {
+    position: fixed;
+    right: 10px;
+    left: auto;
+    bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+    min-width: 168px;
+    z-index: 1110;
+    padding: 8px;
     border-radius: 14px;
-    background: rgba(22, 28, 52, 0.98);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45);
-    animation: adminPopoverUp 0.2s ease;
+    background: #1a223d;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+    animation: adminPopoverUpFixed 0.22s ease;
   }
 
   .bottom-nav-menu-option {
@@ -2386,29 +2655,55 @@ html, body {
     line-height: 1;
   }
 
-  @keyframes adminPopoverUp {
+  @keyframes adminPopoverUpFixed {
     from {
       opacity: 0;
-      transform: translateX(-50%) translateY(8px);
+      transform: translateY(10px);
     }
     to {
       opacity: 1;
-      transform: translateX(-50%) translateY(0);
+      transform: translateY(0);
     }
   }
 
-  /* Filtrlar — ustma-ust */
+  /* Filtrlar — bir qator */
   .filters {
-    flex-direction: column;
+    flex-direction: row;
+    align-items: stretch;
     gap: 8px;
   }
 
-  .search-input,
-  .filter-select {
-    width: 100%;
+  .search-input {
+    flex: 1;
     min-width: 0;
-    min-height: 48px;
-    font-size: 16px; /* iOS zoom oldini olish */
+    width: auto;
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 16px;
+  }
+
+  .admin-custom-select--header-mode {
+    flex: 1;
+    max-width: none;
+    min-width: 96px;
+  }
+
+  .admin-custom-select--header-pay {
+    width: 68px;
+  }
+
+  .admin-custom-select--filter {
+    width: 118px;
+    max-width: 38%;
+  }
+
+  .admin-custom-select-trigger {
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  .admin-custom-select-menu {
+    z-index: 1300;
   }
 
   .stats-text {
@@ -2578,6 +2873,15 @@ html, body {
   .header-compact-row {
     gap: 10px;
     margin-bottom: 10px;
+  }
+
+  .admin-custom-select--header-mode {
+    max-width: 148px;
+  }
+
+  .admin-custom-select--filter {
+    width: 150px;
+    max-width: none;
   }
 
   .mode-radio-label {
