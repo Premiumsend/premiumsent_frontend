@@ -177,6 +177,12 @@ export default function AdminPanel() {
   const [starPrices, setStarPrices] = useState({ priceFor50: 0, pricePerStar: 0, currency: "TON", availableStars: 0 });
   const [walletLoading, setWalletLoading] = useState(false);
   const [botStarsBalance, setBotStarsBalance] = useState(0);
+  const [paymeeWallet, setPaymeeWallet] = useState({
+    configured: false,
+    balanceUsdt: null,
+    currency: "USDT",
+    error: null,
+  });
 
   // RobynHood merchant API
   const [robynHistory, setRobynHistory] = useState([]);
@@ -268,6 +274,30 @@ export default function AdminPanel() {
           currency: data.stars_price.currency || "TON",
           availableStars: data.available_stars || 0
         });
+
+        const pm = data.paymee;
+        if (pm?.configured && pm.balance_usdt != null && !Number.isNaN(Number(pm.balance_usdt))) {
+          setPaymeeWallet({
+            configured: true,
+            balanceUsdt: Number(pm.balance_usdt),
+            currency: pm.currency || "USDT",
+            error: null,
+          });
+        } else if (pm?.configured) {
+          setPaymeeWallet({
+            configured: true,
+            balanceUsdt: null,
+            currency: "USDT",
+            error: pm.error || "Balans olinmadi",
+          });
+        } else {
+          setPaymeeWallet({
+            configured: false,
+            balanceUsdt: null,
+            currency: "USDT",
+            error: null,
+          });
+        }
       }
 
       // Bot stars balance
@@ -2049,6 +2079,21 @@ export default function AdminPanel() {
             <div className="info-row">
               <span className="info-label">💵 50 stars narxi:</span>
               <span className="info-value green">{walletLoading ? '...' : (starPrices.priceFor50 || 0).toFixed(3)} TON</span>
+            </div>
+            <div className="info-row">
+              <span className="info-label">💳 Paymee API balansi:</span>
+              <span className="info-value green">
+                {walletLoading
+                  ? "..."
+                  : !paymeeWallet.configured
+                    ? "— (API sozlanmagan)"
+                    : paymeeWallet.error
+                      ? paymeeWallet.error
+                      : `${Number(paymeeWallet.balanceUsdt).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })} ${paymeeWallet.currency}`}
+              </span>
             </div>
           </div>
 
