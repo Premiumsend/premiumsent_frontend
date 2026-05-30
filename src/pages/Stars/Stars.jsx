@@ -13,6 +13,8 @@ import {
   isPaymeeInsufficientError,
   paymeeInsufficientAlertMessage,
 } from "../../utils/paymeeErrors";
+import { PaymeeStockBanner } from "../../components/PaymeeStockBanner";
+import { PaymeeStockAlert } from "../../components/PaymeeStockAlert";
 import "./Stars.css";
 
 import WebApp from "@twa-dev/sdk";
@@ -82,6 +84,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
   const [countdown, setCountdown] = useState(480); // 8 daqiqa
   const [showMorePlans, setShowMorePlans] = useState(false);
   const [stockUnavailableMessage, setStockUnavailableMessage] = useState("");
+  const [paymeeStockModal, setPaymeeStockModal] = useState(null);
 
   // Promocode state
   const [pramacod, setPramacod] = useState("");
@@ -233,7 +236,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
         } else {
           setPrice(0);
           if (isPaymeeInsufficientError(data)) {
-            setStockUnavailableMessage(paymeeInsufficientAlertMessage(data));
+            setStockUnavailableMessage(paymeeInsufficientAlertMessage(data, "stars"));
           } else {
             setStockUnavailableMessage("");
           }
@@ -574,7 +577,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
         }
 
         if (isPaymeeInsufficientError(errorData)) {
-          alert(paymeeInsufficientAlertMessage(errorData));
+          setPaymeeStockModal(paymeeInsufficientAlertMessage(errorData, "stars"));
           return;
         }
         
@@ -789,21 +792,15 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
       </div>
 
       {stockUnavailableMessage && (
-        <p
-          style={{
-            margin: "0 0 12px",
-            padding: "12px 14px",
-            borderRadius: "10px",
-            background: "rgba(231, 76, 60, 0.12)",
-            border: "1px solid rgba(231, 76, 60, 0.35)",
-            color: "#ff8a80",
-            fontSize: "14px",
-            lineHeight: 1.45,
-            whiteSpace: "pre-line",
-          }}
-        >
-          {stockUnavailableMessage}
-        </p>
+        <PaymeeStockBanner product="stars" message={stockUnavailableMessage} />
+      )}
+
+      {paymeeStockModal && (
+        <PaymeeStockAlert
+          product="stars"
+          message={paymeeStockModal}
+          onClose={() => setPaymeeStockModal(null)}
+        />
       )}
 
       <div className="actions" style={{ marginBottom: '20px' }}>

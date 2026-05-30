@@ -1,0 +1,34 @@
+.paymee-stock-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(231, 76, 60, 0.12);
+  border: 1px solid rgba(231, 76, 60, 0.35);
+}
+
+.paymee-stock-banner__icon {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.paymee-stock-banner__lottie {
+  width: 52px;
+  height: 52px;
+  pointer-events: none;
+}
+
+.paymee-stock-banner__text {
+  margin: 0;
+  padding-top: 4px;
+  color: #ff8a80;
+  font-size: 14px;
+  line-height: 1.45;
+  flex: 1;
+}

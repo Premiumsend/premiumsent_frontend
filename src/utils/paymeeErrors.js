@@ -3,20 +3,35 @@ export function isPaymeeInsufficientError(data) {
   return data?.code === "PAYMEE_INSUFFICIENT_BALANCE";
 }
 
-const FALLBACK_BY_PRODUCT = {
+/** Matn (emoji yo'q — ikonka Lottie/TGS orqali) */
+export const PAYMEE_STOCK_TEXT = {
   stars:
-    "⭐ Afsuski, botda Stars tugab qoldi.\n\nAdmin hozir to'ldirmoqda — birozdan keyin yana urinib ko'ring! 🙏",
+    "Afsuski, botda Stars tugab qoldi. Admin hozir to'ldirmoqda — birozdan keyin yana urinib ko'ring!",
   premium:
-    "💎 Afsuski, botda Premium vaqtincha tugagan.\n\nBirozdan keyin qayta urinib ko'ring! ✨",
+    "Afsuski, botda Premium tugap qoldi. Admin hozir to'ldirmoqda — birozdan keyin yana urinib ko'ring!",
   gift:
-    "🎁 Afsuski, botda Gift tugab qoldi.\n\nBirozdan keyin yana urinib ko'ring! 🙏",
+    "Afsuski, botda sovga tugap qoldi. Admin hozir to'ldirmoqda — birozdan keyin yana urinib ko'ring!",
 };
 
-export function paymeeInsufficientAlertMessage(data) {
-  if (data?.error) return data.error;
-  const product = data?.product;
-  if (product && FALLBACK_BY_PRODUCT[product]) {
-    return FALLBACK_BY_PRODUCT[product];
+/**
+ * @param {object} [data] — API javob
+ * @param {'stars'|'premium'|'gift'} [productHint]
+ */
+export function paymeeInsufficientAlertMessage(data, productHint) {
+  const text = data?.error || data?.message;
+  if (text) return stripStockEmojis(text);
+
+  const product = data?.product || productHint;
+  if (product && PAYMEE_STOCK_TEXT[product]) {
+    return PAYMEE_STOCK_TEXT[product];
   }
-  return FALLBACK_BY_PRODUCT.stars;
+  return PAYMEE_STOCK_TEXT.stars;
+}
+
+/** Eski backend javoblaridagi emoji belgilarni olib tashlash */
+function stripStockEmojis(text) {
+  return String(text)
+    .replace(/^[\s⭐💎🎁]+/u, "")
+    .replace(/\s*🙏\s*✨?\s*$/u, "")
+    .trim();
 }

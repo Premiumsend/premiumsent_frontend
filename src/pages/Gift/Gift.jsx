@@ -6,6 +6,7 @@ import {
   isPaymeeInsufficientError,
   paymeeInsufficientAlertMessage,
 } from "../../utils/paymeeErrors";
+import { PaymeeStockAlert } from "../../components/PaymeeStockAlert";
 import { TGSSticker } from "../../components/TGSSticker";
 import WebApp from "@twa-dev/sdk";
 import starsjoyLogo from "../../assets/starsjoy.jpg";
@@ -80,6 +81,7 @@ export default function Gift() {
   const [copiedCard, setCopiedCard] = useState(false);
   const [copiedAmount, setCopiedAmount] = useState(false);
   const [sending, setSending] = useState(false);
+  const [paymeeStockModal, setPaymeeStockModal] = useState(null);
 
   // Promocode
   const [pramacod, setPramacod] = useState("");
@@ -325,7 +327,7 @@ export default function Gift() {
         if (newOrder.code === "SLOTS_FULL") {
           alert(t("gift.slotsFull") || "Hozirda barcha slotlar band. Iltimos, bir necha soniyadan so'ng qayta urinib ko'ring!");
         } else if (isPaymeeInsufficientError(newOrder)) {
-          alert(paymeeInsufficientAlertMessage(newOrder));
+          setPaymeeStockModal(paymeeInsufficientAlertMessage(newOrder, "gift"));
         } else {
           alert(newOrder.error || t("gift.error"));
         }
@@ -878,6 +880,14 @@ export default function Gift() {
 
           </div>
         </div>
+      )}
+
+      {paymeeStockModal && (
+        <PaymeeStockAlert
+          product="gift"
+          message={paymeeStockModal}
+          onClose={() => setPaymeeStockModal(null)}
+        />
       )}
     </div>
   );

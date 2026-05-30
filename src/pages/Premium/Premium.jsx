@@ -16,6 +16,8 @@ import {
   isPaymeeInsufficientError,
   paymeeInsufficientAlertMessage,
 } from "../../utils/paymeeErrors";
+import { PaymeeStockBanner } from "../../components/PaymeeStockBanner";
+import { PaymeeStockAlert } from "../../components/PaymeeStockAlert";
 function normalizePremiumPollStatus(status) {
   if (status === "completed" || status === "delivered") return "premium_sent";
   return status;
@@ -76,6 +78,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
   const [fragmentPriceLoading, setFragmentPriceLoading] = useState(false);
   const [fragmentSlotsFull, setFragmentSlotsFull] = useState(false);
   const [paymeeStockMessage, setPaymeeStockMessage] = useState("");
+  const [paymeeStockModal, setPaymeeStockModal] = useState(null);
 
   // Format
   const formatAmount = (num) =>
@@ -146,7 +149,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
           setFragmentPlanPrice(null);
           setFragmentSlotsFull(true);
           setPaymeeStockMessage(
-            isPaymeeInsufficientError(data) ? paymeeInsufficientAlertMessage(data) : ""
+            isPaymeeInsufficientError(data) ? paymeeInsufficientAlertMessage(data, "premium") : ""
           );
         }
       })
@@ -338,7 +341,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
           return;
         }
         if (isPaymeeInsufficientError(data)) {
-          alert(paymeeInsufficientAlertMessage(data));
+          setPaymeeStockModal(paymeeInsufficientAlertMessage(data, "premium"));
           return;
         }
         alert(data.error || "Order yaratishda xato");
@@ -590,20 +593,15 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
       </div>
 
       {paymeeStockMessage && (
-        <p
-          style={{
-            margin: "16px 0 0",
-            padding: "12px 14px",
-            borderRadius: "10px",
-            background: "rgba(231, 76, 60, 0.12)",
-            border: "1px solid rgba(231, 76, 60, 0.35)",
-            color: "#ff8a80",
-            fontSize: "14px",
-            lineHeight: 1.45,
-          }}
-        >
-          {paymeeStockMessage}
-        </p>
+        <PaymeeStockBanner product="premium" message={paymeeStockMessage} />
+      )}
+
+      {paymeeStockModal && (
+        <PaymeeStockAlert
+          product="premium"
+          message={paymeeStockModal}
+          onClose={() => setPaymeeStockModal(null)}
+        />
       )}
 
       <div className="actions" style={{ marginTop: "25px", marginBottom: "15px" }}>
