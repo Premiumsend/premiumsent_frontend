@@ -799,6 +799,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
             color: "#ff8a80",
             fontSize: "14px",
             lineHeight: 1.45,
+            whiteSpace: "pre-line",
           }}
         >
           {stockUnavailableMessage}
