@@ -277,7 +277,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
           ? username.slice(1)
           : username;
 
-        if (isCardFlow) {
+        if (isFragment) {
           if (/^[a-zA-Z0-9_]{4,32}$/.test(cleanUsername)) {
             setProfile({ username: cleanUsername, recipient: cleanUsername });
           } else {
@@ -286,10 +286,18 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
           return;
         }
 
-        const profileRes = await apiFetch("/api/search", {
+        const starNum = parseInt(stars, 10);
+        const searchUrl = isPaymee
+          ? `${starsApi}/search`
+          : "/api/search";
+        const searchBody = isPaymee
+          ? { username: cleanUsername, stars: Number.isInteger(starNum) ? starNum : 50 }
+          : { username: cleanUsername };
+
+        const profileRes = await apiFetch(searchUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: cleanUsername }),
+          body: JSON.stringify(searchBody),
         });
 
         const data = await profileRes.json();
@@ -301,10 +309,10 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
       } finally {
         setLoadingProfile(false);
       }
-    }, isCardFlow ? 300 : 1000);
+    }, isFragment ? 300 : 1000);
 
     return () => clearTimeout(timeout);
-  }, [username, isCardFlow]);
+  }, [username, isFragment, isPaymee, stars, starsApi]);
 
   // Copy card
   const handleCopy = () => {

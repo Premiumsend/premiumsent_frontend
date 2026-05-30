@@ -175,7 +175,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
 
         const clean = username.replace("@", "");
 
-        if (isCardFlow) {
+        if (isFragment) {
           if (/^[a-zA-Z0-9_]{4,32}$/.test(clean)) {
             setProfile({ username: clean, recipient: clean, fullName: clean });
             setSearchError(null);
@@ -186,7 +186,8 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
           return;
         }
 
-        const res = await apiFetch("/api/premium/search", {
+        const searchUrl = isPaymee ? `${premiumApi}/search` : "/api/premium/search";
+        const res = await apiFetch(searchUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -219,13 +220,13 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
       } finally {
         setLoadingProfile(false);
       }
-    }, isCardFlow ? 300 : 500);
+    }, isFragment ? 300 : 500);
 
     return () => {
       clearTimeout(delay);
       controller.abort();
     };
-  }, [username, selectedPlan, isCardFlow]);
+  }, [username, selectedPlan, isFragment, isPaymee, premiumApi]);
 
   // 🔹 Telegramdan username olish
   const fillMyUsername = () => {
