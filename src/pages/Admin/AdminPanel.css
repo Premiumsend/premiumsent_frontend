@@ -245,6 +245,43 @@ html, body {
   height: 10px;
 }
 
+.info-row--userbot-refill {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+}
+
+.userbot-refill-main {
+  flex: 1;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.userbot-refill-warn {
+  font-size: 12px;
+  color: #ff8a80;
+  font-weight: 600;
+}
+
+.userbot-refill-toggle {
+  margin-left: auto;
+}
+
+.userbot-refill-hint {
+  margin: -4px 0 12px;
+  padding: 0 4px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.userbot-refill-hint code {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
 .site-mini--compact .toggle-track.active .toggle-thumb {
   transform: translateX(10px);
 }

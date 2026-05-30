@@ -264,6 +264,11 @@ export default function AdminPanel() {
   const [starPrices, setStarPrices] = useState({ priceFor50: 0, pricePerStar: 0, currency: "TON", availableStars: 0 });
   const [walletLoading, setWalletLoading] = useState(false);
   const [botStarsBalance, setBotStarsBalance] = useState(0);
+  const [userbotRefillEnabled, setUserbotRefillEnabled] = useState(true);
+  const [userbotRefillMin, setUserbotRefillMin] = useState(200);
+  const [userbotRefillStars, setUserbotRefillStars] = useState(50);
+  const [userbotRefillUsername, setUserbotRefillUsername] = useState("StarsjoySupport");
+  const [userbotRefillToggleLoading, setUserbotRefillToggleLoading] = useState(false);
   const [paymeeWallet, setPaymeeWallet] = useState({
     configured: false,
     balanceUsdt: null,
@@ -337,9 +342,10 @@ export default function AdminPanel() {
     setWalletLoading(true);
     try {
       // Parallel fetch wallet info and bot stars balance
-      const [walletRes, botStarsRes] = await Promise.all([
+      const [walletRes, botStarsRes, refillStatusRes] = await Promise.all([
         apiFetch("/api/admin/wallet-info"),
-        apiFetch("/api/admin/bot-stars-balance")
+        apiFetch("/api/admin/bot-stars-balance"),
+        apiFetch("/api/admin/userbot-refill/status"),
       ]);
       
       const data = await walletRes.json();
@@ -401,6 +407,17 @@ export default function AdminPanel() {
         console.warn("⚠️ Bot stars fetch muvaffaqiyatsiz:", botStarsData.message || botStarsData.error);
         setBotStarsBalance(0);
       }
+
+      const refillStatus = await refillStatusRes.json();
+      if (refillStatus.success) {
+        setUserbotRefillEnabled(Boolean(refillStatus.enabled));
+        if (refillStatus.min_balance != null) setUserbotRefillMin(refillStatus.min_balance);
+        if (refillStatus.refill_stars != null) setUserbotRefillStars(refillStatus.refill_stars);
+        if (refillStatus.refill_username) setUserbotRefillUsername(refillStatus.refill_username);
+        if (refillStatus.bot_stars_balance != null) {
+          setBotStarsBalance(refillStatus.bot_stars_balance);
+        }
+      }
     } catch (err) {
       console.error("❌ Wallet/Prices fetch error:", err);
     } finally {
@@ -416,6 +433,26 @@ export default function AdminPanel() {
   // Get available stars (pre-calculated from backend)
   const getAvailableStars = () => {
     return starPrices?.availableStars || 0;
+  };
+
+  const toggleUserbotRefill = async () => {
+    setUserbotRefillToggleLoading(true);
+    try {
+      const res = await apiFetch("/api/admin/userbot-refill/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: !userbotRefillEnabled }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setUserbotRefillEnabled(Boolean(data.enabled));
+        if (data.bot_stars_balance != null) setBotStarsBalance(data.bot_stars_balance);
+      }
+    } catch (err) {
+      console.error("Userbot refill toggle:", err);
+    } finally {
+      setUserbotRefillToggleLoading(false);
+    }
   };
 
   // Fetch wallet when analytics tab is active
@@ -2121,10 +2158,40 @@ export default function AdminPanel() {
                       : getAvailableStars().toLocaleString()}
               </span>
             </div>
-            <div className="info-row">
-              <span className="info-label">⭐ Userbot balansi:</span>
-              <span className="info-value gold">{walletLoading ? '...' : botStarsBalance.toLocaleString()} ⭐</span>
+            <div className="info-row info-row--userbot-refill">
+              <div className="userbot-refill-main">
+                <span className="info-label">⭐ Userbot balansi:</span>
+                <span className="info-value gold">
+                  {walletLoading ? "..." : `${botStarsBalance.toLocaleString()} ⭐`}
+                  {!walletLoading && botStarsBalance < userbotRefillMin && (
+                    <span className="userbot-refill-warn"> (min {userbotRefillMin})</span>
+                  )}
+                </span>
+              </div>
+              <div
+                className={`site-mini site-mini--compact userbot-refill-toggle ${userbotRefillEnabled ? "on" : "off"}`}
+                title="Balans past bo'lsa Paymee orqali avto to'ldirish"
+              >
+                <span className="site-dot" />
+                <span className="site-txt">Avto {userbotRefillEnabled ? "ON" : "OFF"}</span>
+                <button
+                  type="button"
+                  className="site-toggle"
+                  disabled={userbotRefillToggleLoading || walletLoading}
+                  onClick={toggleUserbotRefill}
+                  aria-label="Userbot avto to'ldirish"
+                >
+                  <span className={`toggle-track ${userbotRefillEnabled ? "active" : ""}`}>
+                    <span className="toggle-thumb" />
+                  </span>
+                </button>
+              </div>
             </div>
+            <p className="userbot-refill-hint">
+              {userbotRefillMin} ⭐ dan kam bo&apos;lsa gift buyurtmada avto{" "}
+              <b>{userbotRefillStars} ⭐</b> → @{userbotRefillUsername} (Paymee,{" "}
+              <code>userbot_star_refills</code> jadvali)
+            </p>
             <div className="info-row">
               <span className="info-label">💎 TON balance:</span>
               <span className="info-value">{walletLoading ? '...' : walletBalance.mainnet.toFixed(2)}</span>
