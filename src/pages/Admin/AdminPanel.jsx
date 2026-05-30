@@ -1294,6 +1294,16 @@ export default function AdminPanel() {
   };
 
   // Manual Premium Order yaratish (admin qo'lda akkauntga kirib yuborgan uchun)
+  const closeManualPremiumModal = () => {
+    setManualPremiumModal(null);
+    setManualPremiumUsername("");
+  };
+
+  const openManualPremiumModal = (plan) => {
+    setManualPremiumUsername("");
+    setManualPremiumModal(plan);
+  };
+
   const createManualPremiumOrder = async () => {
     if (!manualPremiumUsername.trim()) {
       alert("❌ Username kiriting!");
@@ -1316,8 +1326,7 @@ export default function AdminPanel() {
       if (data.success) {
         const planText = manualPremiumModal === "1_oy" ? "1 oylik" : "1 yillik";
         alert(`✅ ${planText} Premium order yaratildi! Order #${data.order.id}`);
-        setManualPremiumModal(null);
-        setManualPremiumUsername("");
+        closeManualPremiumModal();
         fetchPremiumOrders();
       } else {
         alert("❌ Xato: " + data.error);
@@ -2732,49 +2741,32 @@ export default function AdminPanel() {
       {/* ==================== PREMIUM ORDERS TAB ==================== */}
       {activeTab === "premium" && (
         <div className="tab-content">
-          {/* Manual Premium Order Buttons */}
-          <div style={{ 
-            display: 'flex', 
-            gap: '10px', 
-            marginBottom: '15px',
-            flexWrap: 'wrap'
-          }}>
-            <button
-              onClick={() => setManualPremiumModal("1_oy")}
-              style={{
-                padding: '10px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: '#fff',
-                fontWeight: '600',
-                cursor: 'pointer',
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              ➕ 1 Oylik Premium
-            </button>
-            <button
-              onClick={() => setManualPremiumModal("1_yil")}
-              style={{
-                padding: '10px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                color: '#fff',
-                fontWeight: '600',
-                cursor: 'pointer',
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              ➕ 1 Yillik Premium
-            </button>
+          <div className="admin-premium-manual-actions">
+            <span className="admin-premium-manual-label">Qo&apos;lda premium order</span>
+            <div className="admin-premium-manual-btns">
+              <button
+                type="button"
+                className="admin-premium-manual-btn admin-premium-manual-btn--month"
+                onClick={() => openManualPremiumModal("1_oy")}
+              >
+                <span className="admin-premium-manual-btn-icon">💎</span>
+                <span className="admin-premium-manual-btn-text">
+                  <strong>1 oylik</strong>
+                  <small>57 000 so&apos;m</small>
+                </span>
+              </button>
+              <button
+                type="button"
+                className="admin-premium-manual-btn admin-premium-manual-btn--year"
+                onClick={() => openManualPremiumModal("1_yil")}
+              >
+                <span className="admin-premium-manual-btn-icon">👑</span>
+                <span className="admin-premium-manual-btn-text">
+                  <strong>1 yillik</strong>
+                  <small>320 000 so&apos;m</small>
+                </span>
+              </button>
+            </div>
           </div>
 
           {/* Premium Stats */}
@@ -3972,68 +3964,79 @@ export default function AdminPanel() {
         </div>
       )}
 
-      {/* Manual Premium Order Modal */}
       {manualPremiumModal && (
-        <div className="balance-modal-overlay" onClick={() => { setManualPremiumModal(null); setManualPremiumUsername(""); }}>
-          <div className="balance-modal" onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              👑 {manualPremiumModal === "1_oy" ? "1 Oylik" : "1 Yillik"} Premium Order
-            </h3>
-            <p style={{ fontSize: '14px', color: '#888', marginBottom: '10px' }}>
-              Summa: <b>{manualPremiumModal === "1_oy" ? "57,000" : "320,000"} so'm</b>
-            </p>
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px' }}>
-                Qabul qiluvchi username:
-              </label>
-              <input
-                type="text"
-                value={manualPremiumUsername}
-                onChange={(e) => setManualPremiumUsername(e.target.value)}
-                placeholder="@username"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: '8px',
-                  border: '1px solid #333',
-                  background: '#1a1a1a',
-                  color: '#fff',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
+        <div
+          className="balance-modal-overlay admin-premium-modal-overlay"
+          onClick={closeManualPremiumModal}
+          role="presentation"
+        >
+          <div
+            className="balance-modal admin-premium-modal"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-premium-modal-title"
+          >
+            <div
+              className={`balance-modal-header admin-premium-modal-header ${
+                manualPremiumModal === "1_oy"
+                  ? "admin-premium-modal-header--month"
+                  : "admin-premium-modal-header--year"
+              }`}
+            >
+              <h3 id="admin-premium-modal-title">
+                {manualPremiumModal === "1_oy" ? "1 oylik Premium" : "1 yillik Premium"}
+              </h3>
               <button
-                onClick={() => { setManualPremiumModal(null); setManualPremiumUsername(""); }}
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  borderRadius: '8px',
-                  border: '1px solid #444',
-                  background: 'transparent',
-                  color: '#fff',
-                  cursor: 'pointer'
-                }}
+                type="button"
+                className="modal-close"
+                onClick={closeManualPremiumModal}
+                aria-label="Yopish"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="balance-modal-body admin-premium-modal-body">
+              <p className="admin-premium-modal-sum">
+                To&apos;lov summasi:{" "}
+                <b>{manualPremiumModal === "1_oy" ? "57 000" : "320 000"} so&apos;m</b>
+              </p>
+              <label className="admin-premium-modal-field">
+                <span>Qabul qiluvchi username</span>
+                <input
+                  type="text"
+                  value={manualPremiumUsername}
+                  onChange={(e) => setManualPremiumUsername(e.target.value)}
+                  placeholder="@username"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && manualPremiumUsername.trim() && !manualPremiumLoading) {
+                      createManualPremiumOrder();
+                    }
+                  }}
+                />
+              </label>
+            </div>
+
+            <div className="admin-premium-modal-footer">
+              <button
+                type="button"
+                className="admin-premium-modal-btn admin-premium-modal-btn--ghost"
+                onClick={closeManualPremiumModal}
+                disabled={manualPremiumLoading}
               >
                 Bekor qilish
               </button>
               <button
+                type="button"
+                className={`admin-premium-modal-btn admin-premium-modal-btn--primary ${
+                  manualPremiumModal === "1_yil" ? "admin-premium-modal-btn--year" : ""
+                }`}
                 onClick={createManualPremiumOrder}
                 disabled={manualPremiumLoading || !manualPremiumUsername.trim()}
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: manualPremiumLoading || !manualPremiumUsername.trim() 
-                    ? '#444' 
-                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: '#fff',
-                  cursor: manualPremiumLoading || !manualPremiumUsername.trim() ? 'not-allowed' : 'pointer',
-                  fontWeight: '600'
-                }}
               >
-                {manualPremiumLoading ? "⏳ Yaratilmoqda..." : "✅ Order yaratish"}
+                {manualPremiumLoading ? "Yaratilmoqda..." : "Order yaratish"}
               </button>
             </div>
           </div>

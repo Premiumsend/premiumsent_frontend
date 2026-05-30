@@ -2,6 +2,10 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "../../context/LanguageContext";
 import apiFetch from "../../utils/apiFetch";
+import {
+  isPaymeeInsufficientError,
+  paymeeInsufficientAlertMessage,
+} from "../../utils/paymeeErrors";
 import { TGSSticker } from "../../components/TGSSticker";
 import WebApp from "@twa-dev/sdk";
 import starsjoyLogo from "../../assets/starsjoy.jpg";
@@ -320,6 +324,8 @@ export default function Gift() {
       if (!res.ok) {
         if (newOrder.code === "SLOTS_FULL") {
           alert(t("gift.slotsFull") || "Hozirda barcha slotlar band. Iltimos, bir necha soniyadan so'ng qayta urinib ko'ring!");
+        } else if (isPaymeeInsufficientError(newOrder)) {
+          alert(paymeeInsufficientAlertMessage(newOrder));
         } else {
           alert(newOrder.error || t("gift.error"));
         }

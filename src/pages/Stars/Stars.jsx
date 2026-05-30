@@ -9,6 +9,10 @@ import {
   isCardDeliveryVariant,
   starsApiPrefix,
 } from "../../utils/starsPurchaseRoute";
+import {
+  isPaymeeInsufficientError,
+  paymeeInsufficientAlertMessage,
+} from "../../utils/paymeeErrors";
 import "./Stars.css";
 
 import WebApp from "@twa-dev/sdk";
@@ -77,6 +81,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [countdown, setCountdown] = useState(480); // 8 daqiqa
   const [showMorePlans, setShowMorePlans] = useState(false);
+  const [stockUnavailableMessage, setStockUnavailableMessage] = useState("");
 
   // Promocode state
   const [pramacod, setPramacod] = useState("");
@@ -224,9 +229,14 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
       .then(data => {
         if (data.available && data.price) {
           setPrice(data.price);
+          setStockUnavailableMessage("");
         } else {
-          // Agar slot yo'q bo'lsa, 0 ko'rsatamiz
           setPrice(0);
+          if (isPaymeeInsufficientError(data)) {
+            setStockUnavailableMessage(paymeeInsufficientAlertMessage(data));
+          } else {
+            setStockUnavailableMessage("");
+          }
         }
       })
       .catch(() => {
@@ -554,6 +564,11 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
           alert("⏳ Hozirda juda ko'p buyurtmalar mavjud.\n\nIltimos, 1-2 daqiqadan keyin qayta urinib ko'ring.");
           return;
         }
+
+        if (isPaymeeInsufficientError(errorData)) {
+          alert(paymeeInsufficientAlertMessage(errorData));
+          return;
+        }
         
         throw new Error(errorData.error || "Server xatosi");
       }
@@ -765,8 +780,30 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
         )}
       </div>
 
+      {stockUnavailableMessage && (
+        <p
+          style={{
+            margin: "0 0 12px",
+            padding: "12px 14px",
+            borderRadius: "10px",
+            background: "rgba(231, 76, 60, 0.12)",
+            border: "1px solid rgba(231, 76, 60, 0.35)",
+            color: "#ff8a80",
+            fontSize: "14px",
+            lineHeight: 1.45,
+          }}
+        >
+          {stockUnavailableMessage}
+        </p>
+      )}
+
       <div className="actions" style={{ marginBottom: '20px' }}>
-        <button type="button" className="tg-button" onClick={handlePayment}>
+        <button
+          type="button"
+          className="tg-button"
+          onClick={handlePayment}
+          disabled={Boolean(stockUnavailableMessage)}
+        >
           Stars olish {price > 0 && `- ${formatAmount(appliedPromo ? appliedPromo.newPrice : price)} so'm`}
         </button>
       </div>
