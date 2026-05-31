@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import "./Profile.css";
 import { useTranslation } from "../../context/LanguageContext";
 import apiFetch from "../../utils/apiFetch";
+import { SUPPORT_TELEGRAM_URL, SUPPORT_TELEGRAM_USERNAME } from "../../utils/supportContact";
 import { TGSSticker } from "../../components/TGSSticker";
 import tilSticker from "../../assets/AnimatedSticker_til.tgs";
 
@@ -152,7 +153,7 @@ export default function Profile() {
       <div className="settings-group">
         {/* 5. Yordam */}
         <div className="settings-item" onClick={() => {
-          try { WebApp.openTelegramLink("https://t.me/starsjoy_bot"); } catch { window.open("https://t.me/starsjoy_bot", "_blank"); }
+          try { WebApp.openTelegramLink(SUPPORT_TELEGRAM_URL); } catch { window.open(SUPPORT_TELEGRAM_URL, "_blank"); }
         }}>
           <div className="settings-item-left">
             <div className="settings-icon icon-support">🛟</div>
@@ -162,14 +163,14 @@ export default function Profile() {
             </div>
           </div>
           <div className="settings-item-right">
-            <span className="settings-item-value">@starsjoy_bot</span>
+            <span className="settings-item-value">@{SUPPORT_TELEGRAM_USERNAME}</span>
             <span className="settings-arrow">›</span>
           </div>
         </div>
 
         {/* 6. Yangiliklar kanali */}
         <div className="settings-item" onClick={() => {
-          try { WebApp.openTelegramLink("https://t.me/starsjoy"); } catch { window.open("https://t.me/starsjoy", "_blank"); }
+          try { WebApp.openTelegramLink("https://t.me/premiumsenduz"); } catch { window.open("https://t.me/premiumsenduz", "_blank"); }
         }}>
           <div className="settings-item-left">
             <div className="settings-icon icon-channel">📢</div>
@@ -179,7 +180,7 @@ export default function Profile() {
             </div>
           </div>
           <div className="settings-item-right">
-            <span className="settings-item-value">@starsjoy</span>
+            <span className="settings-item-value">@premiumsenduz</span>
             <span className="settings-arrow">›</span>
           </div>
         </div>
@@ -187,7 +188,7 @@ export default function Profile() {
 
       {/* Footer */}
       <div className="settings-footer">
-        <p className="footer-copyright">© 2026 Starsjoy</p>
+        <p className="footer-copyright">© 2026 Premiumsend uz</p>
         <p className="footer-rights">Barcha huquqlar himoyalangan</p>
         <div className="footer-divider"></div>
         <p className="footer-version">v3.1.1</p>

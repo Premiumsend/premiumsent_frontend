@@ -3,6 +3,7 @@ import starsSticker from "../../assets/AnimatedSticker_stars.tgs";
 import { TGSSticker } from "../../components/TGSSticker";
 import { useNavigate } from "react-router-dom";
 import apiFetch from "../../utils/apiFetch";
+import { SUPPORT_TELEGRAM_URL } from "../../utils/supportContact";
 import {
   getPremiumPurchasePath,
   getFragmentPaymentLabel,
@@ -1104,7 +1105,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
                 <div className="modal-result-icon expired-bg" style={{background: 'rgba(255, 59, 48, 0.15)', color: '#ff3b30'}}>❌</div>
                 <h3 className="modal-result-title">Xatolik yuz berdi</h3>
                 <p className="modal-result-desc">{errorMessage || "Stars olishda xatolik. Admin bilan bog'laning."}</p>
-                <button type="button" className="btn-go-home" onClick={() => window.open("https://t.me/StarsjoySupport", "_blank")}>👨🏻‍💻 Admin bilan bog'lanish</button>
+                <button type="button" className="btn-go-home" onClick={() => window.open(SUPPORT_TELEGRAM_URL, "_blank")}>👨🏻‍💻 Admin bilan bog'lanish</button>
               </div>
             )}
           </div>

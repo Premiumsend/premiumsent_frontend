@@ -331,7 +331,7 @@ export default function Dashboard() {
           </div>
 
           {/* Brand name */}
-          <div className="splash-brand">Premium<em>Send</em></div>
+          <div className="splash-brand">Premiumsend <em>uz</em></div>
 
           {/* Loading dots */}
           <div className="splash-dots">
@@ -371,7 +371,7 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-            <h1 className="brand-title_dashboard">Premium Send</h1>
+            <h1 className="brand-title_dashboard">Premiumsend uz</h1>
           </div>
           <button
             className="notification-btn-dashboard"

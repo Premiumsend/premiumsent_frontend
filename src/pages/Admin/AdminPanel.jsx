@@ -267,7 +267,7 @@ export default function AdminPanel() {
   const [userbotRefillEnabled, setUserbotRefillEnabled] = useState(true);
   const [userbotRefillMin, setUserbotRefillMin] = useState(200);
   const [userbotRefillStars, setUserbotRefillStars] = useState(50);
-  const [userbotRefillUsername, setUserbotRefillUsername] = useState("StarsjoySupport");
+  const [userbotRefillUsername, setUserbotRefillUsername] = useState("PremiumSend_jbot");
   const [userbotRefillToggleLoading, setUserbotRefillToggleLoading] = useState(false);
   const [paymeeWallet, setPaymeeWallet] = useState({
     configured: false,

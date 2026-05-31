@@ -25,6 +25,28 @@ export default function History() {
   const formatAmount = (num) =>
     Number(num || 0).toLocaleString("ru-RU");
 
+  // Orqaga — Telegram BackButton + UI
+  useEffect(() => {
+    const handleBack = () => navigate("/");
+    try {
+      WebApp.ready();
+      WebApp.setHeaderColor("#1a1a2e");
+      WebApp.setBackgroundColor("#1a1a2e");
+      WebApp.BackButton.show();
+      WebApp.BackButton.onClick(handleBack);
+    } catch (err) {
+      console.error("BackButton error:", err);
+    }
+    return () => {
+      try {
+        WebApp.BackButton.offClick(handleBack);
+        WebApp.BackButton.hide();
+      } catch {
+        /* ignore */
+      }
+    };
+  }, [navigate]);
+
   // Get Telegram user info
   useEffect(() => {
     try {
@@ -97,6 +119,18 @@ export default function History() {
 
   return (
     <div className="history-page">
+      <div className="history-top-bar">
+        <button
+          type="button"
+          className="history-back-btn"
+          onClick={() => navigate("/")}
+          aria-label={t("common.back") || "Orqaga"}
+        >
+          <span className="history-back-btn__icon">←</span>
+          <span>{t("common.back") || "Orqaga"}</span>
+        </button>
+      </div>
+
       {/* Header with Sticker */}
       <div className="history-header centered-header">
         <div className="history-sticker-container">

@@ -7,6 +7,7 @@ import premiumGif from "../../assets/premium_gif.gif";
 import premiumSticker from "../../assets/AnimatedSticker_premium.tgs";
 import { TGSSticker } from "../../components/TGSSticker";
 import apiFetch from "../../utils/apiFetch";
+import { SUPPORT_TELEGRAM_URL } from "../../utils/supportContact";
 import {
   getFragmentPaymentLabel,
   isCardDeliveryVariant,
@@ -186,18 +187,9 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
 
         const clean = username.replace("@", "");
 
-        if (isFragment) {
-          if (/^[a-zA-Z0-9_]{4,32}$/.test(clean)) {
-            setProfile({ username: clean, recipient: clean, fullName: clean });
-            setSearchError(null);
-          } else {
-            setProfile(null);
-            setSearchError("Username noto'g'ri");
-          }
-          return;
-        }
-
-        const searchUrl = isPaymee ? `${premiumApi}/search` : "/api/premium/search";
+        const searchUrl = isCardFlow
+          ? `${premiumApi}/search`
+          : "/api/premium/search";
         const res = await apiFetch(searchUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -231,7 +223,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
       } finally {
         setLoadingProfile(false);
       }
-    }, isFragment ? 300 : 500);
+    }, 500);
 
     return () => {
       clearTimeout(delay);
@@ -350,6 +342,10 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
         // SLOTS_FULL xatosi
         if (data.code === "SLOTS_FULL") {
           alert("⏳ Hozirda juda ko'p buyurtmalar mavjud.\n\nIltimos, 1-2 daqiqadan keyin qayta urinib ko'ring.");
+          return;
+        }
+        if (data.code === "ALREADY_HAS_PREMIUM") {
+          alert(data.error || "Bu foydalanuvchida allaqachon Premium faol.");
           return;
         }
         if (isPaymeeInsufficientError(data)) {
@@ -915,7 +911,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
                     type="button" 
                     className="modal-close-btn" 
                     style={{ background: '#2b2d31', color: '#fff', border: '1px solid #444', marginTop: 0 }} 
-                    onClick={() => window.open("https://t.me/StarsjoySupport", "_blank")}
+                    onClick={() => window.open(SUPPORT_TELEGRAM_URL, "_blank")}
                   >
                     👨🏻‍💻 Admin bilan bog'lanish
                   </button>

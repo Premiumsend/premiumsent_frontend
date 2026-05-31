@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "../../context/LanguageContext";
 import apiFetch from "../../utils/apiFetch";
+import { SUPPORT_TELEGRAM_URL } from "../../utils/supportContact";
 import {
   isPaymeeInsufficientError,
   paymeeInsufficientAlertMessage,
@@ -866,7 +867,7 @@ export default function Gift() {
                       type="button"
                       className="gift-modal-action-btn"
                       style={{ backgroundColor: '#2b2d31', color: '#fff', border: '1px solid #444' }}
-                      onClick={() => window.open("https://t.me/StarsjoySupport", "_blank")}
+                      onClick={() => window.open(SUPPORT_TELEGRAM_URL, "_blank")}
                     >
                       👨🏻‍💻 Admin bilan bog'lanish
                     </button>

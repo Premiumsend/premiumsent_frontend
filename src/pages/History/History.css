@@ -12,6 +12,38 @@
   transition: all 0.3s ease;
 }
 
+.history-top-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.history-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #ede9fe;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.history-back-btn:active {
+  transform: scale(0.97);
+  background: rgba(139, 92, 246, 0.2);
+}
+
+.history-back-btn__icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
 /* Header */
 .history-header {
   background: transparent;
