@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import "./Premium.css";
 import diamondGif from "../../assets/diamond.gif";
 import WebApp from "@twa-dev/sdk";
@@ -29,6 +29,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
   const isCardFlow = isCardDeliveryVariant(variant);
   const premiumApi = premiumApiPrefix(variant);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const PREMIUM_3 = parseInt(import.meta.env.VITE_PREMIUM_3);
   const PREMIUM_6 = parseInt(import.meta.env.VITE_PREMIUM_6);
   const PREMIUM_12 = parseInt(import.meta.env.VITE_PREMIUM_12);
@@ -50,6 +51,13 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
   ];
 
   const [selectedPlan, setSelectedPlan] = useState(plans[0]);
+
+  useEffect(() => {
+    const m = parseInt(searchParams.get("months"), 10);
+    const match = plans.find((p) => p.months === m);
+    if (match) setSelectedPlan(match);
+  }, [searchParams]);
+
   const [order, setOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);

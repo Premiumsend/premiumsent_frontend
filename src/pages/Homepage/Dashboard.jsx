@@ -3,26 +3,17 @@ import { useNavigate } from "react-router-dom";
 import WebApp from "@twa-dev/sdk";
 import { useTranslation } from "../../context/LanguageContext";
 import apiFetch from "../../utils/apiFetch";
-import {
-  getStarsPurchasePath,
-  getPremiumPurchasePath,
-} from "../../utils/starsPurchaseRoute";
+import { getPremiumPurchasePath } from "../../utils/starsPurchaseRoute";
 import { TGSSticker } from "../../components/TGSSticker";
 import "./Dashboard.css";
 
-import starsGif from "../../assets/stars.gif";
 import premiumGif from "../../assets/premium_gif.gif";
-import ayiqImg from "../../assets/ayiqyurakchali.jpg";
-import actionCardSticker from "../../assets/5800655655995968830.tgs";
 import tilSticker from "../../assets/AnimatedSticker_til.tgs";
-import referalSticker from "../../assets/AnimatedSticker_ref.tgs";
-import ordersIcon from "../../assets/orders_icon.png";
 import profileIcon from "../../assets/profile_icon.png";
 import menuIcon from "../../assets/main_icon.png";
 import bellsIcon from "../../assets/bells_icon.png";
-import starsjoyAvatar from "../../assets/starsjoy.jpg";
 import statsIcon from "../../assets/stats_icon.png";
-import discountIcon from "../../assets/discount_icon.png";
+import ordersIcon from "../../assets/orders_icon.png";
 
 
 // ================== UTILS ==================
@@ -58,7 +49,6 @@ export default function Dashboard() {
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(language);
   const [showComingSoonToast, setShowComingSoonToast] = useState(false);
-  const [starsPurchasePath, setStarsPurchasePath] = useState("/stars");
   const [premiumPurchasePath, setPremiumPurchasePath] = useState("/premium");
 
   /* ================= NOTIFICATIONS ================= */
@@ -99,7 +89,6 @@ export default function Dashboard() {
     apiFetch("/api/app-config")
       .then((r) => r.json())
       .then((cfg) => {
-        setStarsPurchasePath(getStarsPurchasePath(cfg));
         setPremiumPurchasePath(getPremiumPurchasePath(cfg));
       })
       .catch(() => {});
@@ -342,7 +331,7 @@ export default function Dashboard() {
           </div>
 
           {/* Brand name */}
-          <div className="splash-brand">Stars<em>Joy</em></div>
+          <div className="splash-brand">Premium<em>Send</em></div>
 
           {/* Loading dots */}
           <div className="splash-dots">
@@ -363,10 +352,27 @@ export default function Dashboard() {
       {/* HEADER */}
       <header className="dash-header_dashboard">
         <div className="header-inner_dashboard">
-          <h1 className="brand-title_dashboard">
-            <img src={starsjoyAvatar} alt="Starsjoy" className="brand-logo_dashboard" />
-            Starsjoy
-          </h1>
+          <div className="brand-title-wrapper_dashboard">
+            <div className="brand-profile-container_dashboard">
+              {userPhoto ? (
+                <img
+                  src={userPhoto}
+                  alt="Profile"
+                  className="brand-profile-pic_dashboard"
+                  title={username}
+                />
+              ) : (
+                <div className="brand-profile-default_dashboard">
+                  <img
+                    src={profileIcon}
+                    alt="Default Profile"
+                    className="brand-profile-default-icon_dashboard"
+                  />
+                </div>
+              )}
+            </div>
+            <h1 className="brand-title_dashboard">Premium Send</h1>
+          </div>
           <button
             className="notification-btn-dashboard"
             onClick={() => navigate("/notifications")}
@@ -381,44 +387,56 @@ export default function Dashboard() {
       </header>
 
       <main className="dash-main_dashboard" style={{display: tab === 'home' ? 'flex' : 'none'}}>
-        {/* ACTION CARDS - Stars wide, Gift & Premium side by side */}
         <div className="dashboard-actions-container">
-          {/* Stars - Full Width */}
-          <div className="action-card-wide" onClick={() => navigate(starsPurchasePath)}>
-            <img src={starsGif} className="action-card-wide__img" alt="stars" />
-            <div className="action-card-wide__content">
-              <span className="action-card-wide__title">{t("dashboard.buyStars") || "Stars olish"}</span>
+          {/* Premium offers */}
+          <div className="premium-offers-grid">
+            <div
+              className="action-card-offer card-offer-3"
+              onClick={() => navigate({ pathname: premiumPurchasePath, search: "?months=3" })}
+            >
+              <img src={premiumGif} className="offer-img" alt="premium" />
+              <div className="offer-details">
+                <div className="offer-header-row">
+                  <span className="offer-months">3 Oylik</span>
+                </div>
+                <span className="offer-desc">Standart paket</span>
+              </div>
+              <div className="offer-price-tag">
+                {formatAmount(import.meta.env.VITE_PREMIUM_3)} UZS
+              </div>
             </div>
-          </div>
 
-          {/* Gift & Premium - Side by Side */}
-          <div className="action-cards-row">
-            <div className="action-card-half" onClick={() => navigate("/gift")}>
-              <TGSSticker stickerPath={actionCardSticker} className="action-card-half__img" autoplay={true} loop={true} />
-              <span className="action-card-half__title">{t("dashboard.buyGift") || "Gift olish"}</span>
-            </div>
-            <div className="action-card-half" onClick={() => navigate(premiumPurchasePath)}>
-              <img src={premiumGif} className="action-card-half__img" alt="premium" />
-              <span className="action-card-half__title">{t("dashboard.buyPremium") || "Premium olish"}</span>
-            </div>
-          </div>
+            <div className="offers-row-wrapper-custom">
+              <div
+                className="action-card-offer card-offer-6"
+                onClick={() => navigate({ pathname: premiumPurchasePath, search: "?months=6" })}
+              >
+                <div className="offer-details">
+                  <div className="offer-header-row">
+                    <span className="offer-months">6 Oylik</span>
+                    <span className="offer-discount-badge badge-green">-47%</span>
+                  </div>
+                  <span className="offer-desc text-gradient-green">Tavsiya etiladi</span>
+                </div>
+                <div className="offer-price-tag">
+                  {formatAmount(import.meta.env.VITE_PREMIUM_6)} UZS
+                </div>
+              </div>
 
-          {/* Referral Invite Banner */}
-          <div
-            className="referral-invite-banner"
-            onClick={() => navigate("/referral")}
-          >
-            <div className="referral-banner-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-            </div>
-            <div className="referral-banner-content">
-              <div className="referral-banner-text">
-                {t("dashboard.referralBanner") || "Taklif qiling, bonus oling"}
+              <div
+                className="action-card-offer card-offer-12"
+                onClick={() => navigate({ pathname: premiumPurchasePath, search: "?months=12" })}
+              >
+                <div className="offer-details">
+                  <div className="offer-header-row">
+                    <span className="offer-months">1 Yillik</span>
+                    <span className="offer-discount-badge badge-premium">-52%</span>
+                  </div>
+                  <span className="offer-desc">Eng hamyonbop</span>
+                </div>
+                <div className="offer-price-tag">
+                  {formatAmount(import.meta.env.VITE_PREMIUM_12)} UZS
+                </div>
               </div>
             </div>
           </div>
@@ -427,6 +445,16 @@ export default function Dashboard() {
 
       {/* BOTTOM NAVIGATION */}
       <div className="bottom-nav_dashboard">
+        <button
+          className={`nav-btn_dashboard ${tab === "statistics" ? "active" : ""}`}
+          onClick={() => navigate("/statistics")}
+          title={t("dashboard.statistics") || "Statistika"}
+        >
+          <div className="nav-icon">
+            <img src={statsIcon} alt="Stats" />
+          </div>
+        </button>
+
         <button
           className={`nav-btn_dashboard ${tab === "home" ? "active" : ""}`}
           onClick={() => handleNavClick("home")}
@@ -439,31 +467,11 @@ export default function Dashboard() {
 
         <button
           className={`nav-btn_dashboard ${tab === "history" ? "active" : ""}`}
-          onClick={() => navigate("/statistics")}
-          title={t("dashboard.statistics") || "Statistika"}
+          onClick={() => navigate("/history")}
+          title={t("dashboard.orders") || "Buyurtmalar"}
         >
           <div className="nav-icon">
-            <img src={statsIcon} alt="Stats" />
-          </div>
-        </button>
-
-        <button
-          className={`nav-btn_dashboard ${tab === "referral" ? "active" : ""}`}
-          onClick={() => navigate("/discount")}
-          title="Chegirma"
-        >
-          <div className="nav-icon">
-            <img src={discountIcon} alt="Discount" />
-          </div>
-        </button>
-
-        <button
-          className={`nav-btn_dashboard ${tab === "profile" ? "active" : ""}`}
-          onClick={() => handleNavClick("profile")}
-          title={t("dashboard.profile")}
-        >
-          <div className="nav-icon">
-            <img src={profileIcon} alt="Profile" />
+            <img src={ordersIcon} alt="Orders" />
           </div>
         </button>
       </div>
@@ -490,18 +498,6 @@ export default function Dashboard() {
             src="/history"
             className="iframe-modal_dashboard"
             title="History"
-          ></iframe>
-        </div>
-      )}
-
-
-
-      {tab === "profile" && (
-        <div className="overlay-modal_dashboard">
-          <iframe
-            src="/profile"
-            className="iframe-modal_dashboard"
-            title="Profile"
           ></iframe>
         </div>
       )}
