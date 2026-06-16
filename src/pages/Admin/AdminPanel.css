@@ -2624,6 +2624,44 @@ html, body {
   flex-shrink: 0;
 }
 
+/* StarsPaymee API balansi — header chip */
+.hdr-api-balance {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  line-height: 1;
+  border: 1px solid transparent;
+}
+
+.hdr-api-balance.ok {
+  background: rgba(16, 185, 129, 0.14);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.hdr-api-balance.warn {
+  background: rgba(245, 158, 11, 0.14);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.hdr-api-balance-icon {
+  font-size: 13px;
+}
+
+@media (max-width: 480px) {
+  .hdr-api-balance {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+}
+
 .hdr-badge {
   position: absolute;
   top: -4px;

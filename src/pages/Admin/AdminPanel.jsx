@@ -314,11 +314,41 @@ export default function AdminPanel() {
     }
   };
 
+  // ========== STARSPAYMEE API BALANSI (header chip) ==========
+  const fetchPaymeeBalance = async () => {
+    try {
+      const res = await apiFetch("/api/admin/paymee-balance");
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setPaymeeWallet((prev) => ({ ...prev, error: data.error || "Balans olinmadi" }));
+        return;
+      }
+      if (data.configured && data.balance_usdt != null && !Number.isNaN(Number(data.balance_usdt))) {
+        setPaymeeWallet({
+          configured: true,
+          balanceUsdt: Number(data.balance_usdt),
+          currency: data.currency || "USDT",
+          usdtPerStar: data.usdt_per_star != null ? Number(data.usdt_per_star) : null,
+          availableStars: data.available_stars != null ? Number(data.available_stars) : null,
+          error: null,
+        });
+      } else if (data.configured) {
+        setPaymeeWallet((prev) => ({ ...prev, configured: true, error: data.error || "Balans olinmadi" }));
+      } else {
+        setPaymeeWallet((prev) => ({ ...prev, configured: false, error: null }));
+      }
+    } catch (err) {
+      console.error("Paymee balans yuklash:", err);
+      setPaymeeWallet((prev) => ({ ...prev, error: "Tarmoq xatosi" }));
+    }
+  };
+
   // ========== SOZLAMALAR (settings jadvali — DB) ==========
   useEffect(() => {
     if (!isAuthenticated) return;
     fetchAdminSettings();
     fetchReferralRequests("all");
+    fetchPaymeeBalance();
   }, [isAuthenticated]);
 
   const toggleMaintenance = async () => {
@@ -1854,12 +1884,32 @@ export default function AdminPanel() {
             />
           )}
 
+          <div
+            className={`hdr-api-balance ${paymeeWallet.configured && !paymeeWallet.error ? "ok" : "warn"}`}
+            title="StarsPaymee API USDT balansi"
+          >
+            <span className="hdr-api-balance-icon">💳</span>
+            <span className="hdr-api-balance-value">
+              {!paymeeWallet.configured
+                ? "API yo'q"
+                : paymeeWallet.error
+                  ? "—"
+                  : paymeeWallet.balanceUsdt == null
+                    ? "..."
+                    : `${Number(paymeeWallet.balanceUsdt).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })} ${paymeeWallet.currency}`}
+            </span>
+          </div>
+
           <div className="header-top-actions">
             <button
               className="hdr-btn refresh hdr-btn--sm"
               type="button"
               aria-label="Yangilash"
               onClick={() => {
+                fetchPaymeeBalance();
                 if (activeTab === "transactions") fetchTransactions();
                 else if (activeTab === "users") fetchUsers();
                 else if (activeTab === "premium") fetchPremiumOrders();
