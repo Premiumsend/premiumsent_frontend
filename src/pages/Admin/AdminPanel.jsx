@@ -117,7 +117,7 @@ export default function AdminPanel() {
   
   // Users state
   const [users, setUsers] = useState([]);
-  const [activeTab, setActiveTab] = useState("transactions");
+  const [activeTab, setActiveTab] = useState("premium");
 
   const [bottomMenuOpen, setBottomMenuOpen] = useState(false);
 
@@ -319,7 +319,7 @@ export default function AdminPanel() {
     try {
       const res = await apiFetch("/api/admin/paymee-balance");
       const data = await res.json();
-      if (!res.ok || !data.success) {
+      if (!res.ok || data.ok === false) {
         setPaymeeWallet((prev) => ({ ...prev, error: data.error || "Balans olinmadi" }));
         return;
       }
@@ -1864,26 +1864,6 @@ export default function AdminPanel() {
             </button>
           </div>
 
-          <AdminCustomSelect
-            className="admin-custom-select--header-mode"
-            value={starsPurchaseMode}
-            onChange={setPurchaseMode}
-            options={PURCHASE_MODE_OPTIONS}
-            disabled={purchaseModeLoading}
-            ariaLabel="Yetkazish rejimi"
-          />
-
-          {starsPurchaseMode === "fragment" && (
-            <AdminCustomSelect
-              className="admin-custom-select--header-pay"
-              value={fragmentPaymentMethod}
-              onChange={setFragmentPayMethod}
-              options={FRAGMENT_PAY_OPTIONS}
-              disabled={fragmentPayLoading}
-              ariaLabel="Fragment to'lov"
-            />
-          )}
-
           <div
             className={`hdr-api-balance ${paymeeWallet.configured && !paymeeWallet.error ? "ok" : "warn"}`}
             title="StarsPaymee API USDT balansi"
@@ -1960,28 +1940,14 @@ export default function AdminPanel() {
         </div>
       </header>
 
-      {/* Asosiy 4 tab — header ostida (mobil + desktop) */}
+      {/* Asosiy tablar — header ostida (mobil + desktop) */}
       <div className="tabs tabs-primary">
-        <button
-          type="button"
-          className={`tab ${activeTab === "transactions" ? "active" : ""}`}
-          onClick={() => goToTab("transactions")}
-        >
-          ⭐ Stars
-        </button>
         <button
           type="button"
           className={`tab ${activeTab === "premium" ? "active" : ""}`}
           onClick={() => goToTab("premium")}
         >
           💎 Premium
-        </button>
-        <button
-          type="button"
-          className={`tab ${activeTab === "gift" ? "active" : ""}`}
-          onClick={() => goToTab("gift")}
-        >
-          🎁 Gift
         </button>
         <button
           type="button"
