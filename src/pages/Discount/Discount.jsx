@@ -11,7 +11,7 @@ const POLLING_DURATION = 8 * 60 * 1000;
 export default function Discount() {
   const CARD_NUMBER = import.meta.env.VITE_CARD_NUMBER;
   const CARD_NAME = import.meta.env.VITE_CARD_NAME;
-  const NARX = parseInt(import.meta.env.VITE_NARX); // 240 so'm per star
+  const NARX = parseInt(import.meta.env.VITE_NARX) || 300; // 1 dona Stars narxi (so'm)
 
   // Discount packages from API
   const [discountPackages, setDiscountPackages] = useState([]);

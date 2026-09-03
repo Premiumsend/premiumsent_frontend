@@ -288,7 +288,7 @@ export default function AdminPanel() {
   const [promoForm, setPromoForm] = useState({ code: '', target_type: 'stars', target_amount: '', discount_percent: 10, usage_limit: 10 });
   const [promoLoading, setPromoLoading] = useState(false);
   const [editingPackage, setEditingPackage] = useState(null);
-  const BASE_PRICE = parseInt(import.meta.env.VITE_NARX) || 240;
+  const BASE_PRICE = parseInt(import.meta.env.VITE_NARX) || 300;
 
   // Referral requests state
   const [referralRequests, setReferralRequests] = useState([]);
@@ -1948,6 +1948,13 @@ export default function AdminPanel() {
           onClick={() => goToTab("premium")}
         >
           💎 Premium
+        </button>
+        <button
+          type="button"
+          className={`tab ${activeTab === "transactions" ? "active" : ""}`}
+          onClick={() => goToTab("transactions")}
+        >
+          ⭐ Stars
         </button>
         <button
           type="button"

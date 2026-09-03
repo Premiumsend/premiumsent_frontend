@@ -2628,6 +2628,19 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
+.action-card-wide__price {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  font-size: 13px;
+  font-weight: 700;
+  color: #fde68a;
+  white-space: nowrap;
+  z-index: 1;
+}
+
 /* Referral Banner - Professional Dark Style */
 .referral-invite-banner {
   background: linear-gradient(135deg, rgba(139,92,246,0.05), rgba(255,255,255,0.02), rgba(139,92,246,0.04));
@@ -3062,6 +3075,25 @@
   .offer-img {
     width: 48px;
     height: 48px;
+  }
+
+  .action-card-wide {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .action-card-wide__img {
+    width: 52px;
+    height: 52px;
+  }
+
+  .action-card-wide__title {
+    font-size: 16px;
+  }
+
+  .action-card-wide__price {
+    font-size: 11.5px;
+    padding: 7px 10px;
   }
 }
 

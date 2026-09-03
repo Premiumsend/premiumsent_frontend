@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 import WebApp from "@twa-dev/sdk";
 import { useTranslation } from "../../context/LanguageContext";
 import apiFetch from "../../utils/apiFetch";
-import { getPremiumPurchasePath } from "../../utils/starsPurchaseRoute";
+import { getPremiumPurchasePath, getStarsPurchasePath } from "../../utils/starsPurchaseRoute";
 import { TGSSticker } from "../../components/TGSSticker";
 import "./Dashboard.css";
 
 import premiumGif from "../../assets/premium_gif.gif";
+import starsGif from "../../assets/stars.gif";
 import tilSticker from "../../assets/AnimatedSticker_til.tgs";
 import profileIcon from "../../assets/profile_icon.png";
 import menuIcon from "../../assets/main_icon.png";
@@ -50,6 +51,8 @@ export default function Dashboard() {
   const [selectedLanguage, setSelectedLanguage] = useState(language);
   const [showComingSoonToast, setShowComingSoonToast] = useState(false);
   const [premiumPurchasePath, setPremiumPurchasePath] = useState("/premium");
+  const [starsPurchasePath, setStarsPurchasePath] = useState("/stars");
+  const NARX = parseInt(import.meta.env.VITE_NARX) || 300;
 
   /* ================= NOTIFICATIONS ================= */
   const [unreadCount, setUnreadCount] = useState(0);
@@ -90,6 +93,7 @@ export default function Dashboard() {
       .then((r) => r.json())
       .then((cfg) => {
         setPremiumPurchasePath(getPremiumPurchasePath(cfg));
+        setStarsPurchasePath(getStarsPurchasePath(cfg));
       })
       .catch(() => {});
   };
@@ -388,6 +392,21 @@ export default function Dashboard() {
 
       <main className="dash-main_dashboard" style={{display: tab === 'home' ? 'flex' : 'none'}}>
         <div className="dashboard-actions-container">
+          {/* Stars purchase entry */}
+          <div
+            className="action-card-wide"
+            onClick={() => navigate(starsPurchasePath)}
+          >
+            <img src={starsGif} className="action-card-wide__img" alt="stars" />
+            <div className="action-card-wide__content">
+              <span className="action-card-wide__title">Stars sotib olish</span>
+              <span className="action-card-wide__subtitle">50 tadan 10 000 tagacha — istalgan miqdorda</span>
+            </div>
+            <div className="action-card-wide__price">
+              50⭐ · {formatAmount(50 * NARX)} so&apos;m
+            </div>
+          </div>
+
           {/* Premium offers */}
           <div className="premium-offers-grid">
             <div

@@ -57,7 +57,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
   const starsApi = starsApiPrefix(variant);
   const CARD_NUMBER = import.meta.env.VITE_CARD_NUMBER;
   const CARD_NAME = import.meta.env.VITE_CARD_NAME;
-  const NARX = parseInt(import.meta.env.VITE_NARX);
+  const NARX = parseInt(import.meta.env.VITE_NARX) || 300;
 
   // Stars options
   const STARS_OPTIONS = [50, 100, 200, 350, 500, 750, 1000, 2000, 5000, 10000];
