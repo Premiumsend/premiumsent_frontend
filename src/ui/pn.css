@@ -38,7 +38,7 @@
 .pn-word b { font-weight: 700; color: var(--a-ink); }
 .pn-scroll { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: calc(14px + var(--tg-safe-top, 0px)) 16px calc(26px + var(--tg-safe-bottom, 0px)); scrollbar-width: none; }
 .pn-scroll::-webkit-scrollbar { display: none; }
-.pn-scroll--tabs { padding-bottom: calc(96px + var(--tg-safe-bottom, 0px)); }
+.pn-scroll--tabs { padding-bottom: calc(100px + var(--tg-safe-bottom, 0px)); }
 .pn-scroll--bar { padding-bottom: calc(104px + var(--tg-safe-bottom, 0px)); }
 .pn-title { margin-bottom: 14px !important; font-family: var(--display); font-size: 24px; font-weight: 700; letter-spacing: -.025em; }
 .pn-lead { margin: -8px 0 16px !important; font-size: 14.5px; color: var(--ink-2); }
@@ -62,10 +62,10 @@
 .pn-bar__total small { font-size: 12.5px; color: var(--muted); }
 .pn-bar__total b { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-/* pastki menyu: faol tugma kengayib nomini ko'rsatadi */
-.pn-tabs { position: absolute; left: 16px; right: 16px; bottom: calc(14px + var(--tg-safe-bottom, 0px)); z-index: 20; display: flex; justify-content: space-between; gap: 4px; padding: 6px; background: var(--surface); background: color-mix(in srgb, var(--surface) 84%, transparent); -webkit-backdrop-filter: saturate(170%) blur(18px); backdrop-filter: saturate(170%) blur(18px); border: 1px solid var(--line); border-radius: 26px; box-shadow: 0 12px 32px rgba(0, 0, 0, .45); }
-.pn-tabs button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; height: 46px; padding: 0 8px; border: 0; border-radius: 20px; background: none; color: var(--muted); font-size: 13.5px; font-weight: 620; white-space: nowrap; }
-.pn-tabs button.is-active { flex: 0 0 auto; padding: 0 15px; background: var(--grad); color: #fff; }
+/* pastki menyu: belgi ostida nom, faol bo'lim rang bilan ajraladi */
+.pn-tabs { position: absolute; left: 16px; right: 16px; bottom: calc(14px + var(--tg-safe-bottom, 0px)); z-index: 20; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 6px; background: var(--surface); background: color-mix(in srgb, var(--surface) 84%, transparent); -webkit-backdrop-filter: saturate(170%) blur(18px); backdrop-filter: saturate(170%) blur(18px); border: 1px solid var(--line); border-radius: 24px; box-shadow: 0 12px 32px rgba(0, 0, 0, .45); }
+.pn-tabs button { min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; height: 54px; padding: 0 4px; border: 0; border-radius: 18px; background: none; color: var(--muted) !important; font-size: 12px; font-weight: 600; line-height: 1.15; transition: background .18s ease, color .18s ease; }
+.pn-tabs button.is-active { background: var(--soft); color: var(--a-ink) !important; }
 
 /* ---------- bosh sahifa ---------- */
 .pn-top { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }

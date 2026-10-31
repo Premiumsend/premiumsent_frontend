@@ -44,7 +44,7 @@ export function Tabs({ active }) {
     <nav className="pn-tabs" aria-label="Menu">
       {items.map(([id, path, Icon, label]) => (
         <button key={id} type="button" className={active === id ? "is-active" : ""} onClick={() => active !== id && navigate(path)} aria-label={label}>
-          <Icon size={21} />{active === id && <span>{label}</span>}
+          <Icon size={22} /><span>{label}</span>
         </button>
       ))}
     </nav>
