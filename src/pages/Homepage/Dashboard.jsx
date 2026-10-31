@@ -5,6 +5,7 @@ import apiFetch from "../../utils/apiFetch";
 import { getPremiumPurchasePath, getStarsPurchasePath } from "../../utils/starsPurchaseRoute";
 import { Ads, Dust, LanguageModal, Modal, Shell, SupportCard, Tabs, fmt } from "../../ui/Kit";
 import { GlobeIcon, TgStar, Wordmark } from "../../ui/Brand";
+import Intro from "../../ui/Intro";
 
 const GUIDE = [
   ["Mahsulotni tanlang", "Premium yoki Stars"],
@@ -14,7 +15,7 @@ const GUIDE = [
   ["Tayyor", "To'lovdan keyin avtomatik yuboriladi"],
 ];
 
-const SPLASH_MS = 1200;
+const SPLASH_MS = 1700;
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -97,12 +98,7 @@ export default function Dashboard() {
 
   if (splashVisible) {
     return (
-      <Shell>
-        <div className="pn-splash">
-          <Wordmark />
-          <div className="pn-splash__bar"><i /></div>
-        </div>
-      </Shell>
+      <Shell><Intro /></Shell>
     );
   }
 

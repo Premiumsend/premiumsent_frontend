@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect } from "react";
 import Stars from "./pages/Stars/Stars";
 import UsdtStars from "./pages/UsdtStars/UsdtStars";
 import PaymeeStars from "./pages/PaymeeStars/PaymeeStars";
@@ -24,9 +24,6 @@ import TelegramGate from "./components/TelegramGate";
 import apiFetch from "./utils/apiFetch";
 
 import ErrorBoundary from "./components/ErrorBoundary";
-
-// Intro variantlari ko'rigi: faqat lokal, production build'ga kirmaydi
-const TestPage = import.meta.env.DEV ? lazy(() => import("./pages/Test/Test")) : null;
 
 function App() {
   const [maintenance, setMaintenance] = useState(false);
@@ -88,7 +85,6 @@ function App() {
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/starsadmin" element={<AdminPanel/>} />
-                {TestPage && <Route path="/test" element={<Suspense fallback={null}><TestPage /></Suspense>} />}
               </Routes>
             </BrowserRouter>
           </LanguageProvider>
