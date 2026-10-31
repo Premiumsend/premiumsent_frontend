@@ -2,20 +2,15 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import WebApp from "@twa-dev/sdk";
 import { useTranslation } from "../../context/LanguageContext";
-import { TGSSticker } from "../../components/TGSSticker";
 import apiFetch from "../../utils/apiFetch";
-import "./Notifications.css";
+import { Shell } from "../../ui/Kit";
+import { BellIcon, CheckIcon, TgStar } from "../../ui/Brand";
 
-import bellSticker from "../../assets/AnimatedSticker_news.tgs";
-
-// Notification type icons
 const TYPE_ICONS = {
-  info: "ℹ️",
-  success: "✅",
-  warning: "⚠️",
-  promo: "🎁",
-  system: "🔔",
+  success: ["is-ok", <CheckIcon key="ok" />],
+  promo: ["is-gold", <TgStar key="promo" size={20} />],
 };
+const DEFAULT_ICON = ["is-info", <BellIcon key="bell" size={18} />];
 
 // Format relative time
 const formatRelativeTime = (dateStr) => {
@@ -27,7 +22,7 @@ const formatRelativeTime = (dateStr) => {
   if (diff < 3600) return `${Math.floor(diff / 60)} daqiqa oldin`;
   if (diff < 86400) return `${Math.floor(diff / 3600)} soat oldin`;
   if (diff < 604800) return `${Math.floor(diff / 86400)} kun oldin`;
-  
+
   return date.toLocaleDateString("uz-UZ", {
     day: "2-digit",
     month: "short",
@@ -40,14 +35,13 @@ export default function Notifications() {
   const { t } = useTranslation();
 
   const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
 
   // Telegram Mini App Back Button
   useEffect(() => {
     try {
       WebApp.BackButton.show();
-      const handleBackClick = () => navigate("/");
+      const handleBackClick = () => navigate("/profile");
       WebApp.BackButton.onClick(handleBackClick);
 
       return () => {
@@ -73,7 +67,6 @@ export default function Notifications() {
 
     const loadNotifications = async () => {
       try {
-        setLoading(true);
         const res = await apiFetch(`/api/notifications/${userId}`);
         const data = await res.json();
 
@@ -86,76 +79,36 @@ export default function Notifications() {
         }
       } catch (err) {
         console.error("Load notifications error:", err);
-      } finally {
-        setLoading(false);
       }
     };
 
     loadNotifications();
   }, [userId]);
 
-  // Mark single notification as read
-  const markAsRead = async (id) => {
-    try {
-      await apiFetch(`/api/notifications/${id}/read`, { method: "POST" });
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
-      );
-    } catch (err) {
-      console.error("Mark as read error:", err);
-    }
-  };
-
   return (
-    <div className="notifications-page">
-      {/* Header */}
-      <div className="notifications-header">
-        <div className="notifications-sticker-container">
-          <TGSSticker stickerPath={bellSticker} className="notifications-sticker" />
-        </div>
-        <h1>{t("notifications.title") || "Bildirishnomalar"}</h1>
-        <p className="notifications-subtitle">
-          {t("notifications.subtitle") || "Yangiliklar va xabarlar"}
-        </p>
+    <Shell>
+      <div className="pn-scroll">
+        <h1 className="pn-title">{t("notifications.title") || "Bildirishnomalar"}</h1>
+        {notifications.length === 0 ? (
+          <div className="pn-empty">
+            <span><BellIcon size={26} /></span>
+            <b>{t("notifications.noNotifications") || "Bildirishnomalar yo'q"}</b>
+            {t("notifications.emptyHint") || "Yangi xabarlar shu yerda ko'rinadi"}
+          </div>
+        ) : (
+          <ul className="pn-notes">
+            {notifications.map((notif) => {
+              const [tone, icon] = TYPE_ICONS[notif.type] || DEFAULT_ICON;
+              return (
+                <li key={notif.id} className={notif.is_read ? "" : "is-unread"}>
+                  <span className={`pn-notes__ic ${tone}`}>{icon}</span>
+                  <span><b>{notif.title}</b>{notif.message}<small>{formatRelativeTime(notif.created_at)}</small></span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
-
-      {/* Content */}
-      {notifications.length === 0 ? (
-            <div className="notifications-empty">
-              <div className="empty-icon">🔔</div>
-              <h3>{t("notifications.noNotifications") || "Bildirishnomalar yo'q"}</h3>
-              <p>{t("notifications.emptyHint") || "Yangi xabarlar shu yerda ko'rinadi"}</p>
-            </div>
-          ) : (
-            <div className="notifications-list">
-              {notifications.map((notif) => (
-                <div
-                  key={notif.id}
-                  className={`notification-item ${notif.is_read ? "read" : "unread"} type-${notif.type}`}
-                  onClick={() => !notif.is_read && markAsRead(notif.id)}
-                >
-                  <div className="notification-icon">
-                    {TYPE_ICONS[notif.type] || TYPE_ICONS.info}
-                  </div>
-                  <div className="notification-content">
-                    <div className="notification-header">
-                      <h4 className="notification-title">{notif.title}</h4>
-                      {notif.is_global && (
-                        <span className="notification-global-badge">
-                          {t("notifications.global") || "Umumiy"}
-                        </span>
-                      )}
-                    </div>
-                    <p className="notification-message">{notif.message}</p>
-                    <span className="notification-time">
-                      {formatRelativeTime(notif.created_at)}
-                    </span>
-                  </div>
-                  {!notif.is_read && <div className="notification-unread-dot"></div>}
-                </div>
-              ))}
-            </div>
-          )}
-    </div>
+    </Shell>
   );
 }

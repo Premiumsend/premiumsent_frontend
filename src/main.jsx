@@ -6,23 +6,13 @@ import './index.css'
 
 // Telegram Mini App SDK
 import WebApp from '@twa-dev/sdk'
+import { setupTelegramApp } from './utils/telegramApp.js'
 
 // Telegram WebApp ishga tayyor bo'lganda
 WebApp.ready()
 
-// Boshlang'ich rangni o'rnatish (tema ThemeContext'da boshqariladi)
-// Dark mode ni tekshirish
-const savedTheme = localStorage.getItem("theme");
-const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-const isDark = savedTheme ? savedTheme === "dark" : prefersDark;
-
-if (isDark) {
-  WebApp.setBackgroundColor("#000000");
-  WebApp.setHeaderColor("#000000");
-} else {
-  WebApp.setBackgroundColor("#ffffff");
-  WebApp.setHeaderColor("#ffffff");
-}
+// Ranglar, fullscreen va chiqishda tasdiq
+setupTelegramApp()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

@@ -1,12 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
-import starsSticker from "../../assets/AnimatedSticker_stars.tgs";
-import { TGSSticker } from "../../components/TGSSticker";
 import { useNavigate } from "react-router-dom";
 import apiFetch from "../../utils/apiFetch";
-import { SUPPORT_TELEGRAM_URL } from "../../utils/supportContact";
+import { Dust, PromoField, RecipientField, Shell, fmt } from "../../ui/Kit";
+import { ChevronDown, TgStar } from "../../ui/Brand";
+import { Confirm, Status, Transfer } from "../../ui/Payment";
 import {
-  getPremiumPurchasePath,
-  getFragmentPaymentLabel,
   isCardDeliveryVariant,
   starsApiPrefix,
 } from "../../utils/starsPurchaseRoute";
@@ -20,32 +18,15 @@ import "./Stars.css";
 
 import WebApp from "@twa-dev/sdk";
 
-// Star Icon Component
-const StarIcon = () => (
-  <svg height="20" viewBox="0 0 20 20" width="20" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" style={{ marginRight: '8px', marginTop: '-2px' }}>
-    <defs>
-      <path id="a" d="m6.02 4.99 2.21-4.42c.25-.51.86-.72 1.37-.46.2.1.36.27.46.47l2.08 4.26c.17.34.5.58.88.63l4.36.52c.59.08 1.02.62.95 1.22-.03.24-.14.47-.32.65l-3.45 3.42c-.14.13-.2.33-.18.53l.57 4.61c.09.66-.38 1.27-1.03 1.35-.25.03-.5-.02-.72-.14l-3.64-2c-.26-.14-.58-.15-.85-.01l-3.77 1.95c-.53.27-1.18.06-1.45-.48-.11-.2-.14-.43-.11-.65l.3-2.12c.15-1.04.79-1.93 1.71-2.41l4.19-2.15c.11-.06.15-.2.1-.31-.05-.09-.14-.14-.24-.12l-5.12.74c-.78.11-1.58-.11-2.19-.62l-1.71-1.4c-.49-.4-.56-1.12-.17-1.62.19-.22.45-.37.74-.41l4.38-.57c.28-.03.52-.21.65-.46z" />
-      <linearGradient id="b" x1="25%" x2="74.92%" y1=".825%" y2="107.86%">
-        <stop offset="0" stopColor="#ffd951" />
-        <stop offset="1" stopColor="#ffb222" />
-      </linearGradient>
-      <linearGradient id="c" x1="50%" x2="50%" y1="0%" y2="99.8%">
-        <stop offset="0" stopColor="#e58f0d" />
-        <stop offset=".9996" stopColor="#eb7915" />
-      </linearGradient>
-      <filter id="d" height="110.6%" width="110.3%" x="-5.2%" y="-5.3%">
-        <feOffset dx="1" dy="1" in="SourceAlpha" result="shadowOffsetInner1" />
-        <feComposite in="shadowOffsetInner1" in2="SourceAlpha" k2="-1" k3="1" operator="arithmetic" result="shadowInnerInner1" />
-        <feColorMatrix in="shadowInnerInner1" type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.657 0" />
-      </filter>
-    </defs>
-    <g fill="none" fillRule="evenodd" transform="translate(1.389 1.389)">
-      <use fill="url(#b)" fillRule="evenodd" xlinkHref="#a" />
-      <use fill="#000" filter="url(#d)" xlinkHref="#a" />
-      <use stroke="url(#c)" strokeWidth=".89" xlinkHref="#a" />
-    </g>
-  </svg>
-);
+const STAGE_OF = {
+  pending: "pending",
+  payment_received: "received",
+  processing: "received",
+  stars_sent: "success",
+  failed: "failed",
+  error: "failed",
+  expired: "expired",
+};
 
 // 8 daqiqa = 480 sekund
 const POLLING_DURATION = 8 * 60 * 1000; // 8 daqiqa millisekondda
@@ -55,17 +36,11 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
   const isPaymee = variant === "paymee";
   const isCardFlow = isCardDeliveryVariant(variant);
   const starsApi = starsApiPrefix(variant);
-  const CARD_NUMBER = import.meta.env.VITE_CARD_NUMBER;
-  const CARD_NAME = import.meta.env.VITE_CARD_NAME;
   const NARX = parseInt(import.meta.env.VITE_NARX) || 300;
 
   // Stars options
   const STARS_OPTIONS = [50, 100, 200, 350, 500, 750, 1000, 2000, 5000, 10000];
 
-  // Discount packages map: { [stars]: { discount, discountedPrice, basePrice } }
-  const [discountMap, setDiscountMap] = useState({});
-
-  const [backendStatus, setBackendStatus] = useState("");
   const [username, setUsername] = useState("");
   const [stars, setStars] = useState("");
   const [price, setPrice] = useState(0);
@@ -75,8 +50,8 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
   const [status, setStatus] = useState("pending");
   const [errorMessage, setErrorMessage] = useState("");
   const [txId, setTxId] = useState(null);
-  const [copiedCard, setCopiedCard] = useState(false);
-  const [copiedAmount, setCopiedAmount] = useState(false);
+  // Buyurtma ochilmadi: "busy" (slotlar band)
+  const [orderIssue, setOrderIssue] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [timer, setTimer] = useState(20);
@@ -92,26 +67,12 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
   const [promoMessage, setPromoMessage] = useState("");
   const [promoError, setPromoError] = useState(false);
   const [appliedPromo, setAppliedPromo] = useState(null);
-  const [fragmentPayLabel, setFragmentPayLabel] = useState("");
 
   // Refs for polling (modal yopilsa ham davom etadi)
   const pollingRef = useRef(null);
   const countdownRef = useRef(null);
 
   const navigate = useNavigate();
-
-  const goToPremium = async () => {
-    setShowModal(false);
-    try {
-      const res = await apiFetch("/api/app-config");
-      const cfg = await res.json();
-      navigate(getPremiumPurchasePath(cfg));
-    } catch {
-      navigate(
-        isPaymee ? "/paymeepremium" : isFragment ? "/usdtpremium" : "/premium"
-      );
-    }
-  };
 
   const goToHome = () => {
     setShowModal(false);
@@ -129,47 +90,6 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
       setUsername(tgUser);
     } catch (err) {
       console.error("Telegram username olishda xato:", err);
-    }
-  };
-
-  const formatAmount = (num) =>
-    num?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-
-  useEffect(() => {
-    if (!isCardFlow) {
-      setFragmentPayLabel("");
-      return;
-    }
-    if (isPaymee) {
-      setFragmentPayLabel("Paymee API");
-      return;
-    }
-    apiFetch("/api/app-config")
-      .then((r) => r.json())
-      .then((cfg) => setFragmentPayLabel(getFragmentPaymentLabel(cfg)))
-      .catch(() => setFragmentPayLabel("TON"));
-  }, [isCardFlow, isPaymee]);
-
-  // Discount paketlarni yuklash (refreshable)
-  const fetchDiscountPackages = async () => {
-    try {
-      const res = await apiFetch("/api/discount-packages");
-      const data = await res.json();
-      const map = {};
-      data.forEach(pkg => {
-        if (pkg.slot_available !== false) {
-          map[pkg.stars] = {
-            id: pkg.id,
-            discount: pkg.discount_percent,
-            discountedPrice: pkg.current_price,
-            basePrice: pkg.stars * NARX,
-          };
-        }
-      });
-      setDiscountMap(map);
-      console.log("✅ Discount map:", map);
-    } catch (err) {
-      console.error("❌ Discount paketlarni yuklashda xato:", err);
     }
   };
 
@@ -193,11 +113,6 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
       console.warn("Telegram WebApp not ready", e);
     }
 
-    apiFetch("/api/status")
-      .then((res) => res.json())
-      .then((data) => setBackendStatus(data.message))
-      .catch(() => setBackendStatus("Backend offline ❌"));
-
     return () => {
       try {
         if (!showModal && !showWarningModal) {
@@ -207,11 +122,6 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
       } catch (e) {}
     };
   }, [showModal, showWarningModal, navigate]);
-
-  // Discount paketlarni yuklash (initial load)
-  useEffect(() => {
-    fetchDiscountPackages();
-  }, []);
 
   // Stars price - backend dan slot-based narx olish
   useEffect(() => {
@@ -317,20 +227,6 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
 
     return () => clearTimeout(timeout);
   }, [username, isFragment, isPaymee, stars, starsApi]);
-
-  // Copy card
-  const handleCopy = () => {
-    navigator.clipboard.writeText(CARD_NUMBER);
-    setCopiedCard(true);
-    setTimeout(() => setCopiedCard(false), 2000);
-  };
-
-  // Copy amount
-  const handleCopyamount = () => {
-    navigator.clipboard.writeText(order?.amount);
-    setCopiedAmount(true);
-    setTimeout(() => setCopiedAmount(false), 2000);
-  };
 
   // Check promocode
   const handleCheckPromo = async () => {
@@ -579,7 +475,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
         
         // SLOTS_FULL xatosi
         if (errorData.code === "SLOTS_FULL") {
-          alert("⏳ Hozirda juda ko'p buyurtmalar mavjud.\n\nIltimos, 1-2 daqiqadan keyin qayta urinib ko'ring.");
+          setOrderIssue("busy");
           return;
         }
 
@@ -616,502 +512,120 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
     setShowModal(true);
   };
 
-  const formatTime = (sec) => {
-    const min = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${min.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  };
+  const starCount = parseInt(stars, 10) || 0;
+  const validStars = starCount >= 50 && starCount <= 10000;
+  const recipientName = profile?.username || username.replace(/^@/, "").trim() || order?.username || "";
+  const productName = `${fmt(order?.stars)} Stars`;
+  const total = appliedPromo ? appliedPromo.newPrice : price;
+  const stage = STAGE_OF[status];
+  const closePayment = () => { setShowModal(false); stopPolling(); stopCountdown(); };
+  const buyDisabled =
+    Boolean(stockUnavailableMessage) ||
+    !validStars ||
+    priceLoading ||
+    !username.trim() ||
+    (!isCardFlow && !profile?.recipient);
+
+  const packRow = (pack, i) => (
+    <button key={pack} type="button" className={`pn-starrow ${starCount === pack ? "is-active" : ""}`} onClick={() => setStars(String(pack))}>
+      <span className="pn-stack">{Array.from({ length: Math.min(i + 1, 6) }, (_, n) => <TgStar key={n} size={26} outline />)}</span>
+      <span className="pn-starrow__n">{fmt(pack)}</span>
+      <span className="pn-starrow__p">{fmt(pack * NARX)} so'm</span>
+    </button>
+  );
 
   return (
-    <div className="stars-container">
-      <div className="stars-header-container">
-        <TGSSticker stickerPath={starsSticker} className="stars-header-sticker" />
-      </div>
-
-      <div className="stars-page-title">
-        <h1>Telegram Stars</h1>
-        <p>
-          xarid qilish
-          {isCardFlow && fragmentPayLabel
-            ? isPaymee
-              ? ` · ${fragmentPayLabel}`
-              : ` · Fragment (${fragmentPayLabel})`
-            : ""}
-        </p>
-      </div>
-
-      {/* Profile */}
-      {profile && (
-        <div className="profile-preview-small">
-          <img
-            src={profile.imageUrl || "../src/assets/default_image.png"}
-            className="profile-img-small"
-          />
-          <div className="profile-info">
-            <div className="name">{profile.fullName}</div>
-            <div className="username">@{profile.username}</div>
-          </div>
+    <Shell>
+      <div className="pn-scroll pn-scroll--bar">
+        <div className="pn-pagehero pn-pagehero--gold">
+          <span className="pn-star-dust pn-star-dust--gold"><TgStar size={60} /><Dust /></span>
+          <h1>Telegram Stars</h1>
+          <p>Kanal va botlar uchun yulduzlar</p>
         </div>
-      )}
 
-      {loadingProfile && (
-        <div className="loader-arc">
-          <div className="loader-arc-1"></div>
-          <div className="loader-arc-2">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </div>
-      )}
-
-      {/* SEARCH */}
-      <div className="search-row">
-        <div className="username-row" style={{ width: "100%" }}>
-          <input
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Foydalanuvchi nomi @username"
-          />
-          {/* 🔹 Faqat Telegram Mini App'da */}
-          {window?.Telegram?.WebApp && (
-            <button type="button" className="btn-my" onClick={fillMyUsername}>
-              O'zim
-            </button>
-          )}
-        </div>
-      </div>
-
-      <h3>Stars miqdorini kiriting:</h3>
-      <div className="input-group">
-        <input
-          className="tg-input"
-          type="number"
-          value={stars}
-          onChange={(e) => setStars(e.target.value)}
-          placeholder="50 dan 100,000 tagacha"
+        <RecipientField
+          username={username}
+          setUsername={setUsername}
+          onMe={fillMyUsername}
+          loading={loadingProfile}
+          profile={profile?.fullName ? profile : null}
         />
-      </div>
 
-      {/* Stars Options */}
-      <div className="preset-options-section">
-        <h3 style={{color: '#fff', margin: '24px 0 12px 0', fontSize: '16px', fontWeight: '600'}}>Yoki to'plamni tanlang:</h3>
-        <div style={{display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '20px'}}>
-          {(showMorePlans ? STARS_OPTIONS : STARS_OPTIONS.slice(0, 3)).map((starAmount, idx) => {
-            const maxPrice = starAmount * NARX;
-            const discountPkg = discountMap[starAmount];
-
-            if (discountPkg) {
-              // Bu amount uchun chegirma paket mavjud — discount ko'rinishida chiqar
-              return (
-                <div
-                  key={idx}
-                  onClick={() => navigate('/discount', { state: { selectedPackageId: discountPkg.id } })}
-                  style={{
-                    position: 'relative',
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '10px 14px',
-                    background: 'linear-gradient(135deg, rgba(249,168,37,0.18) 0%, rgba(255,204,2,0.08) 100%)',
-                    border: '2px solid rgba(249,168,37,0.5)',
-                    borderRadius: '10px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    overflow: 'hidden'
-                  }}
-                >
-                  {/* Chegirma badge */}
-                  <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    background: 'linear-gradient(135deg, #f9a825, #ffcc02)',
-                    color: '#1a1a2e',
-                    fontSize: '10px',
-                    fontWeight: '700',
-                    padding: '3px 10px',
-                    borderRadius: '0 8px 0 8px'
-                  }}>
-                    -{discountPkg.discount}%
-                  </div>
-
-                  <span style={{color: '#fff', fontSize: '14px', fontWeight: '500', flex: 1, display: 'flex', alignItems: 'center'}}>
-                    <StarIcon />
-                    {starAmount >= 1000 ? (starAmount / 1000) + 'K' : starAmount} Stars
-                  </span>
-
-                  <div style={{textAlign: 'right'}}>
-                    <div style={{color: '#f9a825', fontSize: '13px', fontWeight: '700'}}>
-                      {formatAmount(discountPkg.discountedPrice)} UZS
-                    </div>
-                    <div style={{color: 'rgba(255,255,255,0.45)', fontSize: '11px', textDecoration: 'line-through'}}>
-                      {formatAmount(maxPrice)} UZS
-                    </div>
-                  </div>
-                </div>
-              );
-            }
-
-            return (
-              <div
-                key={idx}
-                onClick={() => setStars(String(starAmount))}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '10px 14px',
-                  background: stars === String(starAmount) ? 'rgba(102, 126, 234, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                  border: stars === String(starAmount) ? '2px solid #667eea' : '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <span style={{color: '#fff', fontSize: '14px', fontWeight: '500', flex: 1, display: 'flex', alignItems: 'center'}}>
-                  <StarIcon />
-                  {starAmount >= 1000 ? (starAmount / 1000) + 'K' : starAmount} Stars
-                </span>
-                <span style={{color: '#4ee0ff', fontSize: '13px', fontWeight: '600'}}>
-                  {formatAmount(maxPrice)} UZS
-                </span>
-              </div>
-            );
-          })}
-        </div>
-        
-        {/* MORE OPTIONS DROPDOWN */}
-        {STARS_OPTIONS.length > 3 && (
-          <div style={{textAlign: 'center', marginBottom: '20px'}}>
-            <button onClick={() => setShowMorePlans(!showMorePlans)} style={{
-              background: 'none',
-              border: 'none',
-              color: '#667eea',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '500',
-              textDecoration: 'none',
-              transition: 'all 0.2s ease'
-            }}>
-              {showMorePlans ? 'Kamroq variantlarni yashiring ▲' : "Ko'proq variantlarni ko'rsatish ▼"}
-            </button>
+        <section className="pn-field">
+          <label htmlFor="pn-stars">Miqdor</label>
+          <div className="pn-input pn-input--plain">
+            <input
+              id="pn-stars"
+              inputMode="numeric"
+              value={stars}
+              onChange={(e) => setStars(e.target.value.replace(/\D/g, "").slice(0, 5))}
+              placeholder="50 dan 10 000 gacha"
+            />
+            <em>{validStars && price > 0 ? `${fmt(price)} so'm` : ""}</em>
           </div>
-        )}
-      </div>
+          {stars && !validStars && <p className="pn-error">50 dan 10 000 gacha kiriting</p>}
+        </section>
 
-      {stockUnavailableMessage && (
-        <PaymeeStockBanner product="stars" message={stockUnavailableMessage} />
-      )}
-
-      {paymeeStockModal && (
-        <PaymeeStockAlert
-          product="stars"
-          message={paymeeStockModal}
-          onClose={() => setPaymeeStockModal(null)}
-        />
-      )}
-
-      <div className="actions" style={{ marginBottom: '20px' }}>
-        <button
-          type="button"
-          className="tg-button"
-          onClick={handlePayment}
-          disabled={Boolean(stockUnavailableMessage)}
-        >
-          Stars olish {price > 0 && `- ${formatAmount(appliedPromo ? appliedPromo.newPrice : price)} so'm`}
-        </button>
-      </div>
-
-      <div className="pramacod" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <input 
-            value={pramacod}
-            onChange={(e) => setPramacod(e.target.value)}
-            style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff' }}
-            placeholder="Promokod kiriting (Agar bo'lsa)" 
-          />
-          <button 
-            type="button" 
-            onClick={handleCheckPromo}
-            style={{ padding: '0 16px', borderRadius: '10px', background: '#e58f0d', color: '#fff', border: 'none', fontWeight: 'bold' }}
-          >
-            Tekshirish
+        <div className="pn-starlist">
+          {STARS_OPTIONS.slice(0, 3).map(packRow)}
+          <div className={`pn-starmore ${showMorePlans ? "is-open" : ""}`}>
+            <div>{STARS_OPTIONS.slice(3).map((pack, i) => packRow(pack, i + 3))}</div>
+          </div>
+          <button type="button" className={`pn-starlist__toggle ${showMorePlans ? "is-open" : ""}`} onClick={() => setShowMorePlans((m) => !m)}>
+            {showMorePlans ? "Kamroq" : "Ko'proq"} <ChevronDown size={17} />
           </button>
         </div>
-        {promoMessage && (
-          <div style={{ fontSize: '13px', color: promoError ? '#ff4d4d' : '#00e676', textAlign: 'left', paddingLeft: '5px' }}>
-            {promoMessage}
-          </div>
-        )}
+
+        {stockUnavailableMessage && <PaymeeStockBanner product="stars" message={stockUnavailableMessage} />}
+
+        <div className="pn-gap" />
+        <PromoField code={pramacod} setCode={setPramacod} message={promoMessage} isError={promoError} applied={Boolean(appliedPromo)} onApply={handleCheckPromo} />
       </div>
 
-      {/* ---------------- WARNING MODAL (Gift-style) ---------------- */}
-      {showWarningModal && (
-        <div className="stars-warn-overlay">
-          <div className="stars-warn-panel">
-            <div className="stars-warn-header">
-              <h3 className="stars-warn-title">⚠️ MUHIM DIQQAT ⚠️</h3>
-            </div>
+      <div className="pn-bar">
+        <span className="pn-bar__total"><small>Jami</small><b>{validStars && total > 0 ? `${fmt(total)} so'm` : "—"}</b></span>
+        <button type="button" className="pn-cta" disabled={buyDisabled} onClick={handlePayment}>Sotib olish</button>
+      </div>
 
-            <div className="stars-warn-body">
-              <div className="stars-warn-block">
-                <strong>1️⃣ To&apos;lov miqdori:</strong>
-                <br />
-                Faqat ko&apos;rsatilgan summani aniq yuboring. Ozgina farq ham to&apos;lovni topishga xalaqit beradi.
-              </div>
-
-              <div className="stars-warn-amount-highlight">
-                <span className="stars-warn-label">To&apos;lov summasi</span>
-                <span className="stars-warn-amount">{formatAmount(order?.amount)} so&apos;m</span>
-              </div>
-            </div>
-
-            <button type="button" className="stars-warn-btn" onClick={handleWarningUnderstood}>
-              ✅ Shartlarni tushundim
-            </button>
-          </div>
-        </div>
+      {paymeeStockModal && (
+        <PaymeeStockAlert product="stars" message={paymeeStockModal} onClose={() => setPaymeeStockModal(null)} />
       )}
 
-      {/* ---------------- MODAL ---------------- */}
-      {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-
-            {/* PAYMENT INFO - To'lov ma'lumotlari */}
-            {status === "payment_info" && (
-              <div className="payment-info-section">
-                {/* Modal Header */}
-                <div className="modal-header-bar">
-                  <span className="modal-header-title">To'lov ma'lumotlari</span>
-                  <button type="button" className="modal-close-x" onClick={() => { setShowModal(false); stopPolling(); stopCountdown(); }}>✕</button>
-                </div>
-
-                {/* Profile Card */}
-                {profile && (
-                  <div className="modal-profile-card">
-                    <img
-                      src={profile.imageUrl || "../src/assets/default_image.png"}
-                      className="modal-profile-img"
-                    />
-                    <div className="modal-profile-info">
-                      <div className="modal-profile-name">{profile.fullName}</div>
-                      <div className="modal-profile-username">@{profile.username}</div>
-                    </div>
-                    <div className="modal-stars-badge">⭐ {order?.stars}</div>
-                  </div>
-                )}
-
-                {/* Payment Info Cards */}
-                <div className="modal-payment-grid">
-                  <div className="modal-pay-item">
-                    <div className="modal-pay-label">Karta raqami</div>
-                    <div className="modal-pay-row">
-                      <span className="modal-pay-value">{CARD_NUMBER}</span>
-                      <button type="button" className="modal-copy-btn" onClick={handleCopy}>
-                        {copiedCard ? "✓" : "📋"}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="modal-pay-item">
-                    <div className="modal-pay-label">Karta egasi</div>
-                    <div className="modal-pay-row">
-                      <span className="modal-pay-value">{CARD_NAME}</span>
-                    </div>
-                  </div>
-
-                  <div className="modal-pay-item highlight-amount">
-                    <div className="modal-pay-label">To'lov summasi</div>
-                    <div className="modal-pay-row">
-                      <span className="modal-pay-value bold">{formatAmount(order?.amount)} so'm</span>
-                      <button type="button" className="modal-copy-btn" onClick={handleCopyamount}>
-                        {copiedAmount ? "✓" : "📋"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Attention Warning */}
-                <div className="modal-warning-attention">
-                  <div className="warning-pulse"></div>
-                  <span className="warning-icon-big">⚠️</span>
-                  <div className="warning-text">
-                    <strong>DIQQAT!</strong>
-                    <p>Aynan <span className="amount-highlight">{formatAmount(order?.amount)} so'm</span> yuboring!</p>
-                    <p className="warning-sub">Boshqa summa yuborilsa to'lov ko'rinmaydi</p>
-                  </div>
-                </div>
-
-                {/* Timer */}
-                <div className="modal-timer-bar">
-                  <div className="modal-timer">
-                    <span className="timer-icon">⏳</span>
-                    <span className="timer-text">{formatTime(countdown)}</span>
-                  </div>
-                </div>
-
-                {/* Pay Button */}
-                <button type="button" className="btn-payment-done" onClick={handlePaymentDone}>
-                  ✅ To'lov qildim
-                </button>
-                <p className="modal-close-hint">To'lovni amalga oshiring va tugmani bosing</p>
-              </div>
-            )}
-
-            {/* PENDING - To'lov kutilmoqda */}
-            {status === "pending" && (
-              <div className="pending-waiting-section">
-                <div className="modal-header-bar">
-                  <span className="modal-header-title">⏳ To'lov kutilmoqda</span>
-                  <button type="button" className="modal-close-x" onClick={() => { setShowModal(false); stopPolling(); stopCountdown(); }}>✕</button>
-                </div>
-
-                <div className="waiting-animation-wrap">
-                  <div className="waiting-circle-outer">
-                    <div className="waiting-circle-inner">
-                      <div className="waiting-icon">🔍</div>
-                    </div>
-                  </div>
-                  <div className="waiting-dots">
-                    <span></span><span></span><span></span>
-                  </div>
-                </div>
-
-                <h3 className="waiting-title">To'lov qidirilmoqda...</h3>
-                <p className="waiting-subtitle">To'lovingiz avtomatik aniqlanadi</p>
-
-                <div className="waiting-payment-info">
-                  <div className="waiting-info-row">
-                    <span className="waiting-label">Karta:</span>
-                    <span className="waiting-value">{CARD_NUMBER}</span>
-                    <button type="button" className="modal-copy-btn-sm" onClick={handleCopy}>
-                      {copiedCard ? "✓" : "📋"}
-                    </button>
-                  </div>
-                  <div className="waiting-info-row highlight">
-                    <span className="waiting-label">Summa:</span>
-                    <span className="waiting-value bold">{formatAmount(order?.amount)} so'm</span>
-                  </div>
-                </div>
-
-                <div className="waiting-timer">
-                  <span className="timer-icon-sm">⏱️</span>
-                  <span>{formatTime(countdown)}</span>
-                </div>
-
-                <p className="modal-close-hint">Oyna yopilsa ham to'lov kuzatiladi</p>
-              </div>
-            )}
-
-            {/* PAYMENT RECEIVED */}
-            {status === "payment_received" && (
-              <div className="modal-sending-section">
-                <div className="sending-anim-wrap">
-                  <div className="sending-pulse-ring"></div>
-                  <div className="sending-pulse-ring delay"></div>
-                  <div className="sending-center-icon">💫</div>
-                </div>
-                <h3 className="sending-title">To'lov qabul qilindi!</h3>
-                <p className="sending-subtitle">Stars yuborilmoqda...</p>
-
-                {profile && (
-                  <div className="sending-recipient">
-                    <img src={profile.imageUrl || "../src/assets/default_image.png"} className="sending-avatar" />
-                    <div className="sending-info">
-                      <span className="sending-name">{profile.fullName}</span>
-                      <span className="sending-user">@{profile.username}</span>
-                    </div>
-                    <div className="sending-stars-count">⭐ {order?.stars}</div>
-                  </div>
-                )}
-
-                <div className="sending-progress-bar">
-                  <div className="sending-progress-fill"></div>
-                </div>
-                <p className="sending-hint">Biroz kuting, jarayon avtomatik...</p>
-              </div>
-            )}
-
-            {/* STARS SENT - SUCCESS */}
-            {status === "stars_sent" && (
-              <div className="modal-success-section">
-                <div className="success-confetti">
-                  <span></span><span></span><span></span><span></span><span></span><span></span>
-                </div>
-
-                <div className="success-check-wrap">
-                  <svg className="success-check-svg" viewBox="0 0 52 52">
-                    <circle className="success-check-circle" cx="26" cy="26" r="25" fill="none" />
-                    <path className="success-check-path" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
-                  </svg>
-                </div>
-
-                <h3 className="success-title">Muvaffaqiyatli! 🎉</h3>
-                <p className="success-amount">{order?.stars} ⭐ yuborildi</p>
-
-                {profile && (
-                  <div className="success-recipient-card">
-                    <img src={profile.imageUrl || "../src/assets/default_image.png"} className="success-avatar" />
-                    <div className="success-user-info">
-                      <span className="success-user-name">{profile.fullName}</span>
-                      <span className="success-user-handle">@{profile.username}</span>
-                    </div>
-                    <div className="success-delivered-badge">✓ Yetkazildi</div>
-                  </div>
-                )}
-
-                <div className="success-details">
-                  <div className="success-detail-row">
-                    <span className="success-detail-label">Stars</span>
-                    <span className="success-detail-value">{order?.stars} ⭐</span>
-                  </div>
-                  <div className="success-detail-row">
-                    <span className="success-detail-label">To'lov</span>
-                    <span className="success-detail-value">{formatAmount(order?.amount)} so'm</span>
-                  </div>
-                </div>
-
-                {txId && (
-                  <div className="modal-txid">
-                    <span className="modal-txid-label">Tranzaksiya ID</span>
-                    <div className="modal-txid-row">
-                      <code>{txId}</code>
-                      <button type="button" className="modal-copy-btn" onClick={() => navigator.clipboard.writeText(txId)}>
-                        📋
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <p className="modal-auto-close">Oyna {timer}s da yopiladi</p>
-              </div>
-            )}
-
-            {/* EXPIRED */}
-            {status === "expired" && (
-              <div className="modal-result-section">
-                <button type="button" className="modal-close-x expired-x" onClick={() => { setShowModal(false); stopPolling(); stopCountdown(); }}>✕</button>
-                <div className="modal-result-icon expired-bg">⏰</div>
-                <h3 className="modal-result-title">Vaqt tugadi</h3>
-                <p className="modal-result-desc">To'lov muddati o'tib ketdi. Qaytadan urinib ko'ring.</p>
-                <button type="button" className="btn-go-home" onClick={goToHome}>🏠 Bosh sahifaga qaytish</button>
-              </div>
-            )}
-
-            {/* FAILED / ERROR */}
-            {["failed", "error"].includes(status) && (
-              <div className="modal-result-section">
-                <button type="button" className="modal-close-x expired-x" onClick={() => { setShowModal(false); stopPolling(); stopCountdown(); }}>✕</button>
-                <div className="modal-result-icon expired-bg" style={{background: 'rgba(255, 59, 48, 0.15)', color: '#ff3b30'}}>❌</div>
-                <h3 className="modal-result-title">Xatolik yuz berdi</h3>
-                <p className="modal-result-desc">{errorMessage || "Stars olishda xatolik. Admin bilan bog'laning."}</p>
-                <button type="button" className="btn-go-home" onClick={() => window.open(SUPPORT_TELEGRAM_URL, "_blank")}>👨🏻‍💻 Admin bilan bog'lanish</button>
-              </div>
-            )}
-          </div>
-        </div>
+      {showWarningModal && order && (
+        <Confirm product={productName} recipient={recipientName} amount={order.amount} onContinue={handleWarningUnderstood} />
       )}
-    </div>
+
+      {showModal && order && status === "payment_info" && (
+        <Transfer amount={order.amount} item="stars" countdown={countdown} onClose={closePayment} onPaid={handlePaymentDone} />
+      )}
+
+      {showModal && order && stage && (
+        <Status
+          stage={stage}
+          item="stars"
+          product={productName}
+          recipient={recipientName}
+          amount={order.amount}
+          countdown={countdown}
+          orderId={order.id}
+          txId={txId}
+          errorText={errorMessage}
+          note={stage === "success" ? `Oyna ${timer} soniyada yopiladi` : ""}
+          onClose={closePayment}
+          onDone={goToHome}
+          onRetry={closePayment}
+        />
+      )}
+
+      {orderIssue && (
+        <Status
+          stage={orderIssue}
+          item="stars"
+          onClose={() => setOrderIssue(null)}
+          onRetry={() => { setOrderIssue(null); handlePayment(); }}
+        />
+      )}
+    </Shell>
   );
 }
 

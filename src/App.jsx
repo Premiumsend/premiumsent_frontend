@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import Stars from "./pages/Stars/Stars";
 import UsdtStars from "./pages/UsdtStars/UsdtStars";
 import PaymeeStars from "./pages/PaymeeStars/PaymeeStars";
@@ -13,7 +13,6 @@ import Profile from "./pages/Profile/Profile";
 import History from "./pages/History/History";
 import Challenges from "./pages/Challenges/Challenges";
 import Gift from "./pages/Gift/Gift";
-import Statistics from "./pages/Statistics/Statistics";
 import Discount from "./pages/Discount/Discount";
 import Notifications from "./pages/Notifications/Notifications";
 import TermsOfService from "./pages/Legal/TermsOfService";
@@ -25,6 +24,9 @@ import TelegramGate from "./components/TelegramGate";
 import apiFetch from "./utils/apiFetch";
 
 import ErrorBoundary from "./components/ErrorBoundary";
+
+// Intro variantlari ko'rigi: faqat lokal, production build'ga kirmaydi
+const TestPage = import.meta.env.DEV ? lazy(() => import("./pages/Test/Test")) : null;
 
 function App() {
   const [maintenance, setMaintenance] = useState(false);
@@ -81,12 +83,12 @@ function App() {
                 <Route path="/history" element={<History />} />
                 <Route path="/challenges" element={<Challenges />} />
                 <Route path="/gift" element={<Gift />} />
-                <Route path="/statistics" element={<Statistics />} />
                 <Route path="/discount" element={<Discount />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/starsadmin" element={<AdminPanel/>} />
+                {TestPage && <Route path="/test" element={<Suspense fallback={null}><TestPage /></Suspense>} />}
               </Routes>
             </BrowserRouter>
           </LanguageProvider>

@@ -1,15 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import "./Premium.css";
-import diamondGif from "../../assets/diamond.gif";
 import WebApp from "@twa-dev/sdk";
-import premiumGif from "../../assets/premium_gif.gif";
-import premiumSticker from "../../assets/AnimatedSticker_premium.tgs";
-import { TGSSticker } from "../../components/TGSSticker";
 import apiFetch from "../../utils/apiFetch";
-import { SUPPORT_TELEGRAM_URL } from "../../utils/supportContact";
+import { Dust, PromoField, RecipientField, Shell, fmt } from "../../ui/Kit";
+import { TgStar } from "../../ui/Brand";
+import { Confirm, Status, Transfer } from "../../ui/Payment";
 import {
-  getFragmentPaymentLabel,
   isCardDeliveryVariant,
   premiumApiPrefix,
 } from "../../utils/starsPurchaseRoute";
@@ -19,6 +16,17 @@ import {
 } from "../../utils/paymeeErrors";
 import { PaymeeStockBanner } from "../../components/PaymeeStockBanner";
 import { PaymeeStockAlert } from "../../components/PaymeeStockAlert";
+const PLAN_TAGS = { 6: "Tavsiya", 12: "Eng foydali" };
+const STAGE_OF = {
+  pending: "pending",
+  payment_received: "received",
+  processing: "received",
+  premium_sent: "success",
+  failed: "failed",
+  error: "failed",
+  expired: "expired",
+};
+
 function normalizePremiumPollStatus(status) {
   if (status === "completed" || status === "delivered") return "premium_sent";
   return status;
@@ -34,8 +42,6 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
   const PREMIUM_3 = parseInt(import.meta.env.VITE_PREMIUM_3);
   const PREMIUM_6 = parseInt(import.meta.env.VITE_PREMIUM_6);
   const PREMIUM_12 = parseInt(import.meta.env.VITE_PREMIUM_12);
-  const CARD_NUMBER = import.meta.env.VITE_CARD_NUMBER;
-  const CARD_NAME = import.meta.env.VITE_CARD_NAME;
 
   // ====================
   // STATE
@@ -74,24 +80,19 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
   const [countdown, setCountdown] = useState(0);
 
   const [loadingBuy, setLoadingBuy] = useState(false);
-  const [copiedCard, setCopiedCard] = useState(false);
-  const [copiedAmount, setCopiedAmount] = useState(false);
+  // Buyurtma ochilmadi: "busy" (slotlar band) yoki "error" (tarmoq/server)
+  const [orderIssue, setOrderIssue] = useState(null);
 
   // Promocode states
   const [pramacod, setPramacod] = useState("");
   const [promoMessage, setPromoMessage] = useState("");
   const [promoError, setPromoError] = useState(false);
   const [appliedPromo, setAppliedPromo] = useState(null);
-  const [fragmentPayLabel, setFragmentPayLabel] = useState("");
   const [fragmentPlanPrice, setFragmentPlanPrice] = useState(null);
   const [fragmentPriceLoading, setFragmentPriceLoading] = useState(false);
   const [fragmentSlotsFull, setFragmentSlotsFull] = useState(false);
   const [paymeeStockMessage, setPaymeeStockMessage] = useState("");
   const [paymeeStockModal, setPaymeeStockModal] = useState(null);
-
-  // Format
-  const formatAmount = (num) =>
-    num?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
   // Back button functionality
   useEffect(() => {
@@ -123,21 +124,6 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
     };
   }, [showModal, showWarningModal, navigate]);
 
-  useEffect(() => {
-    if (!isCardFlow) {
-      setFragmentPayLabel("");
-      return;
-    }
-    if (isPaymee) {
-      setFragmentPayLabel("Paymee API");
-      return;
-    }
-    apiFetch("/api/app-config")
-      .then((r) => r.json())
-      .then((cfg) => setFragmentPayLabel(getFragmentPaymentLabel(cfg)))
-      .catch(() => setFragmentPayLabel("TON"));
-  }, [isCardFlow, isPaymee]);
-
   // Fragment: slot narxi backenddan (to'lov summasi mos bo'lishi uchun)
   useEffect(() => {
     if (!isCardFlow) {
@@ -168,6 +154,12 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
       })
       .finally(() => setFragmentPriceLoading(false));
   }, [isCardFlow, selectedPlan.months, premiumApi]);
+
+  // Promokod narxi tanlangan muddatga bog'liq
+  useEffect(() => {
+    setAppliedPromo(null);
+    setPromoMessage("");
+  }, [selectedPlan.months]);
 
   // ================================
   // 🔍 PREMIUM SEARCH
@@ -306,7 +298,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
     }
 
     if (isCardFlow && fragmentSlotsFull) {
-      alert("⏳ Hozirda juda ko'p buyurtmalar mavjud.\n\nIltimos, 1-2 daqiqadan keyin qayta urinib ko'ring.");
+      setOrderIssue("busy");
       return;
     }
 
@@ -341,7 +333,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
       if (!res.ok) {
         // SLOTS_FULL xatosi
         if (data.code === "SLOTS_FULL") {
-          alert("⏳ Hozirda juda ko'p buyurtmalar mavjud.\n\nIltimos, 1-2 daqiqadan keyin qayta urinib ko'ring.");
+          setOrderIssue("busy");
           return;
         }
         if (data.code === "ALREADY_HAS_PREMIUM") {
@@ -367,7 +359,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
       startPolling(orderData.id);
 
     } catch {
-      alert("Server xatosi");
+      setOrderIssue("error");
     } finally {
       setLoadingBuy(false);
     }
@@ -463,7 +455,9 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
       setCountdown((n) => {
         if (n <= 1) {
           stopCountdown();
-          setShowModal(false);
+          stopPolling();
+          setShowWarningModal(false);
+          setShowModal(true);
           setPaymentStatus("expired");
           return 0;
         }
@@ -483,19 +477,6 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
     };
   }, []);
 
-  // Copy handlers - alohida animatsiyalar
-  const handleCopyCard = () => {
-    navigator.clipboard.writeText(CARD_NUMBER);
-    setCopiedCard(true);
-    setTimeout(() => setCopiedCard(false), 1500);
-  };
-
-  const handleCopyAmount = () => {
-    navigator.clipboard.writeText(String(order?.amount));
-    setCopiedAmount(true);
-    setTimeout(() => setCopiedAmount(false), 1500);
-  };
-
   // "To'lov qildim" tugmasi - payment_info dan pending ga o'tish
   const handlePaymentDone = () => {
     paymentDoneClickedRef.current = true;
@@ -508,446 +489,117 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
     setShowModal(true);
   };
 
-  const formatTime = (s) =>
-    `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-
   // ================================
   // UI
   // ================================
+  const recipientName = profile?.username || username.replace(/^@/, "").trim();
+  const productName = order ? `Premium, ${order.muddat_oy} oy` : "";
+  const basePrice = isCardFlow ? fragmentPlanPrice : selectedPlan.price;
+  const total = appliedPromo?.new_price ?? basePrice;
+  const stage = STAGE_OF[paymentStatus];
+  const closePayment = () => { setShowModal(false); stopPolling(); stopCountdown(); };
+  const buyDisabled =
+    loadingBuy ||
+    loadingProfile ||
+    Boolean(searchError) ||
+    Boolean(paymeeStockMessage) ||
+    (isCardFlow && (fragmentSlotsFull || fragmentPriceLoading)) ||
+    !recipientName ||
+    (!isCardFlow && !profile?.recipient);
+
+  const planPrice = (p) => {
+    if (!isCardFlow || selectedPlan.id !== p.id) return `${fmt(p.price)} so'm`;
+    if (fragmentPriceLoading) return "...";
+    if (fragmentPlanPrice != null) return `${fmt(fragmentPlanPrice)} so'm`;
+    return fragmentSlotsFull ? "Band" : "—";
+  };
+
   return (
-    <div className="premium-container">
-      <div className="premium-header-container">
-        <TGSSticker stickerPath={premiumSticker} className="premium-header-sticker" />
-      </div>
-
-      <div className="premium-page-title">
-        <h1>Telegram Premium</h1>
-        <p>
-          xarid qilish
-          {isCardFlow && fragmentPayLabel
-            ? isPaymee
-              ? ` · ${fragmentPayLabel}`
-              : ` · Fragment (${fragmentPayLabel})`
-            : ""}
-        </p>
-      </div>
-
-      {/* SEARCH */}
-      <div className="search-row">
-        <div className="username-row" style={{ width: "100%" }}>
-          <input
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Foydalanuvchi nomi @username"
-          />
-          {/* 🔹 Faqat Telegram Mini App’da */}
-          {window?.Telegram?.WebApp && (
-            <button
-              type="button"
-              className="btn-my"
-              onClick={fillMyUsername}
-            >
-              O‘zim
-            </button>
-          )}
+    <Shell>
+      <div className="pn-scroll pn-scroll--bar">
+        <div className="pn-pagehero">
+          <span className="pn-star-dust"><TgStar size={54} accent /><Dust /></span>
+          <h1>Telegram Premium</h1>
+          <ul><li>Reklamasiz</li><li>4 GB fayllar</li><li>Premium stikerlar</li></ul>
         </div>
-        {loadingProfile && <div className="loader-arc">🔄</div>}
-      </div>
 
-      {searchError && <div className="error">{searchError}</div>}
-
-      {profile && (
-        <div className="profile-preview">
-          <img src={profile.imageUrl || "../src/assets/default_image.png"} />
-          <div>
-            <b>{profile.fullName}</b>
-            <p>@{profile.username}</p>
-          </div>
-        </div>
-      )}
-
-      {/* avto fragment orqali */}
-      <h3>Avto:</h3>
-
-      <div className="plans">
-        {plans.map((p) => (
-          <label key={p.id} className={selectedPlan.id === p.id ? "plan selected" : "plan"}>
-            <input
-              type="radio"
-              name="plan"
-              checked={selectedPlan.id === p.id}
-              onChange={() => setSelectedPlan(p)}
-            />
-
-            <img src={premiumGif} className="plan-gif" />
-
-            <div className="narx">
-              <span>{p.label}</span>
-              <span>
-                {isCardFlow && selectedPlan.id === p.id
-                  ? fragmentPriceLoading
-                    ? "..."
-                    : fragmentPlanPrice != null
-                      ? `${formatAmount(fragmentPlanPrice)} so'm`
-                      : fragmentSlotsFull
-                        ? "Band"
-                        : "—"
-                  : `${formatAmount(p.price)} so'm`}
-              </span>
-            </div>
-            <span style={{ marginLeft: "auto", fontSize: "13px", color: "#0088cc", fontWeight: "600" }}>(Avto)</span>
-          </label>
-        ))}
-      </div>
-
-      {paymeeStockMessage && (
-        <PaymeeStockBanner product="premium" message={paymeeStockMessage} />
-      )}
-
-      {paymeeStockModal && (
-        <PaymeeStockAlert
-          product="premium"
-          message={paymeeStockModal}
-          onClose={() => setPaymeeStockModal(null)}
+        <RecipientField
+          username={username}
+          setUsername={setUsername}
+          onMe={fillMyUsername}
+          loading={loadingProfile}
+          error={searchError}
+          profile={profile}
         />
-      )}
 
-      <div className="actions" style={{ marginTop: "25px", marginBottom: "15px" }}>
-        <button
-          disabled={loadingBuy || Boolean(paymeeStockMessage)}
-          onClick={handleCreateOrder}
-        >
-          {loadingBuy ? "Yuklanmoqda..." : "Premium olish"}
+        <section className="pn-field">
+          <label>Muddat</label>
+          <div className="pn-plans">
+            {plans.map((p) => (
+              <button key={p.id} type="button" className={`pn-plan ${selectedPlan.id === p.id ? "is-active" : ""}`} onClick={() => setSelectedPlan(p)}>
+                <i />
+                <span className="pn-plan__text">
+                  <b>{p.label}{PLAN_TAGS[p.months] && <em>{PLAN_TAGS[p.months]}</em>}</b>
+                  <span>oyiga {fmt(Math.round(p.price / p.months))} so'm</span>
+                </span>
+                <span className="pn-plan__price">{planPrice(p)}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {paymeeStockMessage && <PaymeeStockBanner product="premium" message={paymeeStockMessage} />}
+
+        <PromoField code={pramacod} setCode={setPramacod} message={promoMessage} isError={promoError} applied={Boolean(appliedPromo)} onApply={handleCheckPromo} />
+
+        <p className="pn-note">Obuna avtomatik yangilanmaydi. Karta ma'lumotlaringiz so'ralmaydi.</p>
+      </div>
+
+      <div className="pn-bar">
+        <span className="pn-bar__total"><small>Jami</small><b>{total != null ? `${fmt(total)} so'm` : "—"}</b></span>
+        <button type="button" className="pn-cta" disabled={buyDisabled} onClick={handleCreateOrder}>
+          {loadingBuy ? "Yuklanmoqda..." : "Sotib olish"}
         </button>
       </div>
 
-      <div className="promo-input-group" style={{ marginBottom: "15px" }}>
-        <input 
-          type="text" 
-          placeholder="Promokod kiriting (Agar bo'lsa)" 
-          value={pramacod} 
-          onChange={(e) => setPramacod(e.target.value)} 
-          style={{ width: "calc(100% - 100px)", padding: "12px", borderRadius: "14px", border: "1px solid #ccc", outline: "none", fontSize: "16px", marginRight: "10px" }}
-        />
-        <button className="btn-my" onClick={handleCheckPromo} style={{ width: "90px", padding: "12px", borderRadius: "14px", border: "none", cursor: "pointer", background: "var(--tg-theme-button-color, #2481cc)", color: "white", fontSize: "14px" }}>Qo'llash</button>
-      </div>
-      {promoMessage && (
-        <div style={{ color: promoError ? 'red' : 'green', fontSize: '14px', marginBottom: '15px', textAlign: 'center' }}>
-          {promoMessage}
-        </div>
+      {paymeeStockModal && (
+        <PaymeeStockAlert product="premium" message={paymeeStockModal} onClose={() => setPaymeeStockModal(null)} />
       )}
 
-
-
-      {/* WARNING MODAL (Gift-style) */}
       {showWarningModal && order && (
-        <div className="premium-warn-overlay">
-          <div className="premium-warn-panel">
-            <div className="premium-warn-header">
-              <h3 className="premium-warn-title">⚠️ MUHIM DIQQAT ⚠️</h3>
-            </div>
-
-            <div className="premium-warn-body">
-              <div className="premium-warn-block">
-                <strong>1️⃣ To&apos;lov miqdori:</strong>
-                <br />
-                Faqat ko&apos;rsatilgan summani aniq yuboring. Ozgina farq ham to&apos;lovni topishga xalaqit beradi.
-              </div>
-
-              <div className="premium-warn-amount-highlight">
-                <span className="premium-warn-label">To&apos;lov summasi</span>
-                <span className="premium-warn-amount">{formatAmount(order?.amount)} so&apos;m</span>
-              </div>
-            </div>
-
-            <button type="button" className="premium-warn-btn" onClick={handleWarningUnderstood}>
-              ✅ Shartlarni tushundim
-            </button>
-          </div>
-        </div>
+        <Confirm product={productName} recipient={recipientName} amount={order.amount} onContinue={handleWarningUnderstood} />
       )}
 
-      {/* MODAL */}
-      {showModal && order && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-
-            {/* PAYMENT_INFO - To'lov ma'lumotlari va "To'lov qildim" tugmasi */}
-            {paymentStatus === "payment_info" && (
-              <div className="pending-section">
-                {/* Modal Header */}
-                <div className="modal-header-bar">
-                  <span className="modal-header-title">💳 Premium xarid qilish</span>
-                  <button type="button" className="modal-close-x" onClick={() => {
-                    stopPolling();
-                    stopCountdown();
-                    setShowModal(false);
-                  }}>✕</button>
-                </div>
-
-                {/* Profile Card */}
-                {profile && (
-                  <div className="modal-profile-card">
-                    <img
-                      src={profile.imageUrl || "../src/assets/default_image.png"}
-                      className="modal-profile-img"
-                    />
-                    <div className="modal-profile-info">
-                      <div className="modal-profile-name">{profile.fullName}</div>
-                      <div className="modal-profile-username">@{profile.username}</div>
-                    </div>
-                    <div className="modal-premium-badge">💎 {order.muddat_oy} oy</div>
-                  </div>
-                )}
-
-                {/* Payment Info Cards */}
-                <div className="modal-payment-grid">
-                  <div className="modal-pay-item">
-                    <div className="modal-pay-label">Karta raqami</div>
-                    <div className="modal-pay-row">
-                      <span className="modal-pay-value">{CARD_NUMBER}</span>
-                      <button type="button" className="modal-copy-btn" onClick={handleCopyCard}>
-                        {copiedCard ? "✓" : "📋"}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="modal-pay-item">
-                    <div className="modal-pay-label">Karta egasi</div>
-                    <div className="modal-pay-row">
-                      <span className="modal-pay-value">{CARD_NAME}</span>
-                    </div>
-                  </div>
-
-                  <div className="modal-pay-item highlight">
-                    <div className="modal-pay-label">To'lov summasi</div>
-                    <div className="modal-pay-row">
-                      <span className="modal-pay-value bold">{formatAmount(order.amount)} so'm</span>
-                      <button type="button" className="modal-copy-btn" onClick={handleCopyAmount}>
-                        {copiedAmount ? "✓" : "📋"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Warning */}
-                <div className="modal-warning">
-                  <span className="modal-warning-icon">⚠️</span>
-                  <span>Aynan <b>{formatAmount(order.amount)} so'm</b> to'lang! Aks holda to'lov ko'rinmaydi.</span>
-                </div>
-
-                {/* Timer */}
-                <div className="modal-status-bar">
-                  <div className="modal-timer">
-                    <div className="modal-timer-icon">⏳</div>
-                    <span>{formatTime(countdown)}</span>
-                  </div>
-                </div>
-
-                {/* To'lov qildim button */}
-                <button type="button" className="btn-payment-done" onClick={handlePaymentDone}>
-                  ✅ To'lov qildim
-                </button>
-                <p className="modal-close-hint">To'lovni amalga oshiring va tugmani bosing</p>
-              </div>
-            )}
-
-            {/* PENDING - To'lov kutilmoqda */}
-            {paymentStatus === "pending" && (
-              <div className="pending-section">
-                {/* Modal Header */}
-                <div className="modal-header-bar">
-                  <span className="modal-header-title">⏳ To'lov kutilmoqda</span>
-                  <button type="button" className="modal-close-x" onClick={() => {
-                    stopPolling();
-                    stopCountdown();
-                    setShowModal(false);
-                  }}>✕</button>
-                </div>
-
-                {/* Waiting Animation */}
-                <div className="waiting-animation-wrap">
-                  <div className="waiting-circle-outer">
-                    <div className="waiting-circle-inner">
-                      <div className="waiting-icon">🔍</div>
-                    </div>
-                  </div>
-                  <div className="waiting-dots">
-                    <span></span><span></span><span></span>
-                  </div>
-                </div>
-
-                <h3 className="waiting-title">To'lov qidirilmoqda...</h3>
-                <p className="waiting-subtitle">To'lovingiz avtomatik aniqlanadi</p>
-
-                {/* Payment Info */}
-                <div className="waiting-payment-info">
-                  <div className="waiting-info-row">
-                    <span className="waiting-label">Karta:</span>
-                    <span className="waiting-value">{CARD_NUMBER}</span>
-                    <button type="button" className="modal-copy-btn-sm" onClick={handleCopyCard}>
-                      {copiedCard ? "✓" : "📋"}
-                    </button>
-                  </div>
-                  <div className="waiting-info-row highlight">
-                    <span className="waiting-label">Summa:</span>
-                    <span className="waiting-value bold">{formatAmount(order.amount)} so'm</span>
-                  </div>
-                </div>
-
-                {/* Timer */}
-                <div className="waiting-timer">
-                  <span className="timer-icon-sm">⏱️</span>
-                  <span>{formatTime(countdown)}</span>
-                </div>
-
-                {cardLast4 && (
-                  <div className="modal-card-detected">
-                    <span>✅ Karta aniqlandi: **** {cardLast4}</span>
-                  </div>
-                )}
-
-                <p className="modal-close-hint">Oyna yopilsa ham to'lov kuzatiladi</p>
-              </div>
-            )}
-
-            {/* PAYMENT RECEIVED / PROCESSING — to'lov topildi, premium yuborilmoqda (backend: processing) */}
-            {["payment_received", "processing"].includes(paymentStatus) && (
-              <div className="modal-sending-section">
-                <div className="sending-anim-wrap">
-                  <div className="sending-pulse-ring"></div>
-                  <div className="sending-pulse-ring delay"></div>
-                  <div className="sending-center-icon">💎</div>
-                </div>
-                <h3 className="sending-title">
-                  {paymentStatus === "payment_received" ? "To'lov qabul qilindi!" : "Premium yuborilmoqda"}
-                </h3>
-                <p className="sending-subtitle">
-                  {paymentStatus === "payment_received"
-                    ? "Premium yuborilmoqda..."
-                    : "Iltimos, biroz kuting — jarayon yakunlanmoqda"}
-                </p>
-
-                {profile && (
-                  <div className="sending-recipient">
-                    <img src={profile.imageUrl || "../src/assets/default_image.png"} className="sending-avatar" />
-                    <div className="sending-info">
-                      <span className="sending-name">{profile.fullName}</span>
-                      <span className="sending-user">@{profile.username}</span>
-                    </div>
-                    <div className="sending-premium-badge">💎 {order.muddat_oy} oy</div>
-                  </div>
-                )}
-
-                <div className="sending-progress-bar">
-                  <div className="sending-progress-fill premium"></div>
-                </div>
-                <p className="sending-hint">Biroz kuting, jarayon avtomatik...</p>
-              </div>
-            )}
-
-            {/* PREMIUM SENT - Muvaffaqiyatli */}
-            {paymentStatus === "premium_sent" && (
-              <div className="modal-success-section">
-                <div className="success-confetti">
-                  <span></span><span></span><span></span><span></span><span></span><span></span>
-                </div>
-
-                <div className="success-check-wrap">
-                  <svg className="success-check-svg" viewBox="0 0 52 52">
-                    <circle className="success-check-circle" cx="26" cy="26" r="25" fill="none" />
-                    <path className="success-check-path" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
-                  </svg>
-                </div>
-
-                <h3 className="success-title">Muvaffaqiyatli! 🎉</h3>
-                <p className="success-amount">{order.muddat_oy} oylik Premium yuborildi</p>
-
-                {profile && (
-                  <div className="success-recipient-card">
-                    <img src={profile.imageUrl || "../src/assets/default_image.png"} className="success-avatar" />
-                    <div className="success-user-info">
-                      <span className="success-user-name">{profile.fullName}</span>
-                      <span className="success-user-handle">@{profile.username}</span>
-                    </div>
-                    <div className="success-delivered-badge">✓ Yetkazildi</div>
-                  </div>
-                )}
-
-                <div className="success-details">
-                  <div className="success-detail-row">
-                    <span className="success-detail-label">Premium</span>
-                    <span className="success-detail-value">💎 {order.muddat_oy} oy</span>
-                  </div>
-                  <div className="success-detail-row">
-                    <span className="success-detail-label">To'lov</span>
-                    <span className="success-detail-value">{formatAmount(order.amount)} so'm</span>
-                  </div>
-                </div>
-
-                <button type="button" className="modal-close-btn success-close" onClick={() => { setShowModal(false); stopPolling(); stopCountdown(); }}>
-                  Yopish
-                </button>
-              </div>
-            )}
-
-            {/* FAILED / ERROR */}
-            {["failed", "error"].includes(paymentStatus) && (
-              <div className="modal-error-section">
-                <div className="error-icon-wrap" style={{background: 'rgba(255, 59, 48, 0.15)', color: '#ff3b30', fontSize: '40px'}}>
-                  <span className="error-icon">❌</span>
-                </div>
-                <h3 className="error-title">Xatolik yuz berdi</h3>
-                <p className="error-desc">{errorMessage || "Premium yuborishda muammo chiqdi. Iltimos, qaytadan urinib ko'ring."}</p>
-                
-                <div style={{display: 'flex', flexDirection: 'column', gap: '8px', padding: '0 20px', paddingBottom: '20px'}}>
-                  <button type="button" className="modal-close-btn" onClick={() => {
-                    setShowModal(false);
-                    setPaymentStatus("idle");
-                  }}>
-                    Yopish
-                  </button>
-                  <button 
-                    type="button" 
-                    className="modal-close-btn" 
-                    style={{ background: '#2b2d31', color: '#fff', border: '1px solid #444', marginTop: 0 }} 
-                    onClick={() => window.open(SUPPORT_TELEGRAM_URL, "_blank")}
-                  >
-                    👨🏻‍💻 Admin bilan bog'lanish
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* EXPIRED */}
-            {paymentStatus === "expired" && (
-              <div className="modal-error-section">
-                <div className="error-icon-wrap">
-                  <span className="error-icon">⏰</span>
-                </div>
-                <h3 className="error-title">Vaqt tugadi</h3>
-                <p className="error-desc">To'lov muddati o'tib ketdi. Qaytadan urinib ko'ring.</p>
-                
-                <button type="button" className="modal-close-btn" onClick={() => {
-                  setShowModal(false);
-                  setPaymentStatus("idle");
-                }}>
-                  Yopish
-                </button>
-              </div>
-            )}
-
-          </div>
-        </div>
+      {showModal && order && paymentStatus === "payment_info" && (
+        <Transfer amount={order.amount} item="premium" countdown={countdown} onClose={closePayment} onPaid={handlePaymentDone} />
       )}
 
-      {/* NAVIGATION */}
-      {/* <div className="btn-container">
-        <button className="btn-nav" onClick={() => navigate("/")}>⬅️Orqaga</button>
-        <button className="btn-nav" onClick={() => navigate("/stars")}>Stars</button>
-      </div> */}
+      {showModal && order && stage && (
+        <Status
+          stage={stage}
+          item="premium"
+          product={productName}
+          recipient={recipientName}
+          amount={order.amount}
+          countdown={countdown}
+          orderId={order.id}
+          errorText={errorMessage}
+          note={stage === "received" && cardLast4 ? `Karta aniqlandi: **** ${cardLast4}` : ""}
+          onClose={closePayment}
+          onDone={closePayment}
+          onRetry={closePayment}
+        />
+      )}
 
-    </div>
+      {orderIssue && (
+        <Status
+          stage={orderIssue}
+          item="premium"
+          onClose={() => setOrderIssue(null)}
+          onRetry={() => { setOrderIssue(null); handleCreateOrder(); }}
+        />
+      )}
+    </Shell>
   );
 }
 

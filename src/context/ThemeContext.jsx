@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect } from "react";
-import WebApp from '@twa-dev/sdk'
+import { applyTelegramChrome } from '../utils/telegramApp'
 
 const ThemeContext = createContext();
 
@@ -99,10 +99,7 @@ export function ThemeProvider({ children }) {
     localStorage.setItem("theme", "dark");
     document.documentElement.classList.add("dark-mode");
     document.documentElement.classList.remove("light-mode");
-    try {
-      WebApp.setBackgroundColor("#000000");
-      WebApp.setHeaderColor("#000000");
-    } catch (e) {}
+    applyTelegramChrome();
   }, []);
 
   const toggleTheme = () => {}; // no-op

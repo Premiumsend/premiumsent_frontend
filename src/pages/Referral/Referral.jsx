@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Referral.css";
 
 import WebApp from "@twa-dev/sdk";
 import { useTranslation } from "../../context/LanguageContext";
 import { TGSSticker } from "../../components/TGSSticker";
-import referralSticker from "../../assets/AnimatedSticker_referal.tgs";
 import apiFetch from "../../utils/apiFetch";
+import { Modal, Shell } from "../../ui/Kit";
+import { CheckIcon, CopyIcon, TgStar } from "../../ui/Brand";
 
 // Gift IDlar - referral yechish uchun (minimum 50 stars)
 const GIFTS = [
@@ -48,7 +48,6 @@ export default function Referral() {
     som_balance: 0,
   });
   const [earnings, setEarnings] = useState([]);
-  const [withdrawals, setWithdrawals] = useState([]);
   const [claiming, setClaiming] = useState(false);
 
   // Withdrawal modal state
@@ -56,7 +55,6 @@ export default function Referral() {
   const [selectedGift, setSelectedGift] = useState(null);
   const [withdrawing, setWithdrawing] = useState(false);
   const [withdrawSuccess, setWithdrawSuccess] = useState(false);
-  const [hoveredGift, setHoveredGift] = useState(null);
 
   // My friends state (referrer_username orqali)
   const [myFriends, setMyFriends] = useState([]);
@@ -67,7 +65,7 @@ export default function Referral() {
   useEffect(() => {
     try {
       WebApp.BackButton.show();
-      const handleBackClick = () => navigate("/");
+      const handleBackClick = () => navigate("/profile");
       WebApp.BackButton.onClick(handleBackClick);
       
       return () => {
@@ -178,12 +176,6 @@ export default function Referral() {
         setPendingCount(mfData.pending_count || 0);
       }
 
-      // Load withdrawal history
-      const withdrawalsRes = await apiFetch(`/api/referral/withdrawals/${user}`);
-      if (withdrawalsRes.ok) {
-        const withdrawalsData = await withdrawalsRes.json();
-        setWithdrawals(withdrawalsData || []);
-      }
     } catch (err) {
       console.error("Load data error:", err);
     } finally {
@@ -267,276 +259,103 @@ export default function Referral() {
   const canAfford = (gift) => stats.referral_balance >= gift.stars;
 
   return (
-    <div className="referral-page">
-      {/* Header */}
-      <div className="referral-header centered-header">
-        <div className="history-sticker-container">
-           <TGSSticker stickerPath={referralSticker} className="history-sticker" />
-        </div>
-        <h1>{t("referral.title")}</h1>
-        <p className="header-subtitle">{t("referral.headerDesc") || "Do'stlaringizni taklif qiling va sovg'alar oling"}</p>
+    <Shell>
+      <div className="pn-scroll">
+        <h1 className="pn-title">Do'stlarni taklif qiling</h1>
+
+        {loading ? (
+          <div className="pn-empty"><div className="pn-spin" /></div>
+        ) : (
+          <>
+            <div className="pn-balance">
+              <div><small>{t("referral.balance") || "Referal balans"}</small><strong><TgStar size={30} /> {stats.referral_balance}</strong></div>
+              <button type="button" className="pn-cta pn-cta--sm" onClick={openWithdrawModal}>Yechib olish</button>
+              <p><span>Do'stlar</span><b>{friendsCount} ta{pendingCount > 0 && ` (+${pendingCount} kutilmoqda)`}</b></p>
+            </div>
+
+            <h2 className="pn-h2">Bonus qanday yig'iladi</h2>
+            <ul className="pn-rules">
+              <li><i>1</i><span>Do'stingiz kanalga obuna bo'lsa</span><b>+2</b></li>
+              <li><i>2</i><span>Do'stingiz Stars xarid qilsa</span><b>+5</b></li>
+              <li><i>3</i><span>Do'stingiz Premium olsa (1 marta)</span><b>+15</b></li>
+            </ul>
+
+            <h2 className="pn-h2">Sizning havolangiz</h2>
+            <button type="button" className="pn-link" onClick={copyLink}>
+              <span>{referralLink || "..."}</span>{copied ? <CheckIcon size={18} /> : <CopyIcon />}
+            </button>
+            <button type="button" className="pn-cta pn-cta--full" onClick={shareLink}>Do'stlarga yuborish</button>
+
+            <h2 className="pn-h2">Do'stlarim</h2>
+            {myFriends.length === 0 ? (
+              <p className="pn-hint">Hali do'stlar yo'q. Havolani ulashing.</p>
+            ) : (
+              <ul className="pn-friends">
+                {myFriends.map((friend, idx) => (
+                  <li key={idx}>
+                    <span className="pn-avatar">{String(friend.username || friend.user_id).charAt(0).toUpperCase()}</span>
+                    <span>
+                      <b>@{friend.username || friend.user_id}</b>
+                      {friend.subscribe_user ? new Date(friend.created_at).toLocaleDateString("uz-UZ") : "Kanalga obuna bo'lmagan"}
+                    </span>
+                    {friend.subscribe_user && <CheckIcon size={16} />}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <h2 className="pn-h2">Daromad tarixi</h2>
+            {earnings.length === 0 ? (
+              <p className="pn-hint">Hali daromad yo'q.</p>
+            ) : (
+              <ul className="pn-friends">
+                {earnings.map((earning, idx) => (
+                  <li key={idx}>
+                    <span className="pn-avatar">{String(earning.referee_username || "?").charAt(0).toUpperCase()}</span>
+                    <span><b>@{earning.referee_username}</b>{new Date(earning.created_at).toLocaleDateString("uz-UZ")}</span>
+                    <em>+{earning.earned_stars}</em>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
       </div>
 
-      {/* Loading Overlay */}
-      {loading && (
-        <div className="referral-loading-overlay">
-          <div className="referral-loading-spinner"></div>
-          <p className="referral-loading-text">{t("common.loading") || "Yuklanmoqda..."}</p>
-        </div>
-      )}
-
-      {!loading && (
-        <>
-          {/* Balance and Friends Stats */}
-          <div className="ref-stats-group">
-            <div className="ref-stats-item">
-              <div className="ref-stats-left">
-                <div className="ref-stats-icon">💲</div>
-                <span>{t("referral.balance") || "Balans"}</span>
-              </div>
-              <div className="ref-stats-right">
-                <span className="ref-stats-value">{stats.referral_balance} {t("referral.rewardStars") || "Stars"}</span>
-              </div>
-            </div>
-
-            <div className="ref-stats-item">
-              <div className="ref-stats-left">
-                <div className="ref-stats-icon">👥</div>
-                <span>{t("referral.friends") || "Do'stlar"}</span>
-              </div>
-              <div className="ref-stats-right">
-                <span className="ref-stats-value">{friendsCount}</span>
-                {pendingCount > 0 && (
-                  <span className="ref-stats-pending" title="Kanalga obuna kutilmoqda">
-                    (+{pendingCount} ⏳)
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Withdraw Button */}
-            <button className="ref-withdraw-btn" onClick={openWithdrawModal}>
-              {t("referral.withdrawBalance")}
-            </button>
-          </div>
-
-          {/* Bonus Info Section */}
-          <div className="reward-section">
-            <h2>{t("referral.howToEarn") || "Pul ishlash tartibi"}</h2>
-            <div className="earn-steps-list">
-              <div className="earn-step">
-                <div className="step-number">1</div>
-                <div className="step-content">
-                  <span className="step-title">{t("referral.step1Title") || "Obuna bonus"}</span>
-                  <span className="step-desc">{t("referral.step1Desc") || "Do'stingiz havolangiz orqali kirib, kanalga obuna bo'lsa"}</span>
-                </div>
-                <div className="step-bonus small">+2 ⭐</div>
-              </div>
-              <div className="earn-step">
-                <div className="step-number">2</div>
-                <div className="step-content">
-                  <span className="step-title">{t("referral.step2Title") || "Stars bonus"}</span>
-                  <span className="step-desc">{t("referral.step2Desc") || "Istalgan miqdorda stars xarid qilganda"}</span>
-                </div>
-                <div className="step-bonus small">+5 ⭐</div>
-              </div>
-              <div className="earn-step featured">
-                <div className="step-number">3</div>
-                <div className="step-content">
-                  <span className="step-title">{t("referral.step3Title") || "Premium bonus"}</span>
-                  <span className="step-desc">{t("referral.step3Desc") || "Referalingiz Premium obuna olsa (1 marta)"}</span>
-                </div>
-                <div className="step-bonus big">+15 ⭐</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Referral Link Section */}
-          <div className="referral-link-section">
-            <h2>{t("referral.personalLink") || "Sizning havolangiz"}</h2>
-            <p className="section-desc">{t("referral.linkDesc") || "Bu havolani do'stlaringizga yuboring"}</p>
-
-            <div className="link-box">
-              <div className="link-display">
-                <span className="link-text">{referralLink || "..."}</span>
-                <button className="copy-btn" onClick={copyLink}>
-                  {copied ? "✓" : "📋"}
-                </button>
-              </div>
-              <button className="share-btn" onClick={shareLink}>
-                {t("referral.shareWithFriends") || "Ulashish"}
-              </button>
-            </div>
-
-            <div className="referral-code-display">
-              <p className="code-label">{t("referral.referralCode") || "Kod"}:</p>
-              <code className="code-value">{referralCode || "..."}</code>
-            </div>
-          </div>
-
-          {/* Mening Do'stlarim Section */}
-          <div className="my-friends-section">
-            <h2>{t("referral.myFriends") || "Mening do'stlarim"}</h2>
-            {myFriends.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-icon">👥</div>
-                <p className="empty-text">{t("referral.noFriends") || "Hali do'stlar yo'q"}</p>
-                <p className="empty-hint">{t("referral.inviteFriends") || "Havolani ulashing va do'stlaringizni taklif qiling!"}</p>
-              </div>
-            ) : (
-              <div className="friends-list">
-                {myFriends.map((friend, idx) => (
-                  <div key={idx} className={`friend-item ${!friend.subscribe_user ? 'inactive' : ''}`}>
-                    <div className="friend-left">
-                      <div className="friend-avatar">👤</div>
-                      <div className="friend-info">
-                        <p className="friend-name">@{friend.username || friend.user_id}</p>
-                        <p className="friend-date">
-                          {friend.subscribe_user ? (
-                            new Date(friend.created_at).toLocaleDateString("uz-UZ", {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric"
-                            })
-                          ) : (
-                            <span className="not-subscribed">{t("referral.notSubscribed") || "Kanalga obuna bo'lmagan"}</span>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                    <div className={`friend-badge ${!friend.subscribe_user ? 'pending' : ''}`}>
-                      <span>{friend.subscribe_user ? '✓' : '⏳'}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Earnings History */}
-          <div className="earnings-section">
-            <h2>{t("referral.earningsHistory") || "Daromad tarixi"}</h2>
-            {earnings.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-icon">📭</div>
-                <p className="empty-text">{t("referral.noEarnings") || "Hali daromad yo'q"}</p>
-                <p className="empty-hint">{t("referral.shareToEarn") || "Do'stlaringizni taklif qiling!"}</p>
-              </div>
-            ) : (
-              <div className="earnings-list">
-                {earnings.map((earning, idx) => (
-                  <div key={idx} className="earning-item">
-                    <div className="earning-left">
-                      <div className="earning-avatar">👤</div>
-                      <div className="earning-info">
-                        <p className="referee-name">@{earning.referee_username}</p>
-                        <p className="earning-date">
-                          {new Date(earning.created_at).toLocaleDateString("uz-UZ", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric"
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="earning-right">
-                      <p className="earning-amount">+{earning.earned_stars} ⭐</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-        </>
-      )}
-
-      {/* Withdrawal Modal */}
       {showWithdrawModal && (
-        <div className="withdraw-modal-overlay" onClick={() => !withdrawing && setShowWithdrawModal(false)}>
-          <div className="withdraw-modal" onClick={(e) => e.stopPropagation()}>
-            {/* Header */}
-            <div className="withdraw-modal-header">
-              <h2>{t("referral.withdrawTitle") || "Gift tanlang"}</h2>
-              <button className="withdraw-modal-close" onClick={() => !withdrawing && setShowWithdrawModal(false)}>✕</button>
+        <Modal title="Sovg'a tanlang" onClose={() => !withdrawing && setShowWithdrawModal(false)}>
+          <div className="pn-withdraw__info"><span>Yuboriladi</span><b>@{username}</b></div>
+          <div className="pn-withdraw__info"><span>Balansingiz</span><b>{stats.referral_balance} Stars</b></div>
+          {withdrawSuccess ? (
+            <div className="pn-withdraw__done">
+              <TGSSticker stickerPath={getGiftStickerPath(selectedGift?.id)} className="pn-withdraw__art" autoplay />
+              <b>Sovg'a yuborilmoqda</b>
+              @{username}
             </div>
-
-            {/* Recipient username */}
-            <div className="withdraw-recipient-info">
-              <span>{t("referral.sendTo") || "Yuboriladi"}:</span>
-              <span className="withdraw-recipient-username">@{username}</span>
-            </div>
-
-            {/* Balance info */}
-            <div className="withdraw-balance-info">
-              <span>{t("referral.yourBalance") || "Sizning balans"}:</span>
-              <span className="withdraw-balance-value">{stats.referral_balance} ⭐</span>
-            </div>
-
-            {/* Success state */}
-            {withdrawSuccess ? (
-              <div className="withdraw-success">
-                <TGSSticker 
-                  stickerPath={getGiftStickerPath(selectedGift?.id)} 
-                  className="withdraw-success-sticker"
-                  autoplay={true}
-                />
-                <h3>✅ {t("referral.withdrawSuccess") || "Gift yuborilmoqda!"}</h3>
-                <p>@{username}</p>
+          ) : (
+            <>
+              <div className="pn-withdraw__grid">
+                {GIFTS.map((gift) => (
+                  <button
+                    key={gift.id}
+                    type="button"
+                    className={selectedGift?.id === gift.id ? "is-active" : ""}
+                    disabled={!canAfford(gift)}
+                    onClick={() => setSelectedGift(gift)}
+                  >
+                    <TGSSticker stickerPath={getGiftStickerPath(gift.id)} className="pn-withdraw__art" autoplay={false} />
+                    {gift.stars} Stars
+                  </button>
+                ))}
               </div>
-            ) : (
-              <>
-                {/* Gift Grid */}
-                <div className="withdraw-gift-grid">
-                  {GIFTS.map((gift) => {
-                    const affordable = canAfford(gift);
-                    const isSelected = selectedGift?.id === gift.id;
-                    return (
-                      <div
-                        key={gift.id}
-                        className={`withdraw-gift-item ${isSelected ? 'selected' : ''} ${!affordable ? 'disabled' : ''}`}
-                        onClick={() => affordable && setSelectedGift(gift)}
-                        onMouseEnter={() => setHoveredGift(gift.id)}
-                        onMouseLeave={() => setHoveredGift(null)}
-                      >
-                        <TGSSticker
-                          stickerPath={getGiftStickerPath(gift.id)}
-                          className="withdraw-gift-sticker"
-                          autoplay={hoveredGift === gift.id}
-                        />
-                        <span className={`withdraw-gift-stars ${affordable ? 'affordable' : ''}`}>
-                          {gift.stars} ⭐
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Withdraw button */}
-                <button
-                  className={`withdraw-confirm-btn ${!selectedGift || withdrawing ? 'disabled' : ''}`}
-                  onClick={handleWithdraw}
-                  disabled={!selectedGift || withdrawing}
-                >
-                  {withdrawing ? (
-                    <>{t("common.loading") || "Yuklanmoqda..."}</>
-                  ) : selectedGift ? (
-                    <>{t("referral.withdrawGift") || "Yechib olish"} ({selectedGift.stars} ⭐)</>
-                  ) : (
-                    <>{t("referral.selectGift") || "Gift tanlang"}</>
-                  )}
-                </button>
-
-                <p className="withdraw-hint">
-                  {t("referral.withdrawHint") || "Gift sizning Telegram akkauntingizga yuboriladi"}
-                </p>
-              </>
-            )}
-          </div>
-        </div>
+              <button type="button" className="pn-cta pn-cta--full" disabled={!selectedGift || withdrawing} onClick={handleWithdraw}>
+                {withdrawing ? "Yuklanmoqda..." : selectedGift ? `Yechib olish (${selectedGift.stars} Stars)` : "Sovg'ani tanlang"}
+              </button>
+              <p className="pn-hint">Sovg'a Telegram akkauntingizga yuboriladi</p>
+            </>
+          )}
+        </Modal>
       )}
-
-      {/* End of main content */}
-    </div>
+    </Shell>
   );
 }

@@ -1,5 +1,5 @@
 html, body, #root {
-  background-color: var(--bg-secondary) !important;
+  background-color: #090d18 !important;
   color: var(--text-primary) !important;
 }
 
