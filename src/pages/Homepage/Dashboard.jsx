@@ -1,24 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import WebApp from "@twa-dev/sdk";
+import { useTranslation } from "../../context/LanguageContext";
 import apiFetch from "../../utils/apiFetch";
 import { getPremiumPurchasePath, getStarsPurchasePath } from "../../utils/starsPurchaseRoute";
-import { Ads, Dust, LanguageModal, Modal, Shell, SupportCard, Tabs, fmt } from "../../ui/Kit";
+import { Ads, Dust, LanguageModal, Modal, Shell, SupportCard, Tabs, fill, fmt } from "../../ui/Kit";
 import { GlobeIcon, TgStar, Wordmark } from "../../ui/Brand";
 import Intro from "../../ui/Intro";
-
-const GUIDE = [
-  ["Mahsulotni tanlang", "Premium yoki Stars"],
-  ["Username kiriting", "O'zingizga yoki do'stingizga"],
-  ["Buyurtma oching", "Sizga aniq summa beriladi"],
-  ["Kartaga pul o'tkazing", "Summani aynan shunday yozing"],
-  ["Tayyor", "To'lovdan keyin avtomatik yuboriladi"],
-];
+import { runTransition, useGo } from "../../ui/nav";
 
 const SPLASH_MS = 1700;
 
 export default function Dashboard() {
-  const navigate = useNavigate();
+  const go = useGo();
+  const { t } = useTranslation();
   const [splashVisible, setSplashVisible] = useState(() => !sessionStorage.getItem("splashShown"));
   const [guideOpen, setGuideOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
@@ -90,8 +84,8 @@ export default function Dashboard() {
   useEffect(() => {
     if (!splashVisible) return undefined;
     const id = setTimeout(() => {
-      setSplashVisible(false);
       sessionStorage.setItem("splashShown", "1");
+      runTransition("fade", () => setSplashVisible(false));
     }, SPLASH_MS);
     return () => clearTimeout(id);
   }, []);
@@ -107,22 +101,22 @@ export default function Dashboard() {
       <div className="pn-scroll pn-scroll--tabs pn-home">
         <header className="pn-top">
           <span className="pn-brand"><Wordmark /></span>
-          <button type="button" className="pn-guide-btn" onClick={() => setGuideOpen(true)}>Qo'llanma</button>
-          <button type="button" className="pn-round" onClick={() => setLanguageOpen(true)} aria-label="Til"><GlobeIcon size={20} /></button>
+          <button type="button" className="pn-guide-btn" onClick={() => setGuideOpen(true)}>{t("ui.guideBtn")}</button>
+          <button type="button" className="pn-round" onClick={() => setLanguageOpen(true)} aria-label={t("common.selectLanguage")}><GlobeIcon size={20} /></button>
         </header>
 
         <main className="pn-main">
           <Ads />
           <div className="pn-tiles">
-            <button type="button" className="pn-tile" onClick={() => navigate(premiumPurchasePath)}>
+            <button type="button" className="pn-tile" onClick={() => go(premiumPurchasePath)}>
               <span className="pn-star-dust"><TgStar size={72} accent /><Dust /></span>
               <b>Premium</b>
-              <span>{fmt(import.meta.env.VITE_PREMIUM_3)} so'mdan</span>
+              <span>{fill(t("ui.from"), { price: fmt(import.meta.env.VITE_PREMIUM_3) })}</span>
             </button>
-            <button type="button" className="pn-tile pn-tile--stars" onClick={() => navigate(starsPurchasePath)}>
+            <button type="button" className="pn-tile pn-tile--stars" onClick={() => go(starsPurchasePath)}>
               <span className="pn-star-dust pn-star-dust--gold"><TgStar size={72} /><Dust /></span>
               <b>Stars</b>
-              <span>{fmt(50 * NARX)} so'mdan</span>
+              <span>{fill(t("ui.from"), { price: fmt(50 * NARX) })}</span>
             </button>
           </div>
           <SupportCard />
@@ -130,9 +124,9 @@ export default function Dashboard() {
       </div>
       <Tabs active="home" />
       {guideOpen && (
-        <Modal title="Qanday ishlaydi?" onClose={() => setGuideOpen(false)}>
+        <Modal title={t("ui.guideTitle")} onClose={() => setGuideOpen(false)}>
           <ol className="pn-steps">
-            {GUIDE.map(([title, sub], i) => <li key={title} className="is-key"><i>{i + 1}</i><span><b>{title}</b>{sub}</span></li>)}
+            {[1, 2, 3, 4, 5].map((n) => <li key={n} className="is-key"><i>{n}</i><span><b>{t(`ui.g${n}`)}</b>{t(`ui.g${n}d`)}</span></li>)}
           </ol>
         </Modal>
       )}

@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import apiFetch from "../../utils/apiFetch";
-import { Dust, PromoField, RecipientField, Shell, fmt } from "../../ui/Kit";
+import { useTranslation } from "../../context/LanguageContext";
+import { Dust, PromoField, RecipientField, Shell, fill, fmt } from "../../ui/Kit";
 import { ChevronDown, TgStar } from "../../ui/Brand";
 import { Confirm, Status, Transfer } from "../../ui/Payment";
+import { useGo } from "../../ui/nav";
 import {
   isCardDeliveryVariant,
   starsApiPrefix,
@@ -72,11 +73,12 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
   const pollingRef = useRef(null);
   const countdownRef = useRef(null);
 
-  const navigate = useNavigate();
+  const go = useGo();
+  const { t } = useTranslation();
 
   const goToHome = () => {
     setShowModal(false);
-    navigate("/");
+    go("/", "back");
   };
 
   // 🔹 Telegramdan username olish
@@ -84,7 +86,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
     try {
       const tgUser = window?.Telegram?.WebApp?.initDataUnsafe?.user?.username;
       if (!tgUser) {
-        alert("Telegram username topilmadi");
+        alert(t("ui.tgNoUser"));
         return;
       }
       setUsername(tgUser);
@@ -101,7 +103,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
       } else if (showWarningModal) {
         setShowWarningModal(false);
       } else {
-        navigate("/");
+        go("/", "back");
       }
     };
 
@@ -121,7 +123,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
         }
       } catch (e) {}
     };
-  }, [showModal, showWarningModal, navigate]);
+  }, [showModal, showWarningModal, go]);
 
   // Stars price - backend dan slot-based narx olish
   useEffect(() => {
@@ -234,7 +236,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
     setPromoMessage("");
     if (!stars) {
       setPromoError(true);
-      setPromoMessage("Avval stars miqdorini tanlang");
+      setPromoMessage(t("ui.starsPick"));
       return;
     }
     try {
@@ -260,7 +262,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
       }
     } catch (err) {
       setPromoError(true);
-      setPromoMessage("Xatolik yuz berdi");
+      setPromoMessage(t("ui.errGeneric"));
       setAppliedPromo(null);
     }
   };
@@ -351,7 +353,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
           stopCountdown();
           localStorage.removeItem("pendingStarsOrder");
           if (data.status === "failed" || data.status === "error") {
-            setErrorMessage(data.error_message || data.reason || data.error || "Kutilmagan xatolik yuz berdi. Iltimos, admin bilan bog'laning.");
+            setErrorMessage(data.error_message || data.reason || data.error || t("ui.unexpected"));
           }
         }
       } catch (err) {
@@ -420,12 +422,12 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
     const starNum = parseInt(stars);
     
     if (!stars || starNum < 50 || starNum > 10000) {
-      alert("Stars miqdori 50 dan 10000 gacha bo'lishi kerak!");
+      alert(t("ui.starsRangeErr"));
       return;
     }
 
     if (!username) {
-      alert("Iltimos, username va stars kiriting!");
+      alert(t("ui.enterUsername"));
       return;
     }
 
@@ -434,12 +436,12 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
       .trim();
 
     if (!cleanUsername) {
-      alert("Iltimos, username kiriting!");
+      alert(t("ui.enterUsername"));
       return;
     }
 
     if (!isCardFlow && (!profile || !profile.recipient)) {
-      alert("Foydalanuvchi topilmadi!");
+      alert(t("ui.userNotFound"));
       return;
     }
 
@@ -484,7 +486,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
           return;
         }
         
-        throw new Error(errorData.error || "Server xatosi");
+        throw new Error(errorData.error || t("ui.errServer"));
       }
 
       const newOrder = await res.json();
@@ -502,7 +504,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
       startCountdownTimer(480); // 8 daqiqa
     } catch (err) {
       console.error("❌ Order yaratishda xato:", err);
-      alert(err.message || "Order yaratishda xato");
+      alert(err.message || t("ui.orderFail"));
     }
   };
 
@@ -515,7 +517,8 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
   const starCount = parseInt(stars, 10) || 0;
   const validStars = starCount >= 50 && starCount <= 10000;
   const recipientName = profile?.username || username.replace(/^@/, "").trim() || order?.username || "";
-  const productName = `${fmt(order?.stars)} Stars`;
+  const som = t("ui.som");
+  const productName = fill(t("ui.stars"), { n: fmt(order?.stars) });
   const total = appliedPromo ? appliedPromo.newPrice : price;
   const stage = STAGE_OF[status];
   const closePayment = () => { setShowModal(false); stopPolling(); stopCountdown(); };
@@ -530,7 +533,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
     <button key={pack} type="button" className={`pn-starrow ${starCount === pack ? "is-active" : ""}`} onClick={() => setStars(String(pack))}>
       <span className="pn-stack">{Array.from({ length: Math.min(i + 1, 6) }, (_, n) => <TgStar key={n} size={26} outline />)}</span>
       <span className="pn-starrow__n">{fmt(pack)}</span>
-      <span className="pn-starrow__p">{fmt(pack * NARX)} so'm</span>
+      <span className="pn-starrow__p">{fmt(pack * NARX)} {som}</span>
     </button>
   );
 
@@ -540,7 +543,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
         <div className="pn-pagehero pn-pagehero--gold">
           <span className="pn-star-dust pn-star-dust--gold"><TgStar size={60} /><Dust /></span>
           <h1>Telegram Stars</h1>
-          <p>Kanal va botlar uchun yulduzlar</p>
+          <p>{t("ui.starsSub")}</p>
         </div>
 
         <RecipientField
@@ -552,18 +555,18 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
         />
 
         <section className="pn-field">
-          <label htmlFor="pn-stars">Miqdor</label>
+          <label htmlFor="pn-stars">{t("ui.amount")}</label>
           <div className="pn-input pn-input--plain">
             <input
               id="pn-stars"
               inputMode="numeric"
               value={stars}
               onChange={(e) => setStars(e.target.value.replace(/\D/g, "").slice(0, 5))}
-              placeholder="50 dan 10 000 gacha"
+              placeholder={t("ui.starsRange")}
             />
-            <em>{validStars && price > 0 ? `${fmt(price)} so'm` : ""}</em>
+            <em>{validStars && price > 0 ? `${fmt(price)} ${som}` : ""}</em>
           </div>
-          {stars && !validStars && <p className="pn-error">50 dan 10 000 gacha kiriting</p>}
+          {stars && !validStars && <p className="pn-error">{t("ui.starsRangeErr")}</p>}
         </section>
 
         <div className="pn-starlist">
@@ -572,7 +575,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
             <div>{STARS_OPTIONS.slice(3).map((pack, i) => packRow(pack, i + 3))}</div>
           </div>
           <button type="button" className={`pn-starlist__toggle ${showMorePlans ? "is-open" : ""}`} onClick={() => setShowMorePlans((m) => !m)}>
-            {showMorePlans ? "Kamroq" : "Ko'proq"} <ChevronDown size={17} />
+            {showMorePlans ? t("ui.less") : t("ui.more")} <ChevronDown size={17} />
           </button>
         </div>
 
@@ -583,8 +586,8 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
       </div>
 
       <div className="pn-bar">
-        <span className="pn-bar__total"><small>Jami</small><b>{validStars && total > 0 ? `${fmt(total)} so'm` : "—"}</b></span>
-        <button type="button" className="pn-cta" disabled={buyDisabled} onClick={handlePayment}>Sotib olish</button>
+        <span className="pn-bar__total"><small>{t("ui.total")}</small><b>{validStars && total > 0 ? `${fmt(total)} ${som}` : "—"}</b></span>
+        <button type="button" className="pn-cta" disabled={buyDisabled} onClick={handlePayment}>{t("ui.buy")}</button>
       </div>
 
       {paymeeStockModal && (
@@ -610,7 +613,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
           orderId={order.id}
           txId={txId}
           errorText={errorMessage}
-          note={stage === "success" ? `Oyna ${timer} soniyada yopiladi` : ""}
+          note={stage === "success" ? fill(t("ui.autoClose"), { n: timer }) : ""}
           onClose={closePayment}
           onDone={goToHome}
           onRetry={closePayment}
@@ -619,6 +622,7 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
 
       {orderIssue && (
         <Status
+          sheet
           stage={orderIssue}
           item="stars"
           onClose={() => setOrderIssue(null)}

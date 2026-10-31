@@ -1,15 +1,17 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CheckIcon, ClockIcon, CopyIcon, SendIcon, ShieldIcon, TgStar } from "./Brand";
-import { fmt, openSupport } from "./Kit";
+import { useTranslation } from "../context/LanguageContext";
+import { Modal, fill, fmt, openSupport, useClosing } from "./Kit";
 
 const TOTAL = 480;
 const mmss = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
 function Countdown({ left }) {
+  const { t } = useTranslation();
   const tone = left <= 60 ? "is-danger" : left <= 120 ? "is-warn" : "";
   return (
     <div className={`pn-timer ${tone}`}>
-      <span><ClockIcon /> Qolgan vaqt</span>
+      <span><ClockIcon /> {t("ui.timeLeft")}</span>
       <b>{mmss(left)}</b>
       <i style={{ transform: `scaleX(${Math.max(0, left) / TOTAL})` }} />
     </div>
@@ -26,9 +28,10 @@ function useCopy() {
 }
 
 function PayTop({ title, onClose }) {
+  const { t } = useTranslation();
   return (
     <div className="pn-pay__top">
-      <button type="button" className="pn-modal__x" onClick={onClose} aria-label="Yopish">✕</button>
+      <button type="button" className="pn-modal__x" onClick={onClose} aria-label={t("ui.close")}>✕</button>
       <b>{title}</b>
       <span />
     </div>
@@ -37,29 +40,23 @@ function PayTop({ title, onClose }) {
 
 // Order ochilgandan keyin: summa aniq bo'lishi kerakligini tasdiqlatadi
 export function Confirm({ product, recipient, amount, onContinue }) {
+  const { t } = useTranslation();
+  const [closing, proceed] = useClosing(onContinue);
   return (
-    <div className="pn-modal">
+    <div className={`pn-modal ${closing ? "is-closing" : ""}`}>
       <div className="pn-modal__panel pn-confirm" role="dialog" aria-modal="true">
         <span className="pn-confirm__ic"><ShieldIcon size={26} /></span>
-        <h2>Xavfsiz to'lov</h2>
+        <h2>{t("ui.safeTitle")}</h2>
         <p className="pn-confirm__sub">{product}{recipient && <> → @{recipient}</>}</p>
         <div className="pn-confirm__box">
-          Keyingi oynadagi kartaga aynan <b>{fmt(amount)} so'm</b> o'tkazing. Summa boshqacha bo'lsa, to'lov aniqlanmaydi.
+          {t("ui.confirmPre")} <b>{fmt(amount)} {t("ui.som")}</b> {t("ui.confirmPost")}
         </div>
-        <p className="pn-confirm__auto"><CheckIcon size={15} /> To'lov avtomatik tekshiriladi</p>
-        <button type="button" className="pn-cta" onClick={onContinue}>Tushundim</button>
+        <p className="pn-confirm__auto"><CheckIcon size={15} /> {t("ui.autoCheck")}</p>
+        <button type="button" className="pn-cta" onClick={proceed}>{t("ui.understood")}</button>
       </div>
     </div>
   );
 }
-
-const GUIDE = [
-  ["Bank ilovasini oching", "Click, Payme, Uzum yoki boshqasi"],
-  ["\"Kartaga o'tkazma\"ni tanlang", "Kartangizni kiritish shart emas"],
-  ["Karta raqamini joylang", "Nusxa tugmasi bilan oling"],
-  ["Summani aynan yozing", "Bir so'm farq ham bo'lmasin"],
-  ["\"To'lov qildim\"ni bosing", "Qolganini tizim o'zi bajaradi"],
-];
 
 export function Transfer({ amount, item, countdown, onClose, onPaid }) {
   const cardNumber = String(import.meta.env.VITE_CARD_NUMBER || "").replace(/\s/g, "");
@@ -67,48 +64,47 @@ export function Transfer({ amount, item, countdown, onClose, onPaid }) {
   const cardBrand = cardNumber.startsWith("9860") ? "HUMO" : "UZCARD";
   const [copied, copy] = useCopy();
   const [guideOpen, setGuideOpen] = useState(false);
+  const [closing, close] = useClosing(onClose, 240);
+  const { t } = useTranslation();
   return (
-    <div className="pn-pay">
-      <PayTop title="To'lov" onClose={onClose} />
+    <div className={`pn-pay pn-pay--sheet ${closing ? "is-closing" : ""}`}>
+      <PayTop title={t("ui.payTitle")} onClose={close} />
       <div className="pn-pay__body">
         <Countdown left={countdown} />
-        <h2 className="pn-pay__title">Kartaga pul o'tkazing</h2>
-        <p className="pn-pay__sub">Istalgan bank ilovasidan o'tkazing</p>
+        <h2 className="pn-pay__title">{t("ui.transferTitle")}</h2>
+        <p className="pn-pay__sub">{t("ui.transferSub")}</p>
 
         <button type="button" className="pn-plastic" onClick={() => copy("card", cardNumber)}>
           <span className="pn-plastic__top"><span className="pn-plastic__chip" /><em>{cardBrand}</em></span>
           <span className="pn-plastic__num">{cardNumber.replace(/(\d{4})(?=\d)/g, "$1 ")}</span>
           <span className="pn-plastic__foot">
             <span>{cardName}</span>
-            <span className="pn-plastic__copy">{copied === "card" ? <><CheckIcon size={16} /> Nusxalandi</> : <><CopyIcon size={16} /> Nusxalash</>}</span>
+            <span className="pn-plastic__copy">{copied === "card" ? <><CheckIcon size={16} /> {t("ui.copied")}</> : <><CopyIcon size={16} /> {t("ui.copy")}</>}</span>
           </span>
         </button>
 
         <button type="button" className="pn-amount" onClick={() => copy("amount", amount)}>
-          <span><small>To'lov summasi</small><b>{fmt(amount)} so'm</b></span>
+          <span><small>{t("ui.payAmount")}</small><b>{fmt(amount)} {t("ui.som")}</b></span>
           <i>{copied === "amount" ? <CheckIcon /> : <CopyIcon />}</i>
         </button>
 
         <div className="pn-warn">
           <span>!</span>
-          <p><b>Summani aynan shunday yozing</b>Aks holda {item === "stars" ? "Stars" : "Premium"} avtomatik yuborilmaydi.</p>
+          <p><b>{t("ui.exactTitle")}</b>{fill(t("ui.exactDesc"), { item: item === "stars" ? "Stars" : "Premium" })}</p>
         </div>
-        <button type="button" className="pn-help" onClick={() => setGuideOpen(true)}><i>?</i> Qanday to'lash kerak?</button>
+        <button type="button" className="pn-help" onClick={() => setGuideOpen(true)}><i>?</i> {t("ui.howPay")}</button>
       </div>
 
       <div className="pn-bar pn-bar--solo">
-        <button type="button" className="pn-cta" onClick={onPaid}>To'lov qildim</button>
+        <button type="button" className="pn-cta" onClick={onPaid}>{t("ui.paid")}</button>
       </div>
 
       {guideOpen && (
-        <div className="pn-modal">
-          <div className="pn-modal__panel" role="dialog" aria-modal="true">
-            <div className="pn-modal__head"><h2>To'lov qo'llanmasi</h2><button type="button" className="pn-modal__x" onClick={() => setGuideOpen(false)} aria-label="Yopish">✕</button></div>
-            <ol className="pn-steps">
-              {GUIDE.map(([title, sub], i) => <li key={title} className={i === 3 ? "is-key" : ""}><i>{i + 1}</i><span><b>{title}</b>{sub}</span></li>)}
-            </ol>
-          </div>
-        </div>
+        <Modal title={t("ui.payGuide")} onClose={() => setGuideOpen(false)}>
+          <ol className="pn-steps">
+            {[1, 2, 3, 4, 5].map((n) => <li key={n} className={n === 4 ? "is-key" : ""}><i>{n}</i><span><b>{t(`ui.p${n}`)}</b>{t(`ui.p${n}d`)}</span></li>)}
+          </ol>
+        </Modal>
       )}
     </div>
   );
@@ -144,37 +140,43 @@ function Hero({ stage, item }) {
   );
 }
 
-const textFor = ({ product, recipient, amount, orderId, errorText }) => ({
-  pending: { title: "To'lov tekshirilmoqda", text: `${fmt(amount)} so'm kelishini kutyapmiz`, note: "Oynani yopmang, to'lov avtomatik aniqlanadi." },
-  received: { title: "To'lov qabul qilindi", text: recipient ? `${product} @${recipient} ga yuborilmoqda` : `${product} yuborilmoqda`, note: "Odatda bir necha daqiqa oladi." },
-  success: { title: "Muvaffaqiyatli yuborildi", text: recipient ? `${product} @${recipient} hisobiga tushdi` : `${product} yuborildi`, note: "" },
-  failed: { title: "Yuborishda xato bo'ldi", text: errorText || "Yuborishda muammo chiqdi", note: orderId ? `Buyurtma #${orderId} raqamini Yordam Markaziga yuboring.` : "" },
-  expired: { title: "Vaqt tugadi", text: "8 daqiqa ichida to'lov aniqlanmadi", note: "Pul o'tkazgan bo'lsangiz, chekni Yordam Markaziga yuboring." },
-  busy: { title: "Hozir band", text: "Hozirda juda ko'p buyurtmalar mavjud", note: "1-2 daqiqadan keyin qayta urinib ko'ring." },
-  error: { title: "Buyurtma ochilmadi", text: "Aloqada xato bo'ldi", note: "Internetni tekshirib, qayta urinib ko'ring." },
-});
+const textFor = (t, { product, recipient, amount, orderId, errorText }) => {
+  const vars = { product, user: recipient, amount: `${fmt(amount)} ${t("ui.som")}`, id: orderId };
+  const line = (key) => fill(t(`ui.${key}`), vars);
+  return {
+    pending: { title: line("pendingT"), text: line("pendingD"), note: line("pendingN") },
+    received: { title: line("receivedT"), text: line(recipient ? "receivedD" : "receivedD2"), note: line("receivedN") },
+    success: { title: line("successT"), text: line(recipient ? "successD" : "successD2"), note: "" },
+    failed: { title: line("failedT"), text: errorText || line("failedD"), note: orderId ? line("failedN") : "" },
+    expired: { title: line("expiredT"), text: line("expiredD"), note: line("expiredN") },
+    busy: { title: line("busyT"), text: line("busyD"), note: line("busyN") },
+    error: { title: line("errorT"), text: line("errorD"), note: line("errorN") },
+  };
+};
 
 /**
  * To'lovdan keyingi holatlar: pending, received, success, failed, expired,
  * hamda order ochilmagan holatlar: busy, error.
  */
-export function Status({ stage, item, product, recipient, amount, countdown, orderId, txId, note, errorText, onClose, onDone, onRetry }) {
-  const text = textFor({ product, recipient, amount, orderId, errorText })[stage];
+export function Status({ stage, item, product, recipient, amount, countdown, orderId, txId, note, errorText, sheet = false, onClose, onDone, onRetry }) {
+  const { t } = useTranslation();
+  const text = textFor(t, { product, recipient, amount, orderId, errorText })[stage];
   const noOrder = stage === "busy" || stage === "error";
-  const support = <button type="button" className="pn-ghost" onClick={openSupport}>Yordam Markazi</button>;
-  const close = <button type="button" className="pn-ghost" onClick={onClose}>Yopish</button>;
+  const [closing, closeSheet] = useClosing(onClose, 240);
+  const support = <button type="button" className="pn-ghost" onClick={openSupport}>{t("ui.support")}</button>;
+  const close = <button type="button" className="pn-ghost" onClick={closeSheet}>{t("ui.close")}</button>;
   const footer = {
-    success: <button type="button" className="pn-cta" onClick={onDone || onClose}>Tayyor</button>,
+    success: <button type="button" className="pn-cta" onClick={onDone || closeSheet}>{t("ui.done")}</button>,
     failed: <>{support}{close}</>,
-    expired: <><button type="button" className="pn-cta" onClick={onRetry || onClose}>Qayta buyurtma</button>{support}</>,
-    busy: <><button type="button" className="pn-cta" onClick={onRetry || onClose}>Qayta urinish</button>{close}</>,
-    error: <><button type="button" className="pn-cta" onClick={onRetry || onClose}>Qayta urinish</button>{close}</>,
+    expired: <><button type="button" className="pn-cta" onClick={onRetry || closeSheet}>{t("ui.reorder")}</button>{support}</>,
+    busy: <><button type="button" className="pn-cta" onClick={onRetry || closeSheet}>{t("ui.retry")}</button>{close}</>,
+    error: <><button type="button" className="pn-cta" onClick={onRetry || closeSheet}>{t("ui.retry")}</button>{close}</>,
   }[stage] || close;
 
   return (
-    <div className="pn-pay">
-      <PayTop title="Buyurtma holati" onClose={onClose} />
-      <div className="pn-pay__body pn-status">
+    <div className={`pn-pay ${sheet ? "pn-pay--sheet" : ""} ${closing ? "is-closing" : ""}`}>
+      <PayTop title={t("ui.statusTitle")} onClose={closeSheet} />
+      <div className="pn-pay__body pn-status" key={stage}>
         <div className="pn-status__timer">{(stage === "pending" || stage === "expired") && <Countdown left={stage === "expired" ? 0 : countdown} />}</div>
         <Hero key={stage} stage={stage} item={item} />
         <h2>{text.title}</h2>
@@ -185,11 +187,11 @@ export function Status({ stage, item, product, recipient, amount, countdown, ord
         </p>
         {!noOrder && (
           <dl className="pn-receipt">
-            {orderId && <div><dt>Buyurtma</dt><dd>#{orderId}</dd></div>}
-            <div><dt>Mahsulot</dt><dd>{product}</dd></div>
-            {recipient && <div><dt>Qabul qiluvchi</dt><dd>@{recipient}</dd></div>}
-            <div><dt>Summa</dt><dd>{fmt(amount)} so'm</dd></div>
-            {txId && <div><dt>Tranzaksiya</dt><dd className="pn-receipt__tx">{txId}</dd></div>}
+            {orderId && <div><dt>{t("ui.rOrder")}</dt><dd>#{orderId}</dd></div>}
+            <div><dt>{t("ui.rProduct")}</dt><dd>{product}</dd></div>
+            {recipient && <div><dt>{t("ui.rRecipient")}</dt><dd>@{recipient}</dd></div>}
+            <div><dt>{t("ui.rAmount")}</dt><dd>{fmt(amount)} {t("ui.som")}</dd></div>
+            {txId && <div><dt>{t("ui.rTx")}</dt><dd className="pn-receipt__tx">{txId}</dd></div>}
           </dl>
         )}
         {(note || text.note) && <p className="pn-status__note">{note || text.note}</p>}

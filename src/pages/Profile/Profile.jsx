@@ -1,23 +1,27 @@
 import React, { useEffect, useState } from "react";
 import WebApp from "@twa-dev/sdk";
-import { useNavigate } from "react-router-dom";
+import { useGo } from "../../ui/nav";
 import { useTranslation } from "../../context/LanguageContext";
 import apiFetch from "../../utils/apiFetch";
 import { SUPPORT_TELEGRAM_URL, SUPPORT_TELEGRAM_USERNAME } from "../../utils/supportContact";
-import { LanguageModal, Shell, Tabs, openLink } from "../../ui/Kit";
+import { LanguageModal, Shell, Tabs, fill, openLink } from "../../ui/Kit";
 import { BellIcon, ChannelIcon, ChevronRight, GlobeIcon, OrdersIcon, SupportIcon, TgStar, UsersIcon } from "../../ui/Brand";
+
+// Bo'limga qaytganda ma'lumot darhol ko'rinadi, orqada yangilanadi
+let cachedUser = null;
+let cachedUnread = 0;
 
 export default function Profile() {
   const { t, language } = useTranslation();
-  const navigate = useNavigate();
-  const [user, setUser] = useState({
-    username: "User",
+  const go = useGo();
+  const [user, setUser] = useState(cachedUser || {
+    username: localStorage.getItem("username") || "User",
     photo_url: null,
     balance: 0,
     friends: 0
   });
   const [showLanguageModal, setShowLanguageModal] = useState(false);
-  const [unread, setUnread] = useState(0);
+  const [unread, setUnread] = useState(cachedUnread);
 
   const langLabels = { uz: "O'zbekcha", en: "English", ru: "Русский" };
 
@@ -45,13 +49,16 @@ export default function Profile() {
         const res = await apiFetch(`/api/referral/stats/${safeUsername}`);
         if (res.ok) {
           const data = await res.json();
-          setUser(prev => ({
-            ...prev,
-            username,
-            photo_url: photoUrl,
-            balance: data.referral_balance || 0,
-            friends: data.total_referrals || 0
-          }));
+          setUser(prev => {
+            cachedUser = {
+              ...prev,
+              username,
+              photo_url: photoUrl,
+              balance: data.referral_balance || 0,
+              friends: data.total_referrals || 0
+            };
+            return cachedUser;
+          });
         } else {
           setUser(prev => ({ ...prev, username, photo_url: photoUrl }));
         }
@@ -67,24 +74,29 @@ export default function Profile() {
     if (uid) {
       apiFetch(`/api/notifications/unread/${uid}`)
         .then((r) => r.json())
-        .then((json) => { if (json.success) setUnread(json.unread_count || 0); })
+        .then((json) => {
+          if (json.success) {
+            cachedUnread = json.unread_count || 0;
+            setUnread(cachedUnread);
+          }
+        })
         .catch(() => {});
     }
   }, []);
 
   const rows = [
     [
-      [GlobeIcon, t("profile.language") || "Til", langLabels[language], () => setShowLanguageModal(true)],
-      [OrdersIcon, t("profile.myOrders") || "Mening buyurtmalarim", t("profile.myOrdersDesc") || "Xaridlar tarixi", () => navigate("/history")],
-      [BellIcon, t("notifications.title") || "Bildirishnomalar", unread > 0 ? `${unread} ta yangi` : (t("notifications.subtitle") || "Yangiliklar va xabarlar"), () => navigate("/notifications")],
+      [GlobeIcon, t("profile.language"), langLabels[language], () => setShowLanguageModal(true)],
+      [OrdersIcon, t("profile.myOrders"), t("profile.myOrdersDesc"), () => go("/history", "tab-prev")],
+      [BellIcon, t("notifications.title"), unread > 0 ? fill(t("ui.unread"), { n: unread }) : t("notifications.subtitle"), () => go("/notifications")],
     ],
     [
-      [TgStar, t("referral.balance") || "Referal balans", `${user.balance} Stars`, () => navigate("/referral")],
-      [UsersIcon, t("profile.friendsCount") || "Do'stlar soni", `${user.friends} ta`, () => navigate("/referral")],
+      [TgStar, t("ui.refBalance"), fill(t("ui.stars"), { n: user.balance }), () => go("/referral")],
+      [UsersIcon, t("ui.friends"), fill(t("ui.countOf"), { n: user.friends }), () => go("/referral")],
     ],
     [
-      [SupportIcon, t("profile.support") || "Yordam", `@${SUPPORT_TELEGRAM_USERNAME}`, () => openLink(SUPPORT_TELEGRAM_URL)],
-      [ChannelIcon, t("profile.channel") || "Yangiliklar kanali", "@premiumsenduz", () => openLink("https://t.me/premiumsenduz")],
+      [SupportIcon, t("ui.support"), `@${SUPPORT_TELEGRAM_USERNAME}`, () => openLink(SUPPORT_TELEGRAM_URL)],
+      [ChannelIcon, t("profile.channel"), "@premiumsenduz", () => openLink("https://t.me/premiumsenduz")],
     ],
   ];
 

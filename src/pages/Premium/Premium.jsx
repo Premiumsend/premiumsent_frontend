@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import "./Premium.css";
 import WebApp from "@twa-dev/sdk";
 import apiFetch from "../../utils/apiFetch";
-import { Dust, PromoField, RecipientField, Shell, fmt } from "../../ui/Kit";
+import { useTranslation } from "../../context/LanguageContext";
+import { Dust, PromoField, RecipientField, Shell, fill, fmt } from "../../ui/Kit";
 import { TgStar } from "../../ui/Brand";
 import { Confirm, Status, Transfer } from "../../ui/Payment";
+import { useGo } from "../../ui/nav";
 import {
   isCardDeliveryVariant,
   premiumApiPrefix,
@@ -16,7 +18,7 @@ import {
 } from "../../utils/paymeeErrors";
 import { PaymeeStockBanner } from "../../components/PaymeeStockBanner";
 import { PaymeeStockAlert } from "../../components/PaymeeStockAlert";
-const PLAN_TAGS = { 6: "Tavsiya", 12: "Eng foydali" };
+const PLAN_TAGS = { 6: "ui.recommended", 12: "ui.best" };
 const STAGE_OF = {
   pending: "pending",
   payment_received: "received",
@@ -37,7 +39,8 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
   const isPaymee = variant === "paymee";
   const isCardFlow = isCardDeliveryVariant(variant);
   const premiumApi = premiumApiPrefix(variant);
-  const navigate = useNavigate();
+  const go = useGo();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const PREMIUM_3 = parseInt(import.meta.env.VITE_PREMIUM_3);
   const PREMIUM_6 = parseInt(import.meta.env.VITE_PREMIUM_6);
@@ -102,7 +105,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
       } else if (showWarningModal) {
         setShowWarningModal(false);
       } else {
-        navigate("/");
+        go("/", "back");
       }
     };
 
@@ -122,7 +125,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
         }
       } catch (e) {}
     };
-  }, [showModal, showWarningModal, navigate]);
+  }, [showModal, showWarningModal, go]);
 
   // Fragment: slot narxi backenddan (to'lov summasi mos bo'lishi uchun)
   useEffect(() => {
@@ -196,7 +199,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
 
         if (!res.ok) {
           setProfile(null);
-          setSearchError(data.error || "Foydalanuvchi topilmadi");
+          setSearchError(data.error || t("ui.userNotFound"));
           return;
         }
 
@@ -210,7 +213,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
         setSearchError(null);
       } catch (err) {
         if (err.name === 'AbortError') return;
-        setSearchError("Tarmoq xatosi");
+        setSearchError(t("ui.errNet"));
         setProfile(null);
       } finally {
         setLoadingProfile(false);
@@ -230,7 +233,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
         window?.Telegram?.WebApp?.initDataUnsafe?.user?.username;
 
       if (!tgUser) {
-        alert("Telegram username topilmadi");
+        alert(t("ui.tgNoUser"));
         return;
       }
 
@@ -245,12 +248,12 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
   // ================================
   const handleCheckPromo = async () => {
     if (!pramacod) {
-      setPromoMessage("Pramacod kiriting");
+      setPromoMessage(t("ui.promoEnter"));
       setPromoError(true);
       return;
     }
     try {
-      setPromoMessage("Tekshirilmoqda...");
+      setPromoMessage(t("ui.promoChecking"));
       setPromoError(false);
 
       const res = await apiFetch("/api/promocode/check", {
@@ -265,11 +268,11 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setPromoMessage(data.error || "Pramacod xato");
+        setPromoMessage(data.error || t("ui.promoBad"));
         setPromoError(true);
         setAppliedPromo(null);
       } else {
-        setPromoMessage(`Muvaffaqiyatli! Chegirma: ${data.discount_percent}%`);
+        setPromoMessage(fill(t("ui.promoOk"), { n: data.discount_percent }));
         setPromoError(false);
         setAppliedPromo({
           code: pramacod,
@@ -278,7 +281,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
         });
       }
     } catch (err) {
-      setPromoMessage("Xatolik yuz berdi");
+      setPromoMessage(t("ui.errGeneric"));
       setPromoError(true);
       setAppliedPromo(null);
     }
@@ -288,12 +291,12 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
 
     const cleanUsername = (profile?.username || username || "").replace(/^@/, "").trim();
     if (!cleanUsername) {
-      alert("Iltimos, username kiriting!");
+      alert(t("ui.enterUsername"));
       return;
     }
 
     if (!isCardFlow && (!profile?.username || !profile?.recipient)) {
-      alert("Foydalanuvchi topilmadi!");
+      alert(t("ui.userNotFound"));
       return;
     }
 
@@ -337,14 +340,14 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
           return;
         }
         if (data.code === "ALREADY_HAS_PREMIUM") {
-          alert(data.error || "Bu foydalanuvchida allaqachon Premium faol.");
+          alert(data.error || t("ui.hasPremium"));
           return;
         }
         if (isPaymeeInsufficientError(data)) {
           setPaymeeStockModal(paymeeInsufficientAlertMessage(data, "premium"));
           return;
         }
-        alert(data.error || "Order yaratishda xato");
+        alert(data.error || t("ui.orderFail"));
         return;
       }
 
@@ -429,7 +432,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
         // Xatolik
         if (["failed", "error"].includes(serverStatus)) {
           stopPolling();
-          setErrorMessage(data.error_message || data.reason || data.error || "Kutilmagan xatolik yuz berdi. Iltimos, admin bilan bog'laning.");
+          setErrorMessage(data.error_message || data.reason || data.error || t("ui.unexpected"));
         }
 
         if (serverStatus === "expired") {
@@ -493,7 +496,9 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
   // UI
   // ================================
   const recipientName = profile?.username || username.replace(/^@/, "").trim();
-  const productName = order ? `Premium, ${order.muddat_oy} oy` : "";
+  const som = t("ui.som");
+  const productName = order ? fill(t("ui.premiumMonths"), { n: order.muddat_oy }) : "";
+  const planLabel = (p) => (p.months === 12 ? t("ui.year") : fill(t("ui.months"), { n: p.months }));
   const basePrice = isCardFlow ? fragmentPlanPrice : selectedPlan.price;
   const total = appliedPromo?.new_price ?? basePrice;
   const stage = STAGE_OF[paymentStatus];
@@ -508,10 +513,10 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
     (!isCardFlow && !profile?.recipient);
 
   const planPrice = (p) => {
-    if (!isCardFlow || selectedPlan.id !== p.id) return `${fmt(p.price)} so'm`;
+    if (!isCardFlow || selectedPlan.id !== p.id) return `${fmt(p.price)} ${som}`;
     if (fragmentPriceLoading) return "...";
-    if (fragmentPlanPrice != null) return `${fmt(fragmentPlanPrice)} so'm`;
-    return fragmentSlotsFull ? "Band" : "—";
+    if (fragmentPlanPrice != null) return `${fmt(fragmentPlanPrice)} ${som}`;
+    return fragmentSlotsFull ? t("ui.busyPrice") : "—";
   };
 
   return (
@@ -520,7 +525,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
         <div className="pn-pagehero">
           <span className="pn-star-dust"><TgStar size={54} accent /><Dust /></span>
           <h1>Telegram Premium</h1>
-          <ul><li>Reklamasiz</li><li>4 GB fayllar</li><li>Premium stikerlar</li></ul>
+          <ul><li>{t("ui.perk1")}</li><li>{t("ui.perk2")}</li><li>{t("ui.perk3")}</li></ul>
         </div>
 
         <RecipientField
@@ -533,14 +538,14 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
         />
 
         <section className="pn-field">
-          <label>Muddat</label>
+          <label>{t("ui.plan")}</label>
           <div className="pn-plans">
             {plans.map((p) => (
               <button key={p.id} type="button" className={`pn-plan ${selectedPlan.id === p.id ? "is-active" : ""}`} onClick={() => setSelectedPlan(p)}>
                 <i />
                 <span className="pn-plan__text">
-                  <b>{p.label}{PLAN_TAGS[p.months] && <em>{PLAN_TAGS[p.months]}</em>}</b>
-                  <span>oyiga {fmt(Math.round(p.price / p.months))} so'm</span>
+                  <b>{planLabel(p)}{PLAN_TAGS[p.months] && <em>{t(PLAN_TAGS[p.months])}</em>}</b>
+                  <span>{fill(t("ui.perMonth"), { price: `${fmt(Math.round(p.price / p.months))} ${som}` })}</span>
                 </span>
                 <span className="pn-plan__price">{planPrice(p)}</span>
               </button>
@@ -552,13 +557,13 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
 
         <PromoField code={pramacod} setCode={setPramacod} message={promoMessage} isError={promoError} applied={Boolean(appliedPromo)} onApply={handleCheckPromo} />
 
-        <p className="pn-note">Obuna avtomatik yangilanmaydi. Karta ma'lumotlaringiz so'ralmaydi.</p>
+        <p className="pn-note">{t("ui.noRenew")}</p>
       </div>
 
       <div className="pn-bar">
-        <span className="pn-bar__total"><small>Jami</small><b>{total != null ? `${fmt(total)} so'm` : "—"}</b></span>
+        <span className="pn-bar__total"><small>{t("ui.total")}</small><b>{total != null ? `${fmt(total)} ${som}` : "—"}</b></span>
         <button type="button" className="pn-cta" disabled={buyDisabled} onClick={handleCreateOrder}>
-          {loadingBuy ? "Yuklanmoqda..." : "Sotib olish"}
+          {loadingBuy ? t("common.loading") : t("ui.buy")}
         </button>
       </div>
 
@@ -584,7 +589,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
           countdown={countdown}
           orderId={order.id}
           errorText={errorMessage}
-          note={stage === "received" && cardLast4 ? `Karta aniqlandi: **** ${cardLast4}` : ""}
+          note={stage === "received" && cardLast4 ? fill(t("ui.cardDetected"), { last4: cardLast4 }) : ""}
           onClose={closePayment}
           onDone={closePayment}
           onRetry={closePayment}
@@ -593,6 +598,7 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
 
       {orderIssue && (
         <Status
+          sheet
           stage={orderIssue}
           item="premium"
           onClose={() => setOrderIssue(null)}

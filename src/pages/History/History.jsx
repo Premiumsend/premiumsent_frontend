@@ -1,21 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useGo } from "../../ui/nav";
 import { useTranslation } from "../../context/LanguageContext";
 import WebApp from "@twa-dev/sdk";
 import apiFetch from "../../utils/apiFetch";
-import { Shell, Tabs, fmt } from "../../ui/Kit";
+import { Shell, Tabs, dateLocale, fill, fmt } from "../../ui/Kit";
 import { OrdersIcon, TgStar } from "../../ui/Brand";
 
-const FILTERS = [["all", "Hammasi"], ["success", "Bajarildi"], ["pending", "Kutilmoqda"], ["failed", "Bekor"], ["expired", "Eskirgan"]];
+const FILTERS = [["all", "ui.fAll"], ["success", "ui.fDone"], ["pending", "ui.fWait"], ["failed", "ui.fCancel"], ["expired", "ui.fExpired"]];
+
+// Bo'limga qaytganda ro'yxat darhol ko'rinadi, orqada yangilanadi
+let cachedHistory = null;
 
 export default function History() {
-  const navigate = useNavigate();
-  const { t } = useTranslation();
+  const go = useGo();
+  const { t, language } = useTranslation();
 
   // State
   const [username, setUsername] = useState(null);
   const [userId, setUserId] = useState(null);
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState(cachedHistory || []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all"); // all, success, failed, expired, pending
@@ -47,13 +50,14 @@ export default function History() {
   // Load user history by userId (owner_user_id)
   const loadHistory = async (uid) => {
     try {
-      setLoading(true);
+      setLoading(!cachedHistory);
       setError(null);
 
       const res = await apiFetch(`/api/user/history/${uid}`);
       const json = await res.json();
 
       const orders = json || [];
+      cachedHistory = orders;
       setHistory(orders);
     } catch (err) {
       console.error("History error:", err);
@@ -68,20 +72,20 @@ export default function History() {
     switch (status) {
       case "pending":
       case "processing":
-        return { label: "Kutilmoqda", class: "is-wait", filterKey: "pending" };
+        return { label: t("ui.fWait"), class: "is-wait", filterKey: "pending" };
       case "stars_sent":
       case "premium_sent":
       case "completed":
       case "delivered":
       case "sent":
-        return { label: "Bajarildi", class: "is-ok", filterKey: "success" };
+        return { label: t("ui.fDone"), class: "is-ok", filterKey: "success" };
       case "failed":
       case "error":
-        return { label: "Bekor qilindi", class: "is-bad", filterKey: "failed" };
+        return { label: t("ui.sCancel"), class: "is-bad", filterKey: "failed" };
       case "expired":
-        return { label: "Eskirgan", class: "is-muted", filterKey: "expired" };
+        return { label: t("ui.fExpired"), class: "is-muted", filterKey: "expired" };
       default:
-        return { label: status, class: "is-muted", filterKey: "all" };
+        return { label: t("ui.fWait"), class: "is-muted", filterKey: "all" };
     }
   };
 
@@ -95,10 +99,10 @@ export default function History() {
   return (
     <Shell>
       <div className="pn-scroll pn-scroll--tabs">
-        <h1 className="pn-title">Buyurtmalar</h1>
+        <h1 className="pn-title">{t("ui.orders")}</h1>
         <div className="pn-filters">
           {FILTERS.map(([id, label]) => (
-            <button key={id} type="button" className={filter === id ? "is-active" : ""} onClick={() => setFilter(id)}>{label}</button>
+            <button key={id} type="button" className={filter === id ? "is-active" : ""} onClick={() => setFilter(id)}>{t(label)}</button>
           ))}
         </div>
 
@@ -109,9 +113,9 @@ export default function History() {
         ) : filteredHistory.length === 0 ? (
           <div className="pn-empty">
             <span><OrdersIcon size={26} /></span>
-            <b>{filter === "all" ? "Buyurtmalar hali yo'q" : "Bu bo'limda buyurtma yo'q"}</b>
-            Xaridlaringiz shu yerda ko'rinadi
-            {filter === "all" && <button type="button" className="pn-cta" onClick={() => navigate("/")}>Xarid qilish</button>}
+            <b>{t(filter === "all" ? "ui.ordersEmpty" : "ui.filterEmpty")}</b>
+            {t("ui.ordersHint")}
+            {filter === "all" && <button type="button" className="pn-cta" onClick={() => go("/", "tab-prev")}>{t("ui.shop")}</button>}
           </div>
         ) : (
           <ul className="pn-orders">
@@ -123,8 +127,8 @@ export default function History() {
                 <li key={`${item.kind}-${item.id}`}>
                   <span className={`pn-order__ic ${isStars ? "is-gold" : ""}`}><TgStar size={24} accent={!isStars} /></span>
                   <span className="pn-order__main">
-                    <b>{isStars ? `${item.stars} Stars` : `Premium, ${item.stars} oy`}</b>
-                    {new Date(item.created_at).toLocaleDateString()} {new Date(item.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    <b>{fill(t(isStars ? "ui.stars" : "ui.premiumMonths"), { n: item.stars })}</b>
+                    {new Date(item.created_at).toLocaleDateString(dateLocale(language))} {new Date(item.created_at).toLocaleTimeString(dateLocale(language), { hour: "2-digit", minute: "2-digit" })}
                   </span>
                   <span className="pn-order__side"><b>{fmt(item.amount)}</b><em className={statusInfo.class}>{statusInfo.label}</em></span>
                 </li>

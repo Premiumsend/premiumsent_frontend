@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useGo } from "../../ui/nav";
 import WebApp from "@twa-dev/sdk";
 import { useTranslation } from "../../context/LanguageContext";
 import apiFetch from "../../utils/apiFetch";
-import { Shell } from "../../ui/Kit";
+import { Shell, dateLocale, fill } from "../../ui/Kit";
 import { BellIcon, CheckIcon, TgStar } from "../../ui/Brand";
 
 const TYPE_ICONS = {
@@ -13,26 +13,21 @@ const TYPE_ICONS = {
 const DEFAULT_ICON = ["is-info", <BellIcon key="bell" size={18} />];
 
 // Format relative time
-const formatRelativeTime = (dateStr) => {
+const formatRelativeTime = (dateStr, t, language) => {
   const date = new Date(dateStr);
-  const now = new Date();
-  const diff = Math.floor((now - date) / 1000);
+  const diff = Math.floor((Date.now() - date) / 1000);
 
-  if (diff < 60) return "Hozir";
-  if (diff < 3600) return `${Math.floor(diff / 60)} daqiqa oldin`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} soat oldin`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)} kun oldin`;
+  if (diff < 60) return t("ui.now");
+  if (diff < 3600) return fill(t("ui.minAgo"), { n: Math.floor(diff / 60) });
+  if (diff < 86400) return fill(t("ui.hourAgo"), { n: Math.floor(diff / 3600) });
+  if (diff < 604800) return fill(t("ui.dayAgo"), { n: Math.floor(diff / 86400) });
 
-  return date.toLocaleDateString("uz-UZ", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric"
-  });
+  return date.toLocaleDateString(dateLocale(language), { day: "2-digit", month: "short", year: "numeric" });
 };
 
 export default function Notifications() {
-  const navigate = useNavigate();
-  const { t } = useTranslation();
+  const go = useGo();
+  const { t, language } = useTranslation();
 
   const [notifications, setNotifications] = useState([]);
   const [userId, setUserId] = useState(null);
@@ -41,7 +36,7 @@ export default function Notifications() {
   useEffect(() => {
     try {
       WebApp.BackButton.show();
-      const handleBackClick = () => navigate("/profile");
+      const handleBackClick = () => go("/profile", "back");
       WebApp.BackButton.onClick(handleBackClick);
 
       return () => {
@@ -51,7 +46,7 @@ export default function Notifications() {
     } catch (err) {
       console.error("BackButton error:", err);
     }
-  }, [navigate]);
+  }, [go]);
 
   // Get user ID
   useEffect(() => {
@@ -88,12 +83,12 @@ export default function Notifications() {
   return (
     <Shell>
       <div className="pn-scroll">
-        <h1 className="pn-title">{t("notifications.title") || "Bildirishnomalar"}</h1>
+        <h1 className="pn-title">{t("notifications.title")}</h1>
         {notifications.length === 0 ? (
           <div className="pn-empty">
             <span><BellIcon size={26} /></span>
-            <b>{t("notifications.noNotifications") || "Bildirishnomalar yo'q"}</b>
-            {t("notifications.emptyHint") || "Yangi xabarlar shu yerda ko'rinadi"}
+            <b>{t("notifications.noNotifications")}</b>
+            {t("notifications.emptyHint")}
           </div>
         ) : (
           <ul className="pn-notes">
@@ -102,7 +97,7 @@ export default function Notifications() {
               return (
                 <li key={notif.id} className={notif.is_read ? "" : "is-unread"}>
                   <span className={`pn-notes__ic ${tone}`}>{icon}</span>
-                  <span><b>{notif.title}</b>{notif.message}<small>{formatRelativeTime(notif.created_at)}</small></span>
+                  <span><b>{notif.title}</b>{notif.message}<small>{formatRelativeTime(notif.created_at, t, language)}</small></span>
                 </li>
               );
             })}
