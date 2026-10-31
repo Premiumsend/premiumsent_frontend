@@ -67,15 +67,17 @@ export default function History() {
   const getStatusInfo = (status) => {
     switch (status) {
       case "pending":
-        return { label: t("stars.paymentPending") || "Kutilmoqda", class: "is-wait", filterKey: "pending" };
+      case "processing":
+        return { label: "Kutilmoqda", class: "is-wait", filterKey: "pending" };
       case "stars_sent":
       case "premium_sent":
       case "completed":
+      case "delivered":
       case "sent":
-        return { label: t("stars.paymentSuccess") || "Bajarildi", class: "is-ok", filterKey: "success" };
+        return { label: "Bajarildi", class: "is-ok", filterKey: "success" };
       case "failed":
       case "error":
-        return { label: t("stars.paymentFailed") || "Bekor qilindi", class: "is-bad", filterKey: "failed" };
+        return { label: "Bekor qilindi", class: "is-bad", filterKey: "failed" };
       case "expired":
         return { label: "Eskirgan", class: "is-muted", filterKey: "expired" };
       default:
@@ -115,7 +117,8 @@ export default function History() {
           <ul className="pn-orders">
             {filteredHistory.map((item) => {
               const statusInfo = getStatusInfo(item.status);
-              const isStars = item.kind === "stars";
+              // Backend turi: stars, stars_paymee, premium, premium_paymee
+              const isStars = String(item.kind).startsWith("stars");
               return (
                 <li key={`${item.kind}-${item.id}`}>
                   <span className={`pn-order__ic ${isStars ? "is-gold" : ""}`}><TgStar size={24} accent={!isStars} /></span>

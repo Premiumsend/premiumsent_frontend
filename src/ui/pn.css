@@ -154,7 +154,7 @@
 .pn-recipient b { font-size: 15px; font-weight: 620; color: var(--ink); }
 .pn-recipient .pn-avatar { object-fit: cover; }
 .pn-spin { width: 20px; height: 20px; margin: 12px auto 0; border: 2.5px solid var(--line); border-top-color: var(--a); border-radius: 50%; animation: pn-spin .8s linear infinite; }
-.pn-recipient i { color: var(--ok); line-height: 0; }
+.pn-recipient i { flex: none; margin-left: auto; color: var(--ok); line-height: 0; }
 
 .pn-plans { display: flex; flex-direction: column; gap: 8px; }
 .pn-plan { width: 100%; display: flex; align-items: center; gap: 12px; padding: 13px 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); text-align: left; }
@@ -211,18 +211,20 @@
 .pn-timer.is-danger b { color: var(--danger); }
 .pn-timer.is-danger i { background: var(--danger); }
 
-.pn-plastic { position: relative; width: 100%; display: flex; flex-direction: column; gap: 15px; overflow: hidden; padding: 15px 16px; border: 0; border-radius: 19px; background: radial-gradient(120% 130% at 100% 0%, rgba(255, 255, 255, .24), transparent 55%), linear-gradient(135deg, var(--plastic-a), var(--plastic-b)); color: #fff !important; text-align: left; box-shadow: 0 14px 30px rgba(var(--a-rgb), .34); }
+.pn-plastic { position: relative; width: 100%; display: flex; flex-direction: column; align-items: stretch; gap: 15px; overflow: hidden; padding: 15px 16px; border: 0; border-radius: 19px; background: radial-gradient(120% 130% at 100% 0%, rgba(255, 255, 255, .24), transparent 55%), linear-gradient(135deg, var(--plastic-a), var(--plastic-b)); color: #fff !important; text-align: left; box-shadow: 0 14px 30px rgba(var(--a-rgb), .34); }
 .pn-plastic__top { display: flex; align-items: center; justify-content: space-between; }
 .pn-plastic__top em { font-size: 12px; font-weight: 700; letter-spacing: .1em; opacity: .85; }
 .pn-plastic__chip { width: 36px; height: 26px; border-radius: 6px; background: linear-gradient(135deg, #ffe9a8, #d9a93b); }
 .pn-plastic__num { font-size: 21.5px; font-weight: 640; letter-spacing: .035em; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.pn-plastic__foot { display: flex; align-items: center; justify-content: space-between; font-size: 14px; }
-.pn-plastic__copy { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 10px; background: rgba(255, 255, 255, .18); font-size: 13px; font-weight: 600; }
-.pn-amount { width: 100%; display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding: 11px 13px 11px 15px; border: 1.5px solid var(--a); border-radius: 17px; background: var(--soft); text-align: left; }
+.pn-plastic > * { width: 100%; }
+.pn-plastic__foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; }
+.pn-plastic__foot > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pn-plastic__copy { flex: none; margin-left: auto; display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 10px; background: rgba(255, 255, 255, .18); font-size: 13px; font-weight: 600; }
+.pn-amount { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; padding: 11px 13px 11px 15px; border: 1.5px solid var(--a); border-radius: 17px; background: var(--soft); text-align: left; }
 .pn-amount span { display: flex; flex-direction: column; }
 .pn-amount small { font-size: 13px; color: var(--ink-2); }
 .pn-amount b { font-size: 23px; font-weight: 740; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-.pn-amount i { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; background: rgba(255, 255, 255, .1); }
+.pn-amount i { flex: none; margin-left: auto; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; background: rgba(255, 255, 255, .1); }
 .pn-warn { display: flex; gap: 10px; margin-top: 10px; padding: 11px 12px; border-radius: 15px; background: rgba(251, 191, 36, .1); }
 .pn-warn > span { flex: none; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--warn); color: #231a02; font-size: 15px; font-weight: 800; }
 .pn-warn p { font-size: 13.5px; line-height: 1.38; color: var(--ink-2); }
