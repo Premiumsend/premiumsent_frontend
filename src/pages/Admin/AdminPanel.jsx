@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./AdminPanel.css";
 import { TGSSticker } from "../../components/TGSSticker";
 import adminSticker from "../../assets/AnimatedSticker_admin.tgs";
@@ -71,6 +71,24 @@ const getGiftStickerPath = (giftId) => {
   }
 };
 
+const WARNING_STEP = 8;
+
+const WARNING_FILTER_OPTIONS = [
+  { value: "all", label: "Hammasi", icon: "📋" },
+  { value: "failed", label: "Failed", icon: "⚠️" },
+  { value: "error", label: "Error", icon: "🔴" },
+  { value: "processing", label: "Processing 10+", icon: "🔄" },
+];
+
+const warningKind = (tx) =>
+  tx.order_type === "gift" ? "gift" : tx.order_type?.startsWith("premium") ? "premium" : "stars";
+
+const warningAmountLabel = (tx) => {
+  const kind = warningKind(tx);
+  if (kind === "premium") return `${tx.type_amount || 1} oy 💎`;
+  return kind === "gift" ? `${tx.type_amount} ⭐ 🎁` : `${tx.type_amount} ⭐`;
+};
+
 export default function AdminPanel() {
   // ========== TELEGRAM AUTH PROTECTION ==========
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -118,7 +136,7 @@ export default function AdminPanel() {
   
   // Users state
   const [users, setUsers] = useState([]);
-  const [activeTab, setActiveTab] = useState("premium");
+  const [activeTab, setActiveTab] = useState("warnings");
 
   const [bottomMenuOpen, setBottomMenuOpen] = useState(false);
 
@@ -126,6 +144,57 @@ export default function AdminPanel() {
     setActiveTab(tab);
     setBottomMenuOpen(false);
   };
+
+  const [warnings, setWarnings] = useState([]);
+  const [warningsTotal, setWarningsTotal] = useState(0);
+  const [warningStats, setWarningStats] = useState({ total: 0, failed: 0, error: 0, processing: 0 });
+  const [warningFilter, setWarningFilter] = useState("all");
+  const [warningSearch, setWarningSearch] = useState("");
+  const [debouncedWarningSearch, setDebouncedWarningSearch] = useState("");
+  const [warningExpandedId, setWarningExpandedId] = useState(null);
+  const [warningsLoading, setWarningsLoading] = useState(false);
+  const [warningsLoadingMore, setWarningsLoadingMore] = useState(false);
+  const warningRequestRef = useRef(0);
+  const warningsCountRef = useRef(0);
+  warningsCountRef.current = warnings.length;
+
+  const fetchWarnings = async ({ append = false, offset = 0, silent = false, limit = WARNING_STEP } = {}) => {
+    const requestId = ++warningRequestRef.current;
+    if (append) setWarningsLoadingMore(true);
+    else if (!silent) setWarningsLoading(true);
+    try {
+      const search = debouncedWarningSearch ? `&search=${encodeURIComponent(debouncedWarningSearch)}` : "";
+      const res = await apiFetch(`/api/admin/warnings?filter=${warningFilter}&limit=${limit}&offset=${offset}${search}`);
+      const data = await res.json();
+      if (requestId === warningRequestRef.current && data.success) {
+        setWarnings((prev) => (append ? [...prev, ...data.items] : data.items));
+        setWarningsTotal(data.total);
+        setWarningStats(data.stats);
+      }
+    } catch (err) {
+      console.error("❌ Warnings fetch error:", err);
+    } finally {
+      if (append) setWarningsLoadingMore(false);
+      else if (!silent) setWarningsLoading(false);
+    }
+  };
+
+  // Amaldan keyin ro'yxat joyida yangilanadi: spinner yo'q, ekran siljimaydi
+  const refreshWarnings = () =>
+    fetchWarnings({ silent: true, limit: Math.min(500, Math.max(WARNING_STEP, warningsCountRef.current)) });
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedWarningSearch(warningSearch.trim()), 350);
+    return () => clearTimeout(timer);
+  }, [warningSearch]);
+
+  // Warning soni va ro'yxati ochiq panelda yangilanib turadi
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    fetchWarnings();
+    const timer = setInterval(refreshWarnings, 30000);
+    return () => clearInterval(timer);
+  }, [isAuthenticated, warningFilter, debouncedWarningSearch]);
 
   const SECONDARY_NAV_MENU = [
     { id: "notifications", icon: "📣", label: "Xabar" },
@@ -1326,7 +1395,7 @@ export default function AdminPanel() {
       const data = await res.json();
       if (data.success) {
         alert("💎 Premium yuborildi!");
-        fetchPremiumOrders();
+        (activeTab === "warnings" ? refreshWarnings : fetchPremiumOrders)();
         setPremiumExpandedId(null);
       } else {
         alert("❌ Xato: " + data.error);
@@ -1433,7 +1502,7 @@ export default function AdminPanel() {
       const data = await res.json();
       if (data.success) {
         alert("🌟 Stars yuborildi!");
-        fetchTransactions();
+        (activeTab === "warnings" ? refreshWarnings : fetchTransactions)();
         setExpandedId(null);
       } else {
         alert("❌ Xato: " + data.error);
@@ -1497,7 +1566,7 @@ export default function AdminPanel() {
       const data = await res.json();
       if (data.success) {
         alert("🎁 Gift yuborildi!");
-        fetchGiftOrders();
+        (activeTab === "warnings" ? refreshWarnings : fetchGiftOrders)();
         setGiftExpandedId(null);
       } else {
         alert("❌ Xato: " + data.error);
@@ -1526,6 +1595,33 @@ export default function AdminPanel() {
       console.error("❌ Gift yuborishda xato:", err);
       alert("Server xato!");
       setAdminSendingOrderId(null);
+    }
+  };
+
+  const warningActions = {
+    stars: { send: adminSendStars, canSend: starsCanAdminSend, updateUrl: (id) => `/api/transactions/update/${id}` },
+    premium: { send: adminSendPremium, canSend: premiumCanAdminSend, updateUrl: (id) => `/api/admin/premium/update/${id}` },
+    gift: { send: adminSendGift, canSend: giftCanAdminSend, updateUrl: (id) => `/api/admin/gift/update/${id}` },
+  };
+
+  const expireWarning = async (tx) => {
+    if (!window.confirm(`#${tx.id} buyurtmani expired qilasizmi?`)) return;
+    try {
+      const res = await apiFetch(warningActions[warningKind(tx)].updateUrl(tx.id), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "expired" }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setWarningExpandedId(null);
+        refreshWarnings();
+      } else {
+        alert("❌ Xato: " + data.error);
+      }
+    } catch (err) {
+      console.error("❌ Warning expire xato:", err);
+      alert("Server xato!");
     }
   };
 
@@ -1891,7 +1987,8 @@ export default function AdminPanel() {
               aria-label="Yangilash"
               onClick={() => {
                 fetchPaymeeBalance();
-                if (activeTab === "transactions") fetchTransactions();
+                if (activeTab === "warnings") fetchWarnings();
+                else if (activeTab === "transactions") fetchTransactions();
                 else if (activeTab === "users") fetchUsers();
                 else if (activeTab === "premium") fetchPremiumOrders();
                 else if (activeTab === "gift") fetchGiftOrders();
@@ -1945,6 +2042,13 @@ export default function AdminPanel() {
       <div className="tabs tabs-primary">
         <button
           type="button"
+          className={`tab ${activeTab === "warnings" ? "active" : ""}`}
+          onClick={() => goToTab("warnings")}
+        >
+          ⚠️ Warning{warningStats.total > 0 ? ` (${warningStats.total})` : ""}
+        </button>
+        <button
+          type="button"
           className={`tab ${activeTab === "premium" ? "active" : ""}`}
           onClick={() => goToTab("premium")}
         >
@@ -1967,6 +2071,124 @@ export default function AdminPanel() {
       </div>
 
       <div className="admin-main">
+
+      {/* ==================== WARNING TAB ==================== */}
+      {activeTab === "warnings" && (
+        <div className="tab-content">
+          <div className="stats-text">
+            <span>Total: <b>{warningStats.total}</b></span>
+            <span>Failed: <b>{warningStats.failed}</b></span>
+            <span>Error: <b>{warningStats.error}</b></span>
+            <span>Processing 10+: <b>{warningStats.processing}</b></span>
+          </div>
+
+          <div className="filters">
+            <input
+              type="text"
+              placeholder="🔍 Qidiruv..."
+              value={warningSearch}
+              onChange={(e) => setWarningSearch(e.target.value)}
+              className="search-input"
+            />
+            <AdminCustomSelect
+              className="admin-custom-select--filter"
+              ariaLabel="Warning holati"
+              value={warningFilter}
+              onChange={setWarningFilter}
+              options={WARNING_FILTER_OPTIONS}
+            />
+          </div>
+
+          {warningsLoading ? (
+            <div className="loader">⏳ Yuklanmoqda...</div>
+          ) : (
+            <div className="orders-list">
+              {warnings.length === 0 ? (
+                <div className="empty-state">✅ Warning yo'q</div>
+              ) : (
+                warnings.map((tx) => {
+                  const actions = warningActions[warningKind(tx)];
+                  return (
+                    <div key={tx.id} className={getOrderCardClassName(tx)}>
+                      <div
+                        className="order-header"
+                        onClick={() => setWarningExpandedId(warningExpandedId === tx.id ? null : tx.id)}
+                        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}
+                      >
+                        <div className="order-main" style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                          <span className="order-user" style={{ fontWeight: "bold" }}>@{tx.username || tx.sender_username || "-"}</span>
+                          <div style={{ fontSize: "12px", color: "var(--tg-theme-hint-color, #999)" }}>
+                            {new Date(tx.created_at).toLocaleString()} • {tx.amount?.toLocaleString()} so'm
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                          <span className="order-stars">{warningAmountLabel(tx)}</span>
+                          <div className="order-status" style={{ backgroundColor: getStatusColor(tx.status) }}>
+                            {getStatusIcon(tx.status)} {tx.status}
+                          </div>
+                        </div>
+                      </div>
+
+                      {warningExpandedId === tx.id && (
+                        <div className="order-details">
+                          <div className="detail-grid">
+                            <div className="detail-item">
+                              <span className="detail-label">Buyurtma</span>
+                              <span className="detail-value">#{tx.id} • {tx.order_type}</span>
+                            </div>
+                            <div className="detail-item">
+                              <span className="detail-label">Yuboruvchi</span>
+                              <span className="detail-value">@{tx.sender_username || '-'} ({tx.owner_user_id})</span>
+                            </div>
+                            <div className="detail-item">
+                              <span className="detail-label">Qabul qiluvchi</span>
+                              <span className="detail-value">@{tx.username} ({tx.recipient || '-'})</span>
+                            </div>
+                            <div className="detail-item">
+                              <span className="detail-label">To'lov</span>
+                              <span className="detail-value">{tx.payment_method || '-'} • {tx.payment_status || '-'}</span>
+                            </div>
+                            <div className="detail-item">
+                              <span className="detail-label">Transaction ID</span>
+                              <span className="detail-value">{tx.transaction_id || "-"}</span>
+                            </div>
+                          </div>
+
+                          <div className="order-actions">
+                            {actions.canSend(tx.status) &&
+                              renderAdminSendButton(tx.id, () => actions.send(tx.id, tx.status))}
+                            <button
+                              className="action-btn expire"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                expireWarning(tx);
+                              }}
+                            >
+                              ❌ Expire
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+
+              {warnings.length < warningsTotal && (
+                <button
+                  className="show-all-btn"
+                  disabled={warningsLoadingMore}
+                  onClick={() => fetchWarnings({ append: true, offset: warnings.length })}
+                >
+                  {warningsLoadingMore
+                    ? "⏳ Yuklanmoqda..."
+                    : `📋 Yana ${Math.min(WARNING_STEP, warningsTotal - warnings.length)} ta yuklash (${warnings.length}/${warningsTotal})`}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ==================== NOTIFICATIONS TAB ==================== */}
       {activeTab === "notifications" && (
