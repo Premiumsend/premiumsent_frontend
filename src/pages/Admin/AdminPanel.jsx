@@ -3,6 +3,7 @@ import "./AdminPanel.css";
 import { TGSSticker } from "../../components/TGSSticker";
 import adminSticker from "../../assets/AnimatedSticker_admin.tgs";
 import apiFetch from "../../utils/apiFetch";
+import PaymentCardsAdmin from "./PaymentCardsAdmin";
 import AdminCustomSelect from "../../components/AdminCustomSelect";
 
 const PURCHASE_MODE_OPTIONS = [
@@ -133,7 +134,7 @@ export default function AdminPanel() {
 
   const SECONDARY_NAV_BOTTOM = [
     { id: "analytics", icon: "📊", label: "Stat" },
-    { id: "settings", icon: "%", label: "Cheg" },
+    { id: "settings", icon: "⚙️", label: "Sozlama" },
     { id: "promocodes", icon: "➕", label: "Promo" },
     { id: "referrals", icon: "🤝", label: "Ref" },
   ];
@@ -142,7 +143,7 @@ export default function AdminPanel() {
     { id: "analytics", icon: "📊", label: "Analitika" },
     { id: "notifications", icon: "📣", label: "Xabar" },
     { id: "fragment-cookie", icon: "🍪", label: "Fragment" },
-    { id: "settings", icon: "%", label: "Chegirma" },
+    { id: "settings", icon: "⚙️", label: "Sozlamalar" },
     { id: "promocodes", icon: "➕", label: "Promokod" },
     { id: "referrals", icon: "🤝", label: "Referral" },
   ];
@@ -3384,6 +3385,7 @@ export default function AdminPanel() {
       {/* ==================== SETTINGS TAB ==================== */}
       {activeTab === "settings" && (
         <div className="tab-content settings-tab">
+          <PaymentCardsAdmin />
           <h3 className="settings-section-title">⚡ Stars / Premium yetkazish</h3>
           <p className="settings-section-desc">
             Dashboard dagi &quot;Stars olish&quot; va &quot;Premium olish&quot; tugmalari qaysi sahifaga ochilishini tanlang.

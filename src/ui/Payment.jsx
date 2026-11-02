@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CheckIcon, ClockIcon, CopyIcon, SendIcon, ShieldIcon, TgStar } from "./Brand";
 import { useTranslation } from "../context/LanguageContext";
 import { Modal, fill, fmt, openSupport, useClosing } from "./Kit";
+import { usePaymentCard } from "../utils/paymentCard";
 
 const TOTAL = 480;
 const mmss = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
@@ -59,9 +60,8 @@ export function Confirm({ product, recipient, amount, onContinue }) {
 }
 
 export function Transfer({ amount, item, countdown, onClose, onPaid }) {
-  const cardNumber = String(import.meta.env.VITE_CARD_NUMBER || "").replace(/\s/g, "");
-  const cardName = import.meta.env.VITE_CARD_NAME || "";
-  const cardBrand = cardNumber.startsWith("9860") ? "HUMO" : "UZCARD";
+  const { cardNumber, cardNumberDisplay, cardNameDisplay, providerLabel, ready } = usePaymentCard();
+  const cardBrand = providerLabel || "UZCARD";
   const [copied, copy] = useCopy();
   const [guideOpen, setGuideOpen] = useState(false);
   const [closing, close] = useClosing(onClose, 240);
@@ -74,11 +74,11 @@ export function Transfer({ amount, item, countdown, onClose, onPaid }) {
         <h2 className="pn-pay__title">{t("ui.transferTitle")}</h2>
         <p className="pn-pay__sub">{t("ui.transferSub")}</p>
 
-        <button type="button" className="pn-plastic" onClick={() => copy("card", cardNumber)}>
+        <button type="button" className="pn-plastic" disabled={!ready} onClick={() => copy("card", cardNumber)}>
           <span className="pn-plastic__top"><span className="pn-plastic__chip" /><em>{cardBrand}</em></span>
-          <span className="pn-plastic__num">{cardNumber.replace(/(\d{4})(?=\d)/g, "$1 ")}</span>
+          <span className="pn-plastic__num">{ready ? cardNumber.replace(/(\d{4})(?=\d)/g, "$1 ") : cardNumberDisplay}</span>
           <span className="pn-plastic__foot">
-            <span>{cardName}</span>
+            <span>{cardNameDisplay}</span>
             <span className="pn-plastic__copy">{copied === "card" ? <><CheckIcon size={16} /> {t("ui.copied")}</> : <><CopyIcon size={16} /> {t("ui.copy")}</>}</span>
           </span>
         </button>

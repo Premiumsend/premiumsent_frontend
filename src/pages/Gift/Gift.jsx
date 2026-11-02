@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "../../context/LanguageContext";
 import apiFetch from "../../utils/apiFetch";
+import { usePaymentCard } from "../../utils/paymentCard";
 import { SUPPORT_TELEGRAM_URL } from "../../utils/supportContact";
 import {
   isPaymeeInsufficientError,
@@ -12,9 +13,6 @@ import { TGSSticker } from "../../components/TGSSticker";
 import WebApp from "@twa-dev/sdk";
 import starsjoyLogo from "../../assets/starsjoy.jpg";
 import "./gift.css";
-
-const CARD_NUMBER = import.meta.env.VITE_CARD_NUMBER;
-const CARD_NAME = import.meta.env.VITE_CARD_NAME;
 
 // Gift IDlar - har bir gift fayl nomi gift ID ga mos keladi (masalan: 5170145012310081615.tgs)
 const GIFTS = [
@@ -55,6 +53,7 @@ const formatTime = (sec) => {
 };
 
 export default function Gift() {
+  const { cardNumber: CARD_NUMBER, cardNumberDisplay: CARD_NUMBER_TEXT, cardNameDisplay: CARD_NAME_TEXT } = usePaymentCard();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -378,6 +377,7 @@ export default function Gift() {
 
   // === Copy handlers ===
   const handleCopyCard = () => {
+    if (!CARD_NUMBER) return;
     navigator.clipboard.writeText(CARD_NUMBER);
     setCopiedCard(true);
     setTimeout(() => setCopiedCard(false), 1500);
@@ -702,7 +702,7 @@ export default function Gift() {
                   <div className="gift-modal-pay-item">
                     <div className="gift-modal-pay-label">{t("stars.cardNumber")}</div>
                     <div className="gift-modal-pay-row">
-                      <span className="gift-modal-pay-value">{CARD_NUMBER}</span>
+                      <span className="gift-modal-pay-value">{CARD_NUMBER_TEXT}</span>
                       <button type="button" className="gift-modal-copy-btn" onClick={handleCopyCard}>
                         {copiedCard ? "✓" : "📋"}
                       </button>
@@ -712,7 +712,7 @@ export default function Gift() {
                   <div className="gift-modal-pay-item">
                     <div className="gift-modal-pay-label">{t("stars.cardName")}</div>
                     <div className="gift-modal-pay-row">
-                      <span className="gift-modal-pay-value">{CARD_NAME}</span>
+                      <span className="gift-modal-pay-value">{CARD_NAME_TEXT}</span>
                     </div>
                   </div>
 
@@ -776,7 +776,7 @@ export default function Gift() {
                   <div className="gift-modal-pay-item">
                     <div className="gift-modal-pay-label">{t("stars.cardNumber")}</div>
                     <div className="gift-modal-pay-row">
-                      <span className="gift-modal-pay-value">{CARD_NUMBER}</span>
+                      <span className="gift-modal-pay-value">{CARD_NUMBER_TEXT}</span>
                       <button type="button" className="gift-modal-copy-btn" onClick={handleCopyCard}>
                         {copiedCard ? "✓" : "📋"}
                       </button>
