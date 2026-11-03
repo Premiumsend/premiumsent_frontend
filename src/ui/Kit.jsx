@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import WebApp from "@twa-dev/sdk";
 import { useTranslation } from "../context/LanguageContext";
-import { CheckIcon, ChevronDown, ChevronRight, HomeIcon, OrdersIcon, ProfileIcon, SupportIcon, TagIcon, ChannelIcon } from "./Brand";
+import { CheckIcon, ChevronDown, ChevronRight, HomeIcon, GiftIcon, OrdersIcon, ProfileIcon, SupportIcon, TagIcon, ChannelIcon } from "./Brand";
 import { SUPPORT_TELEGRAM_URL, SUPPORT_TELEGRAM_USERNAME } from "../utils/supportContact";
 import { useGo } from "./nav";
 import "./pn.css";
@@ -55,6 +55,7 @@ export function Tabs({ active }) {
   const items = [
     ["home", "/", HomeIcon, t("dashboard.home") || "Asosiy"],
     ["orders", "/history", OrdersIcon, t("ui.orders")],
+    ["bonus", "/bonus", GiftIcon, t("ui.bonus.nav")],
     ["profile", "/profile", ProfileIcon, t("dashboard.profile") || "Profil"],
   ];
   return (

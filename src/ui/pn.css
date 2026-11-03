@@ -67,7 +67,7 @@
 .pn-bar__total b { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* pastki menyu: belgi ostida nom, faol bo'lim rang bilan ajraladi */
-.pn-tabs { position: absolute; left: 16px; right: 16px; bottom: calc(14px + var(--tg-safe-bottom, 0px)); z-index: 20; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 6px; background: var(--surface); background: color-mix(in srgb, var(--surface) 84%, transparent); -webkit-backdrop-filter: saturate(170%) blur(18px); backdrop-filter: saturate(170%) blur(18px); border: 1px solid var(--line); border-radius: 24px; box-shadow: 0 12px 32px rgba(0, 0, 0, .45); }
+.pn-tabs { position: absolute; left: 16px; right: 16px; bottom: calc(14px + var(--tg-safe-bottom, 0px)); z-index: 20; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 6px; background: var(--surface); background: color-mix(in srgb, var(--surface) 84%, transparent); -webkit-backdrop-filter: saturate(170%) blur(18px); backdrop-filter: saturate(170%) blur(18px); border: 1px solid var(--line); border-radius: 24px; box-shadow: 0 12px 32px rgba(0, 0, 0, .45); }
 .pn-tabs button { min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; height: 54px; padding: 0 4px; border: 0; border-radius: 18px; background: none; color: var(--muted) !important; font-size: 12px; font-weight: 600; line-height: 1.15; }
 .pn-tabs button { transition: background-color .2s ease, color .2s ease; }
 .pn-tabs button:active { transform: scale(.96); }
@@ -421,3 +421,9 @@ html[data-nav="fade"]::view-transition-old(root), html[data-nav="fade"]::view-tr
 @media (prefers-reduced-motion: reduce) {
   .pn-pay--sheet, .pn-pay.is-closing, .pn-status, .pn-modal, .pn-modal__panel { animation: none; }
 }
+
+/* Bonus */
+.pn-bonus__chips { margin: 10px -16px 0; }
+.pn-bonus__chips button:disabled { opacity: .45; }
+.pn-field > .pn-input + .pn-error, .pn-bonus__chips + .pn-input { margin-top: 10px; }
+.pn-order__side .pn-bonus__plus { color: var(--gold); }

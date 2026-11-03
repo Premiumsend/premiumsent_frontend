@@ -10,6 +10,7 @@ import UsdtPremium from "./pages/UsdtPremium/UsdtPremium";
 import Dashboard from "./pages/Homepage/Dashboard";
 import Referral from "./pages/Referral/Referral";
 import Profile from "./pages/Profile/Profile";
+import Bonus from "./pages/Bonus/Bonus";
 import History from "./pages/History/History";
 import Challenges from "./pages/Challenges/Challenges";
 import Gift from "./pages/Gift/Gift";
@@ -77,6 +78,7 @@ function App() {
                 <Route path="/paymeepremium" element={<PaymeePremium />} />
                 <Route path="/referral" element={<Referral />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/bonus" element={<Bonus />} />
                 <Route path="/history" element={<History />} />
                 <Route path="/challenges" element={<Challenges />} />
                 <Route path="/gift" element={<Gift />} />

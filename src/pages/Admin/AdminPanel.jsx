@@ -4,6 +4,7 @@ import { TGSSticker } from "../../components/TGSSticker";
 import adminSticker from "../../assets/AnimatedSticker_admin.tgs";
 import apiFetch from "../../utils/apiFetch";
 import PaymentCardsAdmin from "./PaymentCardsAdmin";
+import AdminBonus from "./AdminBonus";
 import AdminCustomSelect from "../../components/AdminCustomSelect";
 
 const PURCHASE_MODE_OPTIONS = [
@@ -206,6 +207,7 @@ export default function AdminPanel() {
     { id: "settings", icon: "⚙️", label: "Sozlama" },
     { id: "promocodes", icon: "➕", label: "Promo" },
     { id: "referrals", icon: "🤝", label: "Ref" },
+    { id: "bonus", icon: "🎁", label: "Bonus" },
   ];
 
   const SECONDARY_NAV_HEADER = [
@@ -215,6 +217,7 @@ export default function AdminPanel() {
     { id: "settings", icon: "⚙️", label: "Sozlamalar" },
     { id: "promocodes", icon: "➕", label: "Promokod" },
     { id: "referrals", icon: "🤝", label: "Referral" },
+    { id: "bonus", icon: "🎁", label: "Bonus" },
   ];
 
   const isBottomMenuTabActive = SECONDARY_NAV_MENU.some((item) => item.id === activeTab);
@@ -3246,6 +3249,8 @@ export default function AdminPanel() {
       )}
 
       {/* ==================== PROMOCODES TAB ==================== */}
+      {activeTab === "bonus" && <AdminBonus />}
+
       {activeTab === "promocodes" && (
         <div className="tab-content settings-tab">
           <div className="section-header">

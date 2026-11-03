@@ -49,6 +49,7 @@ const Svg = ({ size = 22, children, ...rest }) => (
 
 export const HomeIcon = (p) => <Svg {...p}><path d="M3.5 11 12 4l8.500 7" /><path d="M6 9.500V19a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V9.500" /></Svg>;
 export const OrdersIcon = (p) => <Svg {...p}><rect x="5" y="3.500" width="14" height="17" rx="3" /><path d="M9 8.500h6M9 12.500h6M9 16.500h3" /></Svg>;
+export const GiftIcon = (p) => <Svg {...p}><rect x="3.500" y="8" width="17" height="4.500" rx="1" /><path d="M5 12.500V20h14v-7.500" /><path d="M12 8v12" /><path d="M12 8c-1.500-3.500-5.500-4-5.500-1.500S9 8 12 8Zm0 0c1.500-3.500 5.500-4 5.500-1.500S15 8 12 8Z" /></Svg>;
 export const ProfileIcon = (p) => <Svg {...p}><circle cx="12" cy="8.500" r="4" /><path d="M4.500 20c1.200-3.600 4-5 7.500-5s6.300 1.400 7.500 5" /></Svg>;
 export const BellIcon = (p) => <Svg {...p}><path d="M6 10a6 6 0 1 1 12 0c0 5 2 6 2 7H4c0-1 2-2 2-7z" /><path d="M10 20.500a2.200 2.200 0 0 0 4 0" /></Svg>;
 export const GlobeIcon = (p) => <Svg {...p}><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 3.600 9A14 14 0 0 1 12 21a14 14 0 0 1-3.600-9A14 14 0 0 1 12 3z" /></Svg>;
