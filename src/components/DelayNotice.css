@@ -1,0 +1,53 @@
+/* Kechikish ogohlantirishi — sariq (--warn), qizil emas: xato emas, kutish.
+   .pn-root ichida ishlaydi (Shell), ranglar pn.css tokenlaridan. */
+.pn-delay {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px 14px 12px 12px;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: var(--r-sm, 15px);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.13), rgba(251, 191, 36, 0.05));
+  text-align: left;
+}
+.pn-delay__ic {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: rgba(251, 191, 36, 0.16);
+  color: var(--warn, #fbbf24);
+}
+.pn-delay__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgba(253, 230, 170, 0.85);
+}
+.pn-delay__text b {
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--warn, #fbbf24);
+}
+
+.pn-delay--inline { margin: 0 0 18px; }
+
+.pn-delay--compact {
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 14px;
+}
+.pn-delay--compact .pn-delay__ic {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+}
+.pn-delay--compact .pn-delay__text { color: #fde6aa; }

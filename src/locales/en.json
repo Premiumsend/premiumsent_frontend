@@ -350,6 +350,8 @@
     "successD2": "{product} sent",
     "failedT": "Delivery failed",
     "failedD": "Something went wrong during delivery",
+    "failedT12h": "Payment received",
+    "failedD12h": "Due to network disruptions, your {product} order may be delayed by up to 12 hours. Your money is safe, no need to pay again.",
     "failedN": "Send order number #{id} to the Help Center.",
     "expiredT": "Time is up",
     "expiredD": "No payment detected within 8 minutes",
@@ -430,6 +432,9 @@
     "hasPremium": "This user already has Premium",
     "stockStars": "Sorry, Stars are out of stock. The admin is restocking, please try again soon.",
     "stockPremium": "Sorry, Premium is out of stock. The admin is restocking, please try again soon.",
+    "delayTitle": "Orders may be delayed",
+    "delayText": "Due to a temporary balance issue, orders may be delayed by up to 12 hours. Your payment is safe and your order will be delivered.",
+    "delayShort": "Orders may currently take up to 12 hours. Your payment is safe and your order will be delivered.",
     "bonus": {
       "nav": "Bonus",
       "title": "Bonus",

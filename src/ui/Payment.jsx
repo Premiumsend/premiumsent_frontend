@@ -3,6 +3,8 @@ import { CheckIcon, ClockIcon, CopyIcon, SendIcon, ShieldIcon, TgStar } from "./
 import { useTranslation } from "../context/LanguageContext";
 import { Modal, fill, fmt, openSupport, useClosing } from "./Kit";
 import { usePaymentCard } from "../utils/paymentCard";
+import DelayNotice from "../components/DelayNotice";
+import useDelayNotice from "../utils/useDelayNotice";
 
 const TOTAL = 480;
 const mmss = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
@@ -53,6 +55,8 @@ export function Confirm({ product, recipient, amount, onContinue }) {
           {t("ui.confirmPre")} <b>{fmt(amount)} {t("ui.som")}</b> {t("ui.confirmPost")}
         </div>
         <p className="pn-confirm__auto"><CheckIcon size={15} /> {t("ui.autoCheck")}</p>
+        {/* Admin: "Kechikish ogohlantirishi" yoqilganda — to'lashdan oldin ko'rsin */}
+        <DelayNotice variant="compact" />
         <button type="button" className="pn-cta" onClick={proceed}>{t("ui.understood")}</button>
       </div>
     </div>
@@ -140,14 +144,17 @@ function Hero({ stage, item }) {
   );
 }
 
-const textFor = (t, { product, recipient, amount, orderId, errorText }) => {
+const textFor = (t, { product, recipient, amount, orderId, errorText, delay12h }) => {
   const vars = { product, user: recipient, amount: `${fmt(amount)} ${t("ui.som")}`, id: orderId };
   const line = (key) => fill(t(`ui.${key}`), vars);
   return {
     pending: { title: line("pendingT"), text: line("pendingD"), note: line("pendingN") },
     received: { title: line("receivedT"), text: line(recipient ? "receivedD" : "receivedD2"), note: line("receivedN") },
     success: { title: line("successT"), text: line(recipient ? "successD" : "successD2"), note: "" },
-    failed: { title: line("failedT"), text: errorText || line("failedD"), note: orderId ? line("failedN") : "" },
+    // Admin "Kechikish ogohlantirishi" yoqilgan: pul kelgan, yetkazish kechikadi
+    failed: delay12h
+      ? { title: line("failedT12h"), text: line("failedD12h"), note: orderId ? line("failedN") : "" }
+      : { title: line("failedT"), text: errorText || line("failedD"), note: orderId ? line("failedN") : "" },
     expired: { title: line("expiredT"), text: line("expiredD"), note: line("expiredN") },
     busy: { title: line("busyT"), text: line("busyD"), note: line("busyN") },
     error: { title: line("errorT"), text: line("errorD"), note: line("errorN") },
@@ -160,7 +167,8 @@ const textFor = (t, { product, recipient, amount, orderId, errorText }) => {
  */
 export function Status({ stage, item, product, recipient, amount, countdown, orderId, txId, note, errorText, sheet = false, onClose, onDone, onRetry }) {
   const { t } = useTranslation();
-  const text = textFor(t, { product, recipient, amount, orderId, errorText })[stage];
+  const delay12h = useDelayNotice();
+  const text = textFor(t, { product, recipient, amount, orderId, errorText, delay12h })[stage];
   const noOrder = stage === "busy" || stage === "error";
   const [closing, closeSheet] = useClosing(onClose, 240);
   const support = <button type="button" className="pn-ghost" onClick={openSupport}>{t("ui.support")}</button>;

@@ -351,6 +351,8 @@
     "successD2": "{product} yuborildi",
     "failedT": "Yuborishda xato bo'ldi",
     "failedD": "Yuborishda muammo chiqdi",
+    "failedT12h": "To'lov qabul qilindi",
+    "failedD12h": "Tarmoqdagi uzilishlar sababli {product} buyurtmangiz 12 soatgacha kechikishi mumkin. Pulingiz xavfsiz, qayta to'lov qilish shart emas.",
     "failedN": "Buyurtma #{id} raqamini Yordam Markaziga yuboring.",
     "expiredT": "Vaqt tugadi",
     "expiredD": "8 daqiqa ichida to'lov aniqlanmadi",
@@ -431,6 +433,9 @@
     "hasPremium": "Bu foydalanuvchida Premium allaqachon faol",
     "stockStars": "Afsuski, botda Stars tugab qoldi. Admin hozir to'ldirmoqda, birozdan keyin yana urinib ko'ring.",
     "stockPremium": "Afsuski, botda Premium tugab qoldi. Admin hozir to'ldirmoqda, birozdan keyin yana urinib ko'ring.",
+    "delayTitle": "Buyurtmalar kechikishi mumkin",
+    "delayText": "Balans bilan bog'liq vaqtinchalik muammo sababli buyurtmalar 12 soatgacha kechikishi mumkin. To'lovingiz saqlanadi va buyurtma albatta yetkaziladi.",
+    "delayShort": "Hozir buyurtmalar 12 soatgacha kechikishi mumkin. To'lovingiz saqlanadi va buyurtma albatta yetkaziladi.",
     "bonus": {
       "nav": "Bonus",
       "title": "Bonus",

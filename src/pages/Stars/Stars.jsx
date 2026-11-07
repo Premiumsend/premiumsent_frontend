@@ -15,6 +15,7 @@ import {
 } from "../../utils/paymeeErrors";
 import { PaymeeStockBanner } from "../../components/PaymeeStockBanner";
 import { PaymeeStockAlert } from "../../components/PaymeeStockAlert";
+import DelayNotice from "../../components/DelayNotice";
 import "./Stars.css";
 
 import WebApp from "@twa-dev/sdk";
@@ -545,6 +546,8 @@ export function StarsPurchasePage({ variant = "robynhood" }) {
           <h1>Telegram Stars</h1>
           <p>{t("ui.starsSub")}</p>
         </div>
+
+        <DelayNotice variant="inline" />
 
         <RecipientField
           username={username}

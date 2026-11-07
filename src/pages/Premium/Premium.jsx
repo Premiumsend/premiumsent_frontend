@@ -18,6 +18,7 @@ import {
 } from "../../utils/paymeeErrors";
 import { PaymeeStockBanner } from "../../components/PaymeeStockBanner";
 import { PaymeeStockAlert } from "../../components/PaymeeStockAlert";
+import DelayNotice from "../../components/DelayNotice";
 const PLAN_TAGS = { 6: "ui.recommended", 12: "ui.best" };
 const STAGE_OF = {
   pending: "pending",
@@ -527,6 +528,8 @@ export function PremiumPurchasePage({ variant = "robynhood" }) {
           <h1>Telegram Premium</h1>
           <ul><li>{t("ui.perk1")}</li><li>{t("ui.perk2")}</li><li>{t("ui.perk3")}</li></ul>
         </div>
+
+        <DelayNotice variant="inline" />
 
         <RecipientField
           username={username}
