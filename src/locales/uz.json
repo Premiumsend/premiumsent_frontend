@@ -434,7 +434,7 @@
     "stockStars": "Afsuski, botda Stars tugab qoldi. Admin hozir to'ldirmoqda, birozdan keyin yana urinib ko'ring.",
     "stockPremium": "Afsuski, botda Premium tugab qoldi. Admin hozir to'ldirmoqda, birozdan keyin yana urinib ko'ring.",
     "delayTitle": "Buyurtmalar kechikishi mumkin",
-    "delayText": "Balans bilan bog'liq vaqtinchalik muammo sababli buyurtmalar 12 soatgacha kechikishi mumkin. To'lovingiz saqlanadi va buyurtma albatta yetkaziladi.",
+    "delayText": "Tarmoqdagi uzilishlar sababli buyurtmalar 12 soatgacha kechikishi mumkin. To'lovingiz saqlanadi va buyurtma albatta yetkaziladi.",
     "delayShort": "Hozir buyurtmalar 12 soatgacha kechikishi mumkin. To'lovingiz saqlanadi va buyurtma albatta yetkaziladi.",
     "bonus": {
       "nav": "Bonus",
